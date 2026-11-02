@@ -1,0 +1,174 @@
+/*
+  Dokuma kapasite planı: tezgâh başına zaman çizelgesi. Örme kapasite planıyla aynı düzen.
+  Renkler index.css'teki tema değişkenlerinden gelir; sabit renk kullanılmaz.
+*/
+.dokuma-timeline {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow-x: auto;
+}
+
+.dokuma-timeline__row {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  min-width: 960px;
+  border-top: 1px solid var(--border);
+}
+
+.dokuma-timeline__row:first-child {
+  border-top: 0;
+}
+
+.dokuma-timeline__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-3);
+}
+
+.dokuma-timeline__label {
+  padding: 4px 8px;
+  border-right: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow: hidden;
+}
+
+.dokuma-timeline__label strong {
+  font-size: 13px;
+}
+
+.dokuma-timeline__track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--dokuma-days), minmax(0, 1fr));
+  min-height: 36px;
+}
+
+.dokuma-timeline__day {
+  border-left: 1px solid var(--border);
+}
+
+.dokuma-timeline__day:first-child {
+  border-left: 0;
+}
+
+.dokuma-timeline__day--weekend {
+  background: var(--surface-2);
+}
+
+.dokuma-timeline__head .dokuma-timeline__day {
+  padding: 2px 0;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.dokuma-timeline__head .dokuma-timeline__day--today {
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.dokuma-timeline__now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--thread);
+  pointer-events: none;
+}
+
+.dokuma-bar {
+  position: absolute;
+  top: 7px;
+  height: 22px;
+  min-width: 4px;
+  padding: 0 4px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font: inherit;
+  font-size: 11px;
+  line-height: 20px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.dokuma-bar {
+  cursor: pointer;
+}
+
+button.dokuma-bar:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.dokuma-bar--running {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+/* Henüz tezgâha hazır olmayan (çözgüden çıkmış ya da haşılda) levent. */
+.dokuma-bar--not-ready {
+  border-style: dashed;
+}
+
+.dokuma-bar--late {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.dokuma-bar--running.dokuma-bar--late {
+  background: var(--danger);
+  color: var(--on-primary);
+}
+
+.dokuma-bar--missing {
+  width: 12px;
+  border-style: dashed;
+  border-color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.dokuma-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.dokuma-legend .dokuma-bar {
+  position: static;
+  display: inline-block;
+  width: 22px;
+  height: 12px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+.dokuma-loads {
+  display: flex;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.dokuma-negative {
+  color: var(--danger);
+}
+
+.dokuma-loom-head > th,
+.dokuma-loom-head > td {
+  background: var(--surface-3);
+}

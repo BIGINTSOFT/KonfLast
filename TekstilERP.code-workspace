@@ -1,0 +1,11 @@
+{
+    "folders": [
+        {
+            "name": "Tekstil ERP",
+            "path": "."
+        }
+    ],
+    "settings": {
+        "dotnet.defaultSolution": "TekstilERP.sln"
+    }
+}

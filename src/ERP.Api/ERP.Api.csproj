@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Core\ERP.Core.Application\ERP.Core.Application.csproj" />
+    <ProjectReference Include="..\Core\ERP.Core.Infrastructure\ERP.Core.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <!--
+    Modüller API'ye derleme anında bağlanmaz (ReferenceOutputAssembly=false): yalnızca önce derlenmeleri sağlanır,
+    çıktıları bin\modules klasörüne kopyalanır ve açılışta ErpModuleLoader tarafından yüklenir.
+    Müşteri kurulumuna yalnızca lisanslı modüllerin dosyaları konur (tools\publish.ps1).
+  -->
+  <ItemGroup>
+    <ModuleProject Include="..\Modules\*\ERP.*.Infrastructure\ERP.*.Infrastructure.csproj" />
+    <ProjectReference Include="@(ModuleProject)" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+
+  <Target Name="CopyModulesToOutput" AfterTargets="Build">
+    <ItemGroup>
+      <ModuleOutput Include="..\Modules\*\ERP.*.Infrastructure\bin\$(Configuration)\$(TargetFramework)\ERP.*.dll;..\Modules\*\ERP.*.Infrastructure\bin\$(Configuration)\$(TargetFramework)\ERP.*.pdb;..\Modules\*\ERP.*.Infrastructure\bin\$(Configuration)\$(TargetFramework)\ERP.*.xml"
+                    Exclude="..\Modules\*\ERP.*.Infrastructure\bin\$(Configuration)\$(TargetFramework)\ERP.Core.*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ModuleOutput)" DestinationFolder="$(OutDir)modules" SkipUnchangedFiles="true" />
+  </Target>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.12" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.12">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.3.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+  </PropertyGroup>
+
+</Project>

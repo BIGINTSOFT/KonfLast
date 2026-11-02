@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Yalnızca yayıncıda çalışır: lisans imzalar. Müşteri kurulumuna konmaz. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Core\ERP.Core.Infrastructure\ERP.Core.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>tekstilerp-lisans</AssemblyName>
+  </PropertyGroup>
+
+</Project>

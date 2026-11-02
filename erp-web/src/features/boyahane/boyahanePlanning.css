@@ -1,0 +1,167 @@
+/*
+  Boyahane kapasite planı: makine başına zaman çizelgesi (CSS grid) ve kuyruk tablosu.
+  Renkler index.css'teki tema değişkenlerinden gelir; sabit renk kullanılmaz.
+*/
+.boyahane-timeline {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow-x: auto;
+}
+
+.boyahane-timeline__row {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  min-width: 960px;
+  border-top: 1px solid var(--border);
+}
+
+.boyahane-timeline__row:first-child {
+  border-top: 0;
+}
+
+.boyahane-timeline__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-3);
+}
+
+.boyahane-timeline__label {
+  padding: 4px 8px;
+  border-right: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow: hidden;
+}
+
+.boyahane-timeline__label strong {
+  font-size: 13px;
+}
+
+.boyahane-timeline__track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--boyahane-days), minmax(0, 1fr));
+  min-height: 36px;
+}
+
+.boyahane-timeline__day {
+  border-left: 1px solid var(--border);
+}
+
+.boyahane-timeline__day:first-child {
+  border-left: 0;
+}
+
+.boyahane-timeline__day--weekend {
+  background: var(--surface-2);
+}
+
+.boyahane-timeline__head .boyahane-timeline__day {
+  padding: 2px 0;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.boyahane-timeline__head .boyahane-timeline__day--today {
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.boyahane-timeline__now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--thread);
+  pointer-events: none;
+}
+
+.boyahane-bar {
+  position: absolute;
+  top: 7px;
+  height: 22px;
+  min-width: 4px;
+  padding: 0 4px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font: inherit;
+  font-size: 11px;
+  line-height: 20px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.boyahane-bar {
+  cursor: pointer;
+}
+
+button.boyahane-bar:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.boyahane-bar--started {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.boyahane-bar--capacity {
+  border-style: dashed;
+  border-color: var(--warning);
+}
+
+.boyahane-bar--late {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.boyahane-bar--started.boyahane-bar--late {
+  background: var(--danger);
+  color: var(--on-primary);
+}
+
+.boyahane-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.boyahane-legend .boyahane-bar {
+  position: static;
+  display: inline-block;
+  width: 22px;
+  height: 12px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+.boyahane-loads {
+  display: flex;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.boyahane-negative {
+  color: var(--danger);
+}
+
+.boyahane-machine-head > th,
+.boyahane-machine-head > td {
+  background: var(--surface-3);
+}

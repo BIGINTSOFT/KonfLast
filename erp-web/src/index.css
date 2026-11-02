@@ -1,0 +1,6659 @@
+/*
+  Tekstil ERP — arayüz teması.
+  Renkler ve ölçüler aşağıdaki değişkenlerden gelir; bileşen kurallarında sabit renk kullanılmaz.
+  Koyu tema, <html data-theme="dark"> ile aynı değişkenleri yeniden tanımlar.
+*/
+:root {
+  color-scheme: light;
+
+  /* Zemin ve yüzeyler */
+  --bg: #f0f2f5;
+  --surface: #ffffff;
+  --surface-2: #f8f9fb;
+  --surface-3: #eef1f5;
+  --border: #e1e5eb;
+  --border-strong: #c9d0da;
+
+  /* Metin */
+  --text: #111a27;
+  --text-2: #364152;
+  --muted: #5f6b7c;
+
+  /* Marka: petrol mavisi; dikiş ipliği altını yalnızca vurgu çizgilerinde */
+  --primary: #0d5c6e;
+  --primary-hover: #094957;
+  --primary-soft: #e2f0f2;
+  --primary-text: #0b5262;
+  --on-primary: #ffffff;
+  --thread: #c9a24a;
+  --focus: rgb(13 92 110 / 32%);
+
+  /* Üst başlık her iki temada da koyudur: uygulama çubuğu lacivert, modül şeridi petrol mavisi */
+  --appbar: #0e1724;
+  --appbar-text: #c4cfdc;
+  --appbar-muted: #8494a8;
+  --modulebar: #0d5c6e;
+  --modulebar-border: #0a4a59;
+  --modulebar-text: rgb(255 255 255 / 82%);
+
+  /* Durumlar */
+  --ok: #136c45;
+  --ok-bg: #e1f3e9;
+  --warning: #8a5700;
+  --warning-bg: #fcefd2;
+  --danger: #b42318;
+  --danger-hover: #8f1b12;
+  --danger-bg: #fdeceb;
+  --info: var(--primary-text);
+  --info-bg: var(--primary-soft);
+  --neutral-bg: #e9edf2;
+
+  /* Ölçüler */
+  --radius: 3px;
+  --radius-sm: 2px;
+  --radius-lg: 4px;
+  --control-height: 32px;
+  --appbar-height: 44px;
+  --modulebar-height: 38px;
+  --header-height: var(--appbar-height);
+  --rail-width: 76px;
+  --panel-width: 228px;
+  --sidebar-width: calc(var(--rail-width) + var(--panel-width));
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 5%);
+  --shadow-md: 0 4px 14px rgb(16 24 40 / 8%);
+  --shadow-lg: 0 24px 64px rgb(16 24 40 / 22%);
+
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%235f6b7c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+
+  --font-sans: 'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', Consolas, 'Cascadia Mono', monospace;
+
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0a111a;
+  --surface: #121b27;
+  --surface-2: #172230;
+  --surface-3: #1d2a3a;
+  --border: #243142;
+  --border-strong: #34455a;
+
+  --text: #e7ecf3;
+  --text-2: #c3ccd9;
+  --muted: #93a0b2;
+
+  --primary: #1b8396;
+  --primary-hover: #2295aa;
+  --primary-soft: #11313a;
+  --primary-text: #6fcbdb;
+  --focus: rgb(111 203 219 / 38%);
+
+  --appbar: #070d15;
+  --modulebar: #0f4552;
+  --modulebar-border: #0b3540;
+
+  --ok: #62d19b;
+  --ok-bg: #10291d;
+  --warning: #f0bd5b;
+  --warning-bg: #33260b;
+  --danger: #ff8a80;
+  --danger-hover: #c93a2e;
+  --danger-bg: #371613;
+  --neutral-bg: #1f2b3a;
+
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%2393a0b2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-md: 0 4px 14px rgb(0 0 0 / 35%);
+  --shadow-lg: 0 24px 64px rgb(0 0 0 / 60%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+a {
+  color: var(--primary-text);
+  text-underline-offset: 2px;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+code,
+pre {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+code {
+  padding: 1px 5px;
+  color: var(--text-2);
+  background: var(--surface-3);
+  border-radius: 4px;
+}
+
+a code {
+  color: inherit;
+}
+
+pre {
+  padding: 12px 14px;
+  overflow-x: auto;
+  color: var(--text-2);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+details > summary {
+  width: fit-content;
+  font-weight: 500;
+  color: var(--primary-text);
+  cursor: pointer;
+}
+
+details[open] > summary {
+  margin-bottom: 8px;
+}
+
+::selection {
+  background: var(--primary-soft);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.preserve-lines {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+/* Marka işareti: kumaş üstünde dikiş hattı */
+.brand-mark {
+  display: block;
+  flex: none;
+  width: 32px;
+  height: 32px;
+}
+
+/* ───────── Düğmeler ───────── */
+.button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--control-height);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--text);
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  transition:
+    background-color 0.12s ease,
+    border-color 0.12s ease,
+    color 0.12s ease;
+}
+
+a.button {
+  text-decoration: none;
+}
+
+.button:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--muted);
+}
+
+.button:active:not(:disabled) {
+  background: var(--surface-3);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.55;
+}
+
+.button--primary {
+  font-weight: 600;
+  color: var(--on-primary);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.button--primary:hover:not(:disabled),
+.button--primary:active:not(:disabled) {
+  color: var(--on-primary);
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+}
+
+.button--danger {
+  font-weight: 600;
+  color: #fff;
+  background: #b42318;
+  border-color: #b42318;
+}
+
+.button--danger:hover:not(:disabled),
+.button--danger:active:not(:disabled) {
+  color: #fff;
+  background: var(--danger-hover);
+  border-color: var(--danger-hover);
+}
+
+.button--ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.button--ghost:hover:not(:disabled) {
+  background: var(--surface-3);
+  border-color: transparent;
+}
+
+.button--icon {
+  width: var(--control-height);
+  padding: 0;
+  font-size: 1.05rem;
+}
+
+.button--tiny {
+  min-height: 0;
+  padding: 0 6px;
+  margin-left: 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  box-shadow: none;
+}
+
+/* ───────── Form alanları ───────── */
+.field {
+  display: grid;
+  gap: 5px;
+  /* Satırdaki komşu alan (ör. altında açıklama olan) daha uzunsa bu alanın kutusu aşağı kaymaz: içerik üstten dizilir. */
+  align-content: start;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-2);
+}
+
+.field > label {
+  font-weight: 500;
+}
+
+.field input,
+.field select,
+.field textarea,
+.toolbar input,
+.toolbar select,
+.matrix-input {
+  min-height: var(--control-height);
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+/* Açılır liste oku: tarayıcının oku yerine kenardan eşit uzaklıkta duran tek tip ok. Alan kurallarındaki
+   "background" kısaltması görseli sıfırladığı için bu bildirimler önceliklidir. */
+select:not([multiple]) {
+  padding-right: 32px !important;
+  appearance: none;
+  background-image: var(--select-chevron) !important;
+  background-repeat: no-repeat !important;
+  background-position: right 11px center !important;
+  background-size: 12px 12px !important;
+}
+
+.field input::placeholder,
+.toolbar input::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover,
+.toolbar input:hover,
+.toolbar select:hover,
+.matrix-input:hover {
+  border-color: var(--muted);
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible,
+.toolbar input:focus-visible,
+.toolbar select:focus-visible,
+.matrix-input:focus-visible {
+  border-color: var(--primary);
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+.field input:disabled,
+.field select:disabled,
+.field textarea:disabled {
+  color: var(--muted);
+  background: var(--surface-3);
+}
+
+.field input[aria-invalid='true'],
+.field select[aria-invalid='true'],
+.field textarea[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.field textarea {
+  resize: vertical;
+}
+
+.field__error {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--danger);
+}
+
+.field__hint {
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+input[type='checkbox'],
+input[type='radio'],
+progress {
+  accent-color: var(--primary);
+}
+
+.checkbox {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 400;
+  color: var(--text);
+}
+
+.checkbox input,
+.field .checkbox input {
+  width: 17px;
+  height: 17px;
+  min-height: 0;
+  padding: 0;
+}
+
+/* Aç / kapa anahtarı (ör. kaydın Aktif durumu). */
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 10px;
+  align-items: center;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.switch input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  opacity: 0;
+}
+
+.switch__track {
+  position: relative;
+  flex: none;
+  width: 36px;
+  height: 20px;
+  background: var(--border-strong);
+  border-radius: 999px;
+  transition: background 120ms ease-out;
+}
+
+.switch__track::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  content: '';
+  background: var(--surface);
+  border-radius: 50%;
+  box-shadow: var(--shadow-sm);
+  transition: transform 120ms ease-out;
+}
+
+.switch input:checked + .switch__track {
+  background: var(--primary);
+}
+
+.switch input:checked + .switch__track::after {
+  transform: translateX(16px);
+}
+
+.switch input:focus-visible + .switch__track {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.checkbox-list {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px 16px;
+  margin: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.checkbox-list legend {
+  padding: 0 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+/* Aranabilir seçim kutusu (ana veri seçimi). */
+.combobox {
+  position: relative;
+}
+
+.combobox input {
+  width: 100%;
+  min-width: 0;
+  padding-right: 32px !important;
+  background-image: var(--select-chevron) !important;
+  background-repeat: no-repeat !important;
+  background-position: right 11px center !important;
+  background-size: 12px 12px !important;
+}
+
+.combobox input::placeholder {
+  color: var(--text-2);
+  opacity: 1;
+}
+
+.combobox__list {
+  position: absolute;
+  top: calc(100% + 2px);
+  right: 0;
+  left: 0;
+  z-index: 40;
+  max-height: 264px;
+  padding: 4px 0;
+  margin: 0;
+  overflow-y: auto;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
+.combobox__option {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.combobox__option--active {
+  background: var(--primary-soft);
+}
+
+.combobox__option[aria-selected="true"] {
+  font-weight: 600;
+  color: var(--primary-text);
+}
+
+.combobox__code {
+  flex: none;
+  min-width: 72px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.combobox__empty {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.color-field {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-weight: 400;
+}
+
+.color-field input[type='color'] {
+  width: 48px;
+  padding: 3px;
+}
+
+.swatch {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.swatch__chip {
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.form.card {
+  margin-top: 20px;
+}
+
+.form p {
+  margin: 0;
+}
+
+.form__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.form__dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Arıza bildirimi: solda neden, sağda kapatma düğmesi. */
+.breakdown-notice {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.form__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ───────── Uyarılar ve rozetler ───────── */
+.alert {
+  padding: 11px 14px;
+  margin: 12px 0 0;
+  font-size: 0.95rem;
+  border: 1px solid transparent;
+  border-left-width: 3px;
+  border-radius: var(--radius);
+}
+
+.form .alert,
+.login__card .alert {
+  margin: 0;
+}
+
+.alert--error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  border-left-color: var(--danger);
+}
+
+.alert--info {
+  color: var(--info);
+  background: var(--info-bg);
+  border-color: color-mix(in srgb, var(--primary-text) 25%, transparent);
+  border-left-color: var(--primary-text);
+}
+
+.alert code {
+  color: inherit;
+  background: color-mix(in srgb, currentcolor 12%, transparent);
+}
+
+.alert ul {
+  padding-left: 18px;
+  margin: 6px 0 0;
+}
+
+.badge {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 1px 7px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text-2);
+  white-space: nowrap;
+  background: var(--neutral-bg);
+  border-radius: var(--radius-sm);
+}
+
+.badge--ok {
+  color: var(--ok);
+  background: var(--ok-bg);
+}
+
+.badge--danger {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.badge--warning {
+  color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.badge--info {
+  color: var(--info);
+  background: var(--info-bg);
+}
+
+.badge--neutral {
+  color: var(--muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  padding: 1px 7px;
+  font-size: 0.78rem;
+  color: var(--text-2);
+  background: var(--neutral-bg);
+  border-radius: var(--radius-sm);
+}
+
+.chips--plain {
+  gap: 8px 20px;
+  padding: 0;
+  margin: 12px 0 0;
+  list-style: none;
+}
+
+.plain-list {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+/* ───────── Giriş ───────── */
+.login {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  min-height: 100vh;
+  background: var(--surface);
+}
+
+.login__aside {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 56px;
+  overflow: hidden;
+  color: #dbe3ee;
+  background:
+    /* İnce dokuma: çözgü ve atkı iplikleri */
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 2.5%) 0 1px, transparent 1px 6px),
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 2.5%) 0 1px, transparent 1px 6px),
+    linear-gradient(160deg, #132236 0%, #0e1724 55%, #0a1019 100%);
+}
+
+.login__aside-brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.login__headline {
+  max-width: 15ch;
+  margin: 0;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  font-weight: 600;
+  line-height: 1.12;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+/* Dikiş hattı: temanın imzası */
+.login__seam {
+  width: 132px;
+  margin: 28px 0 22px;
+  border: 0;
+  border-top: 2px dashed var(--thread);
+}
+
+.login__lead {
+  max-width: 44ch;
+  margin: 0;
+  font-size: 1.05rem;
+  color: #aab6c7;
+}
+
+/* Giriş paneli: tanıtım maddeleri */
+.login__features {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 28px;
+  padding: 24px 0 0;
+  margin: 0;
+  list-style: none;
+  border-top: 1px solid rgb(255 255 255 / 10%);
+}
+
+.login__features li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.login__features svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  color: var(--thread);
+}
+
+.login__features strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.login__features span {
+  display: block;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #aab6c7;
+}
+
+@media (max-width: 1280px) {
+  .login__features {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+}
+
+.login__panel {
+  display: grid;
+  padding: 32px 24px;
+  place-items: center;
+}
+
+.login__card {
+  display: grid;
+  gap: 18px;
+  width: min(100%, 380px);
+}
+
+.login__brand {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.login__brand h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.login__brand p {
+  margin: 2px 0 0;
+  color: var(--muted);
+}
+
+/* Geniş ekranda marka sol panelde zaten görünür */
+.login__brand .brand-mark {
+  display: none;
+}
+
+.login__card .button--primary {
+  min-height: 44px;
+  margin-top: 4px;
+  font-weight: 600;
+}
+
+.login__footnote {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.splash {
+  display: grid;
+  min-height: 100vh;
+  color: var(--muted);
+  place-items: center;
+}
+
+/* ───────── Uygulama kabuğu ─────────
+   Üstte koyu uygulama çubuğu (marka, arama, kullanıcı).
+   Solda bütün modüller açılır-kapanır menü olarak; içerik sağda. */
+.shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.appbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  grid-column: 1 / -1;
+}
+
+.appbar__top {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  height: var(--appbar-height);
+  padding: 0 16px;
+  color: var(--appbar-text);
+  background: var(--appbar);
+}
+
+.appbar__brand {
+  display: flex;
+  flex: none;
+  gap: 10px;
+  align-items: center;
+  width: calc(var(--sidebar-width) - 32px);
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+.appbar__brand:hover {
+  color: #fff;
+}
+
+.appbar__brand .brand-mark {
+  width: 26px;
+  height: 26px;
+}
+
+.appbar__tools {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.appbar__icon {
+  display: inline-grid;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--appbar-text);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  place-items: center;
+}
+
+.appbar__icon:hover {
+  color: #fff;
+  background: rgb(255 255 255 / 10%);
+}
+
+.appbar__menu {
+  display: none;
+}
+
+.appbar .badge {
+  font-size: 0.76rem;
+}
+
+.appbar .global-search input {
+  height: 30px;
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
+  border-color: rgb(255 255 255 / 14%);
+}
+
+.appbar .global-search input::placeholder {
+  color: var(--appbar-muted);
+  opacity: 1;
+}
+
+.appbar .global-search input:focus-visible {
+  background: rgb(255 255 255 / 12%);
+  border-color: rgb(255 255 255 / 40%);
+  box-shadow: none;
+}
+
+.appbar .global-search kbd {
+  top: 6px;
+  color: var(--appbar-muted);
+  border-color: rgb(255 255 255 / 18%);
+}
+
+.appbar__user {
+  display: grid;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  text-align: left;
+}
+
+.appbar__user strong {
+  font-weight: 600;
+  color: #fff;
+}
+
+.appbar__user span {
+  max-width: 22ch;
+  overflow: hidden;
+  font-size: 0.72rem;
+  color: var(--appbar-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Modül sekmeleri: menünün üst düzeyi. */
+.modulebar {
+  display: flex;
+  height: var(--modulebar-height);
+  padding: 0 8px;
+  overflow-x: auto;
+  background: var(--modulebar);
+  border-bottom: 1px solid var(--modulebar-border);
+  scrollbar-width: none;
+}
+
+.modulebar__tab {
+  position: relative;
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--modulebar-text);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.modulebar__tab:hover {
+  color: #fff;
+  background: rgb(255 255 255 / 8%);
+}
+
+.modulebar__tab:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 70%);
+  outline-offset: -2px;
+}
+
+.modulebar__tab--active,
+.modulebar__tab--active:hover {
+  font-weight: 600;
+  color: #fff;
+  background: rgb(0 0 0 / 18%);
+}
+
+.modulebar__tab--active::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  content: '';
+  background: var(--thread);
+}
+
+/* Yan panel: seçili modülün ekranları. */
+.sidepanel {
+  position: sticky;
+  top: var(--header-height);
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--header-height));
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.sidenav__search {
+  flex: none;
+  padding: 12px 12px 8px;
+}
+
+.sidenav__search input {
+  width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.sidenav__search input::placeholder {
+  color: var(--muted);
+}
+
+.sidenav__search input:focus {
+  background: var(--surface);
+  border-color: var(--primary);
+  outline: none;
+}
+
+.sidenav {
+  flex: 1;
+  padding: 0 0 24px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+/* Sol menü: koyu modül rayı ve yanında seçili modülün ekran paneli. Aramada eşleşen modüller alt alta listelenir. */
+.shell--rail {
+  --sidebar-width: var(--rail-width);
+}
+
+.navframe {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.navrail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 2px;
+  width: var(--rail-width);
+  padding: 8px 6px;
+  overflow-y: auto;
+  background: var(--appbar);
+  scrollbar-width: none;
+}
+
+.navrail__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  width: 100%;
+  padding: 7px 2px 6px;
+  font: inherit;
+  color: var(--appbar-text);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-lg);
+  opacity: 0.78;
+}
+
+.navrail__item:hover {
+  background: rgb(255 255 255 / 0.07);
+  opacity: 1;
+}
+
+.navrail__item:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.6);
+  outline-offset: -2px;
+}
+
+.navrail__icon {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  background: rgb(255 255 255 / 0.08);
+  border-radius: var(--radius-lg);
+  place-items: center;
+}
+
+.navrail__icon svg.lucide {
+  width: 17px;
+  height: 17px;
+}
+
+.navrail__label {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.66rem;
+  font-weight: 500;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navrail__item--selected {
+  background: rgb(255 255 255 / 0.1);
+  opacity: 1;
+}
+
+.navrail__item--selected .navrail__icon {
+  color: #ffffff;
+  background: var(--module);
+}
+
+.navrail__item--selected .navrail__label {
+  font-weight: 600;
+}
+
+/* Açık ekranın modülü, başka modüle bakılırken ince bir işaretle belli olur. */
+.navrail__item--current:not(.navrail__item--selected) .navrail__icon {
+  box-shadow: inset 0 0 0 1.5px var(--module);
+}
+
+.navrail__collapse {
+  display: grid;
+  height: 30px;
+  margin-top: auto;
+  color: var(--appbar-text);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-lg);
+  opacity: 0.6;
+  place-items: center;
+}
+
+.navrail__collapse:hover {
+  background: rgb(255 255 255 / 0.07);
+  opacity: 1;
+}
+
+.navrail__collapse svg.lucide {
+  width: 16px;
+  height: 16px;
+}
+
+.navpanel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.navpanel[hidden] {
+  display: none;
+}
+
+/* Daraltılmış menüde ekranlar içeriği itmeden, rayın yanında açılır. */
+.navpanel--flyout {
+  position: absolute;
+  inset: 0 auto 0 var(--rail-width);
+  z-index: 30;
+  width: var(--panel-width);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  animation: fade-in var(--motion-fast) var(--motion-ease);
+}
+
+/* Açılan panel sekme şeridinin (z-index 15) üstünde kalır. */
+.shell--rail .sidepanel {
+  z-index: 18;
+}
+
+/* Daraltılmış menüde marka alanı rayla hizalanmaz; yazı tek satırda kalır. */
+.shell--rail .appbar__brand {
+  width: auto;
+  white-space: nowrap;
+}
+
+.navpanel__head {
+  flex: none;
+  padding: 12px 14px 2px;
+}
+
+.navpanel__title {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.navpanel__title svg.lucide {
+  width: 17px;
+  height: 17px;
+  color: var(--module);
+}
+
+/* Kaydırma çubuğu yalnızca panelin üzerindeyken belirir; içerik kaymaz. */
+.navpanel .sidenav {
+  scrollbar-color: transparent transparent;
+  scrollbar-gutter: stable;
+}
+
+.navpanel:hover .sidenav {
+  scrollbar-color: var(--border-strong) transparent;
+}
+
+.sidenav--searching .sidenav__module + .sidenav__module {
+  border-top: 1px solid var(--border);
+}
+
+.sidenav__module-title {
+  padding: 6px 16px 8px;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+}
+
+.sidenav__group {
+  display: grid;
+  padding: 6px 0;
+}
+
+.sidenav__group + .sidenav__group {
+  border-top: 1px solid var(--border);
+}
+
+.sidenav__group-title {
+  padding: 6px 16px 4px;
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary-text);
+}
+
+.sidenav__link {
+  position: relative;
+  padding: 6px 16px 6px 20px;
+  font-size: 0.875rem;
+  color: var(--text-2);
+  text-decoration: none;
+}
+
+.sidenav__link:hover,
+.sidenav__link--first {
+  color: var(--text);
+  background: var(--surface-3);
+}
+
+.sidenav__link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.sidenav__link.active {
+  font-weight: 600;
+  color: var(--primary-text);
+  background: var(--primary-soft);
+}
+
+.sidenav__link.active::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  content: '';
+  background: var(--primary);
+}
+
+.sidenav__empty {
+  padding: 8px 16px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.shell__main {
+  min-width: 0;
+}
+
+.shell__backdrop {
+  display: none;
+}
+
+/* Konum bilgisi: modül › grup › ekran */
+.breadcrumb {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 34px;
+  padding: 0 24px;
+  overflow: hidden;
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.breadcrumb__current {
+  overflow: hidden;
+  font-weight: 600;
+  color: var(--text-2);
+  text-overflow: ellipsis;
+}
+
+.breadcrumb__separator {
+  color: var(--border-strong);
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-menu > summary {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: auto;
+  padding: 3px 8px 3px 3px;
+  margin: 0;
+  font-weight: 400;
+  list-style: none;
+  border-radius: var(--radius-sm);
+}
+
+.user-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.user-menu > summary:hover,
+.user-menu[open] > summary {
+  margin: 0;
+  background: rgb(255 255 255 / 10%);
+}
+
+.avatar {
+  display: grid;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--on-primary);
+  letter-spacing: 0.02em;
+  background: var(--primary);
+  border-radius: 50%;
+  place-items: center;
+}
+
+.user-menu__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 30;
+  display: grid;
+  min-width: 200px;
+  padding: 4px 0;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+
+.user-menu__item {
+  display: block;
+  width: 100%;
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.user-menu__item:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-3);
+}
+
+.user-menu__item--danger {
+  color: var(--danger);
+}
+
+.user-menu__item--danger:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+/* ───────── Sayfa ───────── */
+.page {
+  padding: 20px 32px 40px;
+}
+
+.page--narrow {
+  max-width: 560px;
+}
+
+.page > h1 + .muted,
+.page__header .muted {
+  max-width: 90ch;
+  margin: 0;
+}
+
+.page__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.page__header.section-title {
+  align-items: center;
+}
+
+.page__header.section-title h2 {
+  margin: 0;
+}
+
+.page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.page h1 .badge {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.section-title {
+  margin: 24px 0 0;
+  font-size: 0.95rem;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: flex-end;
+  margin-top: 14px;
+}
+
+.toolbar input[type='search'] {
+  width: min(100%, 340px);
+}
+
+.toolbar--filters label {
+  display: grid;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+/* ───────── Kartlar ───────── */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.card {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.card > h2 {
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+/* Kartın ilk başlığı panel başlığı olarak şeritte durur. */
+.card > h2:first-child,
+.card > h3:first-child {
+  padding: 8px 16px;
+  margin: -16px -16px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.card .alert {
+  margin-top: 14px;
+}
+
+.card--spaced {
+  margin-top: 12px;
+}
+
+.status-list {
+  display: grid;
+  margin: 0;
+}
+
+.status-list > div {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.status-list > div:first-child {
+  padding-top: 0;
+}
+
+.status-list > div:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.status-list dt {
+  color: var(--muted);
+}
+
+.status-list dd {
+  min-width: 0;
+  margin: 0;
+  font-weight: 500;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+/* ───────── Tablolar ───────── */
+.table-wrap {
+  margin-top: 12px;
+  overflow-x: auto;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.table-wrap[aria-busy='true'] {
+  opacity: 0.6;
+  transition: opacity 0.15s ease 0.15s;
+}
+
+.table {
+  width: 100%;
+  font-size: 0.875rem;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 6px 12px;
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+
+.table thead th {
+  height: 34px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-2);
+  white-space: nowrap;
+  background: var(--surface-3);
+  border-bottom-color: var(--border-strong);
+}
+
+.table thead th + th {
+  border-left: 1px solid var(--border);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:nth-child(even) > td {
+  background: var(--surface-2);
+}
+
+.table tbody tr:hover > td {
+  background: var(--primary-soft);
+}
+
+/* Tablo içindeki kodlar (sipariş no, sicil …) etiket kutusu olmadan yazılır. */
+.table td code {
+  padding: 0;
+  color: inherit;
+  white-space: nowrap;
+  background: none;
+}
+
+.table td > a:not(.button) {
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.table td > a:not(.button):hover {
+  text-decoration: underline;
+}
+
+.table__number {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+.table__actions {
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+.table__actions .button {
+  min-height: 26px;
+  padding: 0 8px;
+  margin-left: 4px;
+  font-size: 0.8rem;
+}
+
+/* Tablo hücresi içindeki tek düğme (ör. "Kart ata"): satır yüksekliğini büyütmez. */
+.button--inline {
+  min-height: 26px;
+  padding: 0 8px;
+  font-size: 0.8rem;
+}
+
+.table td.table__nowrap {
+  white-space: nowrap;
+}
+
+.table td.table__empty {
+  padding: 28px 16px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.table tbody tr:hover > td.table__empty {
+  background: transparent;
+}
+
+.table--compact th,
+.table--compact td {
+  padding: 5px 10px;
+  word-break: break-word;
+}
+
+.table--matrix th[scope='row'] {
+  font-size: inherit;
+  font-weight: 500;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+  background: transparent;
+}
+
+.table--matrix tfoot td,
+.table--matrix tfoot th {
+  font-weight: 600;
+  background: var(--surface-2);
+  border-top: 2px solid var(--border-strong);
+  border-bottom: 0;
+}
+
+.matrix-input {
+  width: 88px;
+  min-height: 32px;
+  padding: 4px 8px;
+  text-align: right;
+  border-radius: var(--radius-sm);
+}
+
+.matrix-input--wide {
+  width: min(100%, 260px);
+  text-align: left;
+}
+
+.matrix-adder {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.matrix-adder--narrow {
+  max-width: 640px;
+  margin-bottom: 12px;
+}
+
+/* Tablo içinde açılan ayrıntı */
+.audit-details {
+  display: grid;
+  gap: 12px;
+  padding: 6px 0;
+}
+
+.audit-details p {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.audit-details .table {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  margin-top: 10px;
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.pagination .muted {
+  margin-right: auto;
+}
+
+.pagination .button {
+  min-height: 28px;
+}
+
+/* ───────── Pencere ───────── */
+.modal {
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 0 20px 20px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.modal::backdrop {
+  background: rgb(8 14 22 / 55%);
+  backdrop-filter: blur(2px);
+}
+
+.modal__header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  margin: 0 -20px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal__header h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.modal h3.section-title {
+  margin: 8px 0 0;
+  font-size: 1rem;
+}
+
+/* Sağdan açılan tam boy panel: uzun kayıt formları. */
+.modal--drawer {
+  inset: 0 0 0 auto;
+  width: min(560px, 100vw);
+  height: 100dvh;
+  max-height: 100dvh;
+  padding-bottom: 0;
+  margin: 0;
+  overflow-y: auto;
+  border-width: 0 0 0 1px;
+  border-radius: 0;
+  animation: drawer-in 180ms ease-out;
+}
+
+/* Sütun düzeni: kısa içerikte satırlar boşluğu paylaşıp büyümez, düğmeler alta yaslanır. */
+.modal--drawer .form {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 90px);
+}
+
+/* Kaydet / Vazgeç uzun formda da görünür kalır. */
+.modal--drawer .form__actions {
+  position: sticky;
+  bottom: 0;
+  padding-bottom: 16px;
+  margin-top: auto;
+  background: var(--surface);
+}
+
+.modal--drawer h3.section-title {
+  padding-top: 16px;
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal--drawer {
+    animation: none;
+  }
+}
+
+/* ───────── Rota akışı, tablet kodu ───────── */
+.route-flow {
+  display: flex;
+  gap: 12px;
+  padding: 0;
+  margin: 12px 0 0;
+  overflow-x: auto;
+  list-style: none;
+}
+
+.route-flow__stage {
+  display: grid;
+  flex: 0 0 210px;
+  gap: 8px;
+  align-content: start;
+  padding: 12px;
+  background: var(--surface-3);
+  border-radius: var(--radius);
+}
+
+.route-flow__stage-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.route-flow__step {
+  padding: 9px 11px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+}
+
+.route-flow__step .muted {
+  font-size: 0.82rem;
+}
+
+.route-flow__step .badge {
+  margin-top: 4px;
+}
+
+/* Form içi sekmeler (ör. operatör formu: Genel / Yetkinlikler). */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tabs__tab {
+  height: var(--control-height);
+  padding: 0 14px;
+  margin-bottom: -1px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+}
+
+.tabs__tab:hover {
+  color: var(--text);
+}
+
+.tabs__tab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.tabs__tab--active {
+  color: var(--primary-text);
+  border-bottom-color: var(--primary);
+}
+
+.tabs__panel {
+  display: grid;
+  gap: 18px;
+}
+
+.tabs__panel[hidden] {
+  display: none;
+}
+
+/* Kişi kartı: operatör formunun başında fotoğraf, ad ve sicil. */
+.person-card {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.person-card__photo {
+  position: relative;
+  display: grid;
+  flex: none;
+  width: 112px;
+  height: 112px;
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--primary);
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--border-strong);
+  place-items: center;
+}
+
+.person-card__photo:focus-within {
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+.person-card__photo--disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.person-card__photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.person-card__initials {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--on-primary);
+  letter-spacing: 0.04em;
+}
+
+.person-card__photo-action {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 4px 0 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #ffffff;
+  text-align: center;
+  background: rgb(8 14 22 / 62%);
+}
+
+.person-card__body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  justify-items: start;
+}
+
+.person-card__status {
+  align-self: flex-start;
+  margin-left: auto;
+}
+
+.person-card__name {
+  font-size: 1.15rem;
+  overflow-wrap: anywhere;
+}
+
+/* ───────── İlerleme: değer metinle de yazılır, yalnızca renge bırakılmaz ───────── */
+.progress {
+  display: grid;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+}
+
+.progress progress {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  appearance: none;
+  background: var(--surface-3);
+  border: 0;
+  border-radius: 999px;
+}
+
+.progress progress::-webkit-progress-bar {
+  background: var(--surface-3);
+}
+
+.progress progress::-webkit-progress-value {
+  background: var(--primary);
+  border-radius: 999px;
+}
+
+.progress progress::-moz-progress-bar {
+  background: var(--primary);
+  border-radius: 999px;
+}
+
+.progress--inline {
+  grid-template-columns: minmax(6rem, 1fr) auto;
+  align-items: center;
+  min-width: 10rem;
+  margin-bottom: 0;
+}
+
+/* ───────── Canlı pano ───────── */
+.cards--stats {
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.stat__label {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.stat__value {
+  margin: 8px 0 2px;
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__detail {
+  margin: 0;
+  font-size: 0.86rem;
+}
+
+.cards--lines {
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  align-items: start;
+}
+
+.line-card {
+  display: grid;
+  gap: 14px;
+}
+
+.line-card__header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.line-card__header h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.line-card .progress {
+  margin-bottom: 0;
+}
+
+.line-card__machines {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.line-card__machines li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  align-items: center;
+}
+
+.line-card__job {
+  grid-column: 1 / -1;
+  font-size: 0.86rem;
+}
+
+/* ───────── Dar ekran ───────── */
+@media (max-width: 960px) {
+  .login {
+    grid-template-columns: 1fr;
+  }
+
+  .login__aside {
+    display: none;
+  }
+
+  .login__brand .brand-mark {
+    display: block;
+  }
+
+  .shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .modulebar {
+    display: none;
+  }
+
+  .sidepanel {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 40;
+    width: min(280px, 86vw);
+    height: 100dvh;
+    transform: translateX(-100%);
+    transition: transform 0.18s ease;
+  }
+
+  .sidenav__module {
+    display: block;
+  }
+
+  .sidenav__module + .sidenav__module {
+    margin-top: 8px;
+  }
+
+  .shell--nav-open .sidepanel {
+    box-shadow: var(--shadow-lg);
+    transform: none;
+  }
+
+  .shell--nav-open .shell__backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    display: block;
+    background: rgb(8 14 22 / 55%);
+    border: 0;
+  }
+
+  .appbar__top {
+    gap: 8px;
+    padding: 0 8px;
+  }
+
+  .appbar__menu {
+    display: inline-grid;
+  }
+
+  .appbar__brand {
+    width: auto;
+  }
+
+  .appbar__brand span,
+  .appbar__user {
+    display: none;
+  }
+
+  .user-menu > summary {
+    padding: 3px;
+  }
+
+  .breadcrumb {
+    padding: 0 16px;
+  }
+
+  .page {
+    padding: 16px 16px 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .sidepanel,
+  .appbar,
+  .breadcrumb,
+  .toolbar,
+  .pagination,
+  .page__actions {
+    display: none !important;
+  }
+
+  .shell {
+    display: block;
+  }
+
+  .card,
+  .table-wrap {
+    box-shadow: none;
+  }
+}
+
+/* ───────── Özet şeridi ───────── */
+.status-list--inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 32px;
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.status-list--inline > div {
+  gap: 10px;
+  justify-content: flex-start;
+  padding: 0;
+  border-bottom: 0;
+}
+
+.status-list--inline dd {
+  text-align: left;
+}
+
+/* ───────── Sipariş üretim akışı ───────── */
+.flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.flow__step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-left: 1px solid var(--border);
+}
+
+.flow__step:first-child {
+  border-left: 0;
+}
+
+.flow__index {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted);
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+}
+
+.flow__step--current .flow__index {
+  color: var(--on-primary);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.flow__step--done .flow__index {
+  color: var(--ok);
+  background: var(--ok-bg);
+  border-color: transparent;
+}
+
+.flow__step--pending .flow__body {
+  color: var(--muted);
+}
+
+.flow__body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
+.flow__body .muted {
+  font-size: 0.82rem;
+}
+
+/* ───────── Ana sayfa: yapılacaklar ───────── */
+.task-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.task {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  color: inherit;
+  text-decoration: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.task:hover,
+.task:focus-visible {
+  border-color: var(--primary);
+}
+
+.task__count {
+  flex: none;
+  min-width: 44px;
+  padding: 4px 8px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary-text);
+  text-align: center;
+  background: var(--primary-soft);
+  border-radius: var(--radius-sm);
+}
+
+.task__body {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.task__body .muted {
+  font-size: 0.84rem;
+}
+
+.task__go {
+  font-size: 1.2rem;
+  color: var(--muted);
+}
+
+/* ───────── Genel arama ───────── */
+.global-search {
+  position: relative;
+  flex: 0 1 380px;
+  min-width: 180px;
+}
+
+.global-search input {
+  width: 100%;
+  height: 34px;
+  min-height: 0;
+  padding: 0 58px 0 12px;
+  font-size: 0.9rem;
+}
+
+.global-search kbd {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  padding: 1px 6px;
+  font-family: inherit;
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--muted);
+  pointer-events: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.global-search__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  z-index: 30;
+  min-width: 360px;
+  max-height: 440px;
+  padding: 6px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+}
+
+.global-search__item {
+  display: grid;
+  grid-template-columns: 124px minmax(0, 1fr);
+  gap: 1px 10px;
+  width: 100%;
+  padding: 7px 10px;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.global-search__item--active {
+  background: var(--primary-soft);
+}
+
+.global-search__type {
+  grid-row: span 2;
+  align-self: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.global-search__title {
+  font-weight: 500;
+}
+
+.global-search__item .muted {
+  grid-column: 2;
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.global-search__empty {
+  padding: 10px;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* ───────── Kurulum rehberi ───────── */
+.setup__title {
+  width: 240px;
+  font-weight: 500;
+}
+
+.setup__state {
+  width: 150px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* ───────── Tablo içi girdiler (reçete, prim kademeleri) ───────── */
+.table--compact td > input,
+.table--compact td > select {
+  width: 100%;
+  min-width: 72px;
+  height: 32px;
+  min-height: 0;
+}
+
+/* ───────── Demet etiketleri ───────── */
+.label-sheet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.label {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2mm;
+  width: var(--label-width);
+  height: var(--label-height);
+  padding: 2.5mm 3mm;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  line-height: 1.15;
+  color: #000;
+  background: #fff;
+  border: 1px dashed var(--border-strong);
+}
+
+.label__header {
+  display: flex;
+  gap: 2mm;
+  justify-content: space-between;
+  overflow: hidden;
+  font-size: 2.6mm;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.label__body {
+  display: flex;
+  flex: 1;
+  gap: 2mm;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 0;
+}
+
+.label__main {
+  min-width: 0;
+}
+
+.label__number {
+  font-family: var(--font-mono);
+  font-size: 7mm;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.label__variant {
+  margin-top: 1mm;
+  font-size: 3.4mm;
+  font-weight: 500;
+}
+
+.label__quantity {
+  font-size: 3.2mm;
+}
+
+.label__qr {
+  flex: none;
+  height: 100%;
+  max-height: 22mm;
+  aspect-ratio: 1;
+  fill: #000;
+}
+
+.label__barcode {
+  flex: none;
+  width: 100%;
+  height: 8mm;
+  fill: #000;
+}
+
+.label__footer {
+  font-size: 2.4mm;
+}
+
+@media (max-width: 960px) {
+  .flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .flow__step:nth-child(3) {
+    border-left: 0;
+  }
+
+  .flow__step:nth-child(n + 3) {
+    border-top: 1px solid var(--border);
+  }
+
+  .global-search {
+    flex-basis: 200px;
+  }
+
+  .global-search kbd {
+    display: none;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  .label-page {
+    max-width: none;
+    padding: 0 !important;
+    margin: 0;
+  }
+
+  .label-sheet {
+    display: block;
+    margin: 0;
+  }
+
+  .label {
+    border: 0;
+    break-after: page;
+    break-inside: avoid;
+  }
+
+  .label-sheet--roll .label:last-child {
+    break-after: auto;
+  }
+
+  .label-sheet--sheet {
+    display: grid;
+    grid-template-columns: repeat(var(--label-columns), var(--label-width));
+    grid-auto-rows: var(--label-height);
+    align-content: start;
+  }
+
+  .label-sheet--sheet .label {
+    break-after: auto;
+  }
+}
+
+/* Form dışındaki girdiler (genel arama, tablo içi) form alanlarıyla aynı görünür. */
+.global-search input,
+.table--compact td > input,
+.table--compact td > select {
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 0.92rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.global-search input {
+  padding-right: 58px;
+}
+
+.global-search input::placeholder {
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+.global-search input:focus-visible,
+.table--compact td > input:focus-visible,
+.table--compact td > select:focus-visible {
+  border-color: var(--primary);
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+.card h3 {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+}
+
+.page > .progress {
+  margin-top: 10px;
+}
+
+.toolbar--filters label.checkbox {
+  flex-direction: row;
+  gap: 6px;
+  align-items: center;
+  align-self: flex-end;
+  min-height: var(--control-height);
+}
+
+/* ───────── Kurumsal düzen: liste paneli, bölüm başlıkları, toplamlar ───────── */
+
+/* Tek satırlık alanlar aynı yükseklikte durur; filtre çubuğunda düğme ve alanlar hizalanır. */
+.field input:not([type="checkbox"], [type="radio"], [type="color"]),
+.field select:not([multiple]),
+.toolbar input:not([type="checkbox"], [type="radio"]),
+.toolbar select:not([multiple]) {
+  height: var(--control-height);
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.field {
+  font-size: 0.82rem;
+}
+
+.field__error,
+.field__hint {
+  font-size: 0.8rem;
+}
+
+/* Sayfa başlığı açıklaması: ikincil bilgi, başlığın altında küçük yazılır. */
+.page > h1 + .muted,
+.page__header .muted {
+  font-size: 0.85rem;
+}
+
+/* Geri bağlantısı (ör. "← Siparişlere dön") sayfanın üstünde küçük bir gezinme öğesidir. */
+.page > p:first-child > a:only-child {
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.page > p:first-child > a:only-child:hover {
+  text-decoration: underline;
+}
+
+.page > p:first-child:has(> a:only-child) {
+  margin-bottom: 8px;
+}
+
+/* Liste paneli: filtre çubuğu, tablo ve sayfalama tek çerçeve içinde durur. */
+.toolbar {
+  padding: 8px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.toolbar--filters label {
+  font-size: 0.78rem;
+}
+
+.toolbar input[type="search"] {
+  width: min(100%, 300px);
+}
+
+.toolbar .checkbox {
+  align-self: center;
+  margin-left: 4px;
+  font-size: 0.85rem;
+}
+
+.toolbar:has(+ .toolbar),
+.toolbar:has(+ .table-wrap) {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.toolbar + .toolbar,
+.toolbar + .table-wrap {
+  margin-top: 0;
+  border-top-width: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.table-wrap:has(+ .pagination) {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.table-wrap + .pagination {
+  padding: 6px 10px;
+  margin-top: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-top-color: var(--border);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.table-wrap + .pagination .muted {
+  font-size: 0.8rem;
+}
+
+/* Tablonun ya da filtre çubuğunun hemen üstündeki bölüm başlığı, panelin başlık şeridi olur. */
+.section-title:has(+ .table-wrap),
+.section-title:has(+ .toolbar) {
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-bottom: 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.section-title:has(+ .table-wrap) h2,
+.section-title:has(+ .toolbar) h2 {
+  font-size: 0.875rem;
+}
+
+.section-title + .table-wrap,
+.section-title + .toolbar {
+  margin-top: 0;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* Toplam satırları */
+.table tfoot th,
+.table tfoot td {
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-3);
+  border-top: 1px solid var(--border-strong);
+  border-bottom: 0;
+}
+
+/* Satıra tıklanınca kayıt açılır. */
+.table__row--link {
+  cursor: pointer;
+}
+
+/* Durum rozetleri: süs karakteri yerine durum rengindeki nokta. Anlam rozet metninde. */
+.badge > [aria-hidden="true"]:first-child {
+  display: none;
+}
+
+.badge:has(> [aria-hidden="true"]:first-child)::before {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  content: "";
+  background: currentcolor;
+  border-radius: 50%;
+}
+
+/* Formun alt çubuğunda solda duran ikincil işlem (ör. kaydı silme). */
+/* Mal kabulde top satırları: miktar + top özellikleri yan yana. */
+.lot-rows {
+  display: grid;
+  gap: 4px;
+  margin: 4px 0 8px;
+}
+
+.lot-rows__row {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr 0.8fr 0.8fr 1.2fr auto;
+  gap: 4px;
+  align-items: center;
+}
+
+.lot-rows__row input {
+  min-width: 0;
+  width: 100%;
+}
+
+.lot-rows__head {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.form__actions-start {
+  margin-right: auto;
+}
+
+.button--danger-ghost {
+  color: var(--danger);
+  background: transparent;
+  border-color: transparent;
+}
+
+.button--danger-ghost:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: transparent;
+}
+
+/* Satırı açan kod: bağlantı gibi davranan düz düğme. */
+.table__open {
+  padding: 0;
+  font: inherit;
+  color: var(--primary-text);
+  text-align: left;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.table__open:hover code {
+  text-decoration: underline;
+}
+
+/* Açılır satır: sağdaki ok satırın ayrıntısını açar / kapatır. */
+.table__toggle-col {
+  width: 40px;
+  text-align: center !important;
+}
+
+.table__toggle {
+  display: inline-grid;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  place-items: center;
+}
+
+.table__toggle::before {
+  width: 6px;
+  height: 6px;
+  content: "";
+  border-right: 1.5px solid var(--muted);
+  border-bottom: 1.5px solid var(--muted);
+  transition: transform 0.12s ease;
+  transform: rotate(-45deg);
+}
+
+.table__toggle[aria-expanded="true"]::before {
+  transform: rotate(45deg);
+}
+
+.table__toggle:hover {
+  background: var(--surface-3);
+}
+
+.table tbody tr.table__row--expanded > td {
+  background: var(--primary-soft);
+}
+
+.table tbody tr.table__detail-row > td {
+  padding: 10px 12px 12px;
+  background: var(--surface-2);
+}
+
+/* Tek listeli sayfa: liste paneli sayfanın kalan yüksekliğini doldurur. Satırlar sığmazsa tablo kendi
+   içinde kayar; sütun başlıkları ve sayfalama çubuğu her zaman görünür kalır. */
+@media (min-width: 961px) {
+  .page:is(:has(> .table-wrap + .pagination), :has(> .toolbar ~ .table-wrap:last-child)):not(:has(> .table-wrap ~ .table-wrap)) {
+    display: flex;
+    flex-direction: column;
+    /* 34px sekme şeridi + 24px durum çubuğu. */
+    height: var(--pane-height, calc(100vh - var(--header-height) - 58px));
+    min-height: 420px;
+  }
+
+  .page:is(:has(> .table-wrap + .pagination), :has(> .toolbar ~ .table-wrap:last-child)):not(:has(> .table-wrap ~ .table-wrap)) > * {
+    flex: none;
+  }
+
+  .page:is(:has(> .table-wrap + .pagination), :has(> .toolbar ~ .table-wrap:last-child)):not(:has(> .table-wrap ~ .table-wrap)) > .table-wrap {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+  }
+
+  .page:is(:has(> .table-wrap + .pagination), :has(> .toolbar ~ .table-wrap:last-child)):not(:has(> .table-wrap ~ .table-wrap)) .table thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+}
+
+/* Filtre çubuğunun sağında özet bilgi (ör. seçilen aralığın toplamları). */
+.toolbar__summary {
+  align-self: center;
+  margin: 0 0 0 auto;
+  font-size: 0.85rem;
+  color: var(--text-2);
+}
+
+/* Sıralanabilir sütun başlığı: tıklanınca artan → azalan → varsayılan sıra. */
+.table__sort {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  vertical-align: middle;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-align: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.table__number .table__sort {
+  flex-direction: row-reverse;
+}
+
+.table__sort::after {
+  width: 0;
+  height: 0;
+  content: "";
+  border-right: 4px solid transparent;
+  border-left: 4px solid transparent;
+  opacity: 0;
+}
+
+.table__sort:hover::after {
+  border-bottom: 5px solid var(--muted);
+  opacity: 0.6;
+}
+
+.table__sort--ascending::after,
+.table__sort--ascending:hover::after {
+  border-top: 0;
+  border-bottom: 5px solid var(--primary);
+  opacity: 1;
+}
+
+.table__sort--descending::after,
+.table__sort--descending:hover::after {
+  border-top: 5px solid var(--primary);
+  border-bottom: 0;
+  opacity: 1;
+}
+
+.table__sort--ascending,
+.table__sort--descending {
+  color: var(--primary-text);
+}
+
+/* Sütun filtreleri: başlığın altında, sütun genişliğinde küçük kutular. */
+.table thead tr.table__filters td {
+  padding: 4px 6px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.table__filters input,
+.table__filters select {
+  width: 100%;
+  min-width: 56px;
+  height: 26px;
+  padding: 0 6px;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.table__filters select:not([multiple]) {
+  padding-right: 22px !important;
+  background-position: right 6px center !important;
+  background-size: 10px 10px !important;
+}
+
+.table__filters input:focus,
+.table__filters select:focus {
+  border-color: var(--primary);
+  outline: 0;
+}
+
+.table__filters .table__number input {
+  text-align: right;
+}
+
+.table__filters input[type="number"] {
+  appearance: textfield;
+}
+
+/* Filtre çubuğunun sağındaki sayfa işlemleri (ör. Yeni kayıt, CSV içe aktar). */
+.toolbar__actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  align-self: flex-end;
+  margin-left: auto;
+}
+
+/* Başlığı yalnızca ekran okuyucuya açık liste sayfaları: dış boşluk yoktur, liste paneli içerik alanının
+   tamamını kaplar (konum satırına, yan menüye ve ekranın kenarlarına bitişik). */
+.page:has(> h1.visually-hidden:first-child) {
+  padding: 0;
+}
+
+.page:has(> h1.visually-hidden:first-child) > :is(.toolbar, .table-wrap, .pagination, .section-title, .alert, .status-list, .cards) {
+  border-right-width: 0;
+  border-left-width: 0;
+  border-radius: 0;
+}
+
+.page:has(> h1.visually-hidden:first-child) > .toolbar:first-of-type {
+  border-top-width: 0;
+}
+
+.page:has(> h1.visually-hidden:first-child) > .table-wrap + .pagination {
+  border-bottom-width: 0;
+}
+
+.page > h1.visually-hidden:first-child + * {
+  margin-top: 0;
+}
+
+/* Kenarsız liste sayfasında bloklar (özet, filtre, uyarı, tablo) aralarında boşluk olmadan, ince çizgiyle ayrılır. */
+.page:has(> h1.visually-hidden:first-child) > * + * {
+  margin-top: 0;
+}
+
+.page:has(> h1.visually-hidden:first-child) > :is(.alert, .status-list) {
+  margin-bottom: 0;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+/* Kenarsız çok bölümlü sayfalar (Kalite, Üretim Takibi, Planlama, Pano …): beyaz zemin, her bölüm başlık şeridiyle
+   başlar; açıklama ve boş durum metinleri şeridin içinde durur. */
+.page:has(> h1.visually-hidden:first-child) {
+  min-height: var(--pane-min-height, calc(100vh - var(--header-height) - 34px));
+  background: var(--surface);
+}
+
+.page:has(> h1.visually-hidden:first-child) > .section-title {
+  padding: 8px 12px;
+  margin: 0;
+  font-size: 0.875rem;
+  background: var(--surface-2);
+  border: 0;
+  border-top: 1px solid var(--border-strong);
+  border-radius: 0;
+}
+
+.page:has(> h1.visually-hidden:first-child) > h1.visually-hidden:first-child + .section-title {
+  border-top: 0;
+}
+
+.page:has(> h1.visually-hidden:first-child) > .section-title + p.muted {
+  padding: 0 12px 8px;
+  margin: 0;
+  font-size: 0.82rem;
+  background: var(--surface-2);
+}
+
+.page:has(> h1.visually-hidden:first-child) > p:not(.alert, .section-title + p.muted) {
+  padding: 12px;
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.page:has(> h1.visually-hidden:first-child) > :is(.cards, .form.card) {
+  padding: 12px;
+  margin: 0;
+}
+
+.page:has(> h1.visually-hidden:first-child) > .form.card {
+  border-width: 0 0 1px;
+  border-radius: 0;
+}
+
+.page:has(> h1.visually-hidden:first-child) > .progress {
+  margin: 0;
+}
+
+.page:has(> h1.visually-hidden:first-child) > .progress progress {
+  width: 100%;
+}
+
+/* Rol yetkileri: aranabilir, modüllere gruplu, daraltılıp genişletilebilen yetki listesi. */
+.permission-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.permission-bar > span {
+  margin-right: auto;
+}
+
+.permission-bar .button--tiny {
+  min-height: 26px;
+  margin: 0;
+  padding: 0 10px;
+  color: var(--text-2);
+}
+
+.permission-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.permission-search svg.lucide {
+  position: absolute;
+  left: 10px;
+  width: 15px;
+  height: 15px;
+  color: var(--text-2);
+  pointer-events: none;
+}
+
+.permission-search input {
+  width: 100%;
+  min-height: 32px;
+  padding: 4px 10px 4px 32px;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.permission-search input:focus-visible {
+  outline: 0;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+/* Gruplar ve yetkiler aynı ızgaraya oturur: ok | kutu | metin | sayı. Yetki kutuları grup adının hizasında başlar. */
+.permission-list {
+  --permission-toggle: 20px;
+  --permission-box: 15px;
+  --permission-gap: 10px;
+  display: grid;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.permission-list__empty {
+  margin: 0;
+  padding: 12px;
+}
+
+.permission-group + .permission-group {
+  border-top: 1px solid var(--border-strong);
+}
+
+.permission-group__head {
+  display: grid;
+  grid-template-columns: var(--permission-toggle) var(--permission-box) 1fr auto;
+  gap: var(--permission-gap);
+  align-items: center;
+  padding: 6px 12px 6px 8px;
+  background: var(--surface-3);
+}
+
+.permission-group__toggle,
+.permission-group__title {
+  display: flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.permission-group__toggle {
+  justify-content: center;
+  width: var(--permission-toggle);
+  height: var(--permission-toggle);
+  border-radius: var(--radius-sm);
+}
+
+.permission-group__toggle:hover:not(:disabled) {
+  background: var(--border);
+}
+
+.permission-group__toggle svg.lucide {
+  width: 16px;
+  height: 16px;
+}
+
+.permission-group__title {
+  justify-self: start;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-align: left;
+}
+
+.permission-group__toggle:disabled,
+.permission-group__title:disabled {
+  cursor: default;
+}
+
+.permission-group__toggle:disabled svg.lucide {
+  opacity: 0.45;
+}
+
+.permission-group__toggle:focus-visible,
+.permission-group__title:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+.permission-group__count {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+  text-align: right;
+  min-width: 3.5em;
+}
+
+.permission-group input[type='checkbox'] {
+  width: var(--permission-box);
+  height: var(--permission-box);
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.permission-group__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--surface);
+}
+
+.permission-group__items li + li {
+  border-top: 1px solid var(--border);
+}
+
+/* Kutu ilk satırın hizasında durur; uzun açıklama kutunun altına değil metnin hizasına sarar. */
+.permission-item {
+  display: grid;
+  grid-template-columns: var(--permission-box) 1fr;
+  gap: var(--permission-gap);
+  align-items: start;
+  padding: 6px 12px 6px calc(8px + var(--permission-toggle) + var(--permission-gap) + var(--permission-box) + var(--permission-gap));
+  font-size: 0.875rem;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.permission-item:hover {
+  background: var(--surface-2);
+}
+
+.permission-item input[type='checkbox'] {
+  margin-top: calc((1.4em - var(--permission-box)) / 2);
+}
+/* ───────── Kayıt sayfaları (detay, form, ana sayfa) ─────────
+   Başlık bölümü (geri bağlantısı, başlık, durum, işlemler) üstte tam genişlikte beyaz bir şerittir; içerik altında
+   liste sayfalarıyla aynı yatay boşlukla durur. */
+.page:not(:has(> h1.visually-hidden:first-child)) {
+  --record-gutter: 24px;
+  padding: 0 var(--record-gutter) 32px;
+}
+
+.page:not(:has(> h1.visually-hidden:first-child)) > :is(
+  p:first-child:has(> a:only-child),
+  p:first-child:has(> a:only-child) + .page__header,
+  .page__header:first-child,
+  p:first-child:has(> a:only-child) + h1,
+  h1:first-child,
+  p:first-child:has(> a:only-child) + h1 + p.muted,
+  h1:first-child + p.muted
+) {
+  max-width: none;
+  padding-right: var(--record-gutter);
+  padding-left: var(--record-gutter);
+  margin: 0 calc(-1 * var(--record-gutter));
+  background: var(--surface);
+}
+
+.page:not(:has(> h1.visually-hidden:first-child)) > p:first-child:has(> a:only-child) {
+  padding-top: 10px;
+  margin-bottom: 0;
+}
+
+.page:not(:has(> h1.visually-hidden:first-child)) > :is(.page__header:first-child, h1:first-child) {
+  padding-top: 14px;
+}
+
+.page:not(:has(> h1.visually-hidden:first-child)) > :is(
+  p:first-child:has(> a:only-child) + .page__header,
+  p:first-child:has(> a:only-child) + h1
+) {
+  padding-top: 4px;
+}
+
+/* Şeridin son öğesi: alt çizgi ve içerikle arasında boşluk. */
+.page:not(:has(> h1.visually-hidden:first-child)) > :is(
+  p:first-child:has(> a:only-child) + .page__header,
+  .page__header:first-child,
+  p:first-child:has(> a:only-child) + h1:not(:has(+ p.muted)),
+  h1:first-child:not(:has(+ p.muted)),
+  p:first-child:has(> a:only-child) + h1 + p.muted,
+  h1:first-child + p.muted
+) {
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.page:not(:has(> h1.visually-hidden:first-child)) > :is(p:first-child:has(> a:only-child) + h1, h1:first-child):has(+ p.muted) {
+  margin-bottom: 0;
+}
+
+.page:not(:has(> h1.visually-hidden:first-child)) > :is(.page__header:first-child, p:first-child + .page__header) h1 {
+  margin-bottom: 2px;
+}
+
+.page--narrow:not(:has(> h1.visually-hidden:first-child)) {
+  max-width: none;
+}
+
+.page--narrow > .form.card {
+  max-width: 560px;
+}
+
+/* Etiket sayfası: başlık bölümü yazdırmada gizlenen kabın içindedir. */
+.label-page > .no-print > :is(p:first-child:has(> a:only-child), p:first-child:has(> a:only-child) + .page__header) {
+  padding-right: var(--record-gutter);
+  padding-left: var(--record-gutter);
+  margin: 0 calc(-1 * var(--record-gutter));
+  background: var(--surface);
+}
+
+.label-page > .no-print > p:first-child:has(> a:only-child) {
+  padding-top: 10px;
+  margin-bottom: 0;
+}
+
+.label-page > .no-print > p:first-child:has(> a:only-child) > a {
+  font-size: 0.82rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.label-page > .no-print > p:first-child:has(> a:only-child) + .page__header {
+  padding-top: 4px;
+  padding-bottom: 12px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+/* ───────── Müşteri formu ───────── */
+.modal--drawer:has(.customer-form) {
+  width: min(720px, 100vw);
+}
+
+.customer-form {
+  display: grid;
+  gap: 16px;
+}
+
+/* İki alan yan yana (ör. VKN / vergi dairesi); dar ekranda alt alta. */
+/* Yetkiye göre alanları topluca kilitleyen kap: görünmez. */
+fieldset.form {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.form__pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.form__note {
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.form__section {
+  display: grid;
+  gap: 12px;
+  padding: 12px 14px 14px;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.form__section > legend {
+  padding: 0 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tabs__count {
+  min-width: 18px;
+  padding: 0 5px;
+  margin-left: 6px;
+  font-size: 0.72rem;
+  line-height: 18px;
+  color: var(--primary-text);
+  background: var(--primary-soft);
+  border-radius: 9px;
+}
+
+.address-card {
+  display: grid;
+  gap: 10px;
+  padding: 10px 14px 12px;
+  margin: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+}
+
+.address-card > legend {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 0 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.address-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
+}
+
+.address-card__wide {
+  grid-column: 1 / -1;
+}
+
+.address-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.address-card__footer .checkbox {
+  font-size: 0.85rem;
+}
+
+.address-card__footer .button {
+  min-height: 26px;
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  .address-card__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ───────── Ürün formu: reçete ───────── */
+.modal--drawer:has(.product-form) {
+  width: min(920px, 100vw);
+}
+
+.product-form {
+  display: grid;
+  gap: 16px;
+}
+
+.recipe-table {
+  margin-top: 0;
+}
+
+.batch-card {
+  max-width: 148mm;
+  background: #fff;
+  color: #000;
+  padding: 6mm;
+  border: 1px solid #000;
+  font-size: 10pt;
+}
+
+.batch-card__header {
+  display: grid;
+  grid-template-columns: 1fr 65mm;
+  align-items: start;
+  gap: 4mm;
+  margin-bottom: 4mm;
+}
+
+.batch-card__number {
+  font-size: 15pt;
+  font-weight: 700;
+}
+
+.batch-card__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 3mm;
+}
+
+.batch-card__table th,
+.batch-card__table td {
+  border: 1px solid #000;
+  padding: 1mm 1.5mm;
+  text-align: left;
+}
+
+@media print {
+  .batch-card {
+    max-width: none;
+    border: 0;
+    padding: 0;
+  }
+}
+
+.packing-sheet {
+  max-width: 190mm;
+}
+
+.packing-box {
+  width: 70px;
+}
+
+.purchase-input {
+  width: 90px;
+}
+
+.matrix-input.purchase-date {
+  width: 140px;
+}
+
+/* Final kalite: dar çekmecede sonuç ve ölçü alanları satıra sığar. */
+.batch-final th,
+.batch-final td {
+  padding-inline: 6px;
+}
+
+.batch-final select,
+.batch-final input {
+  width: 82px;
+  min-width: 0;
+}
+
+/* Dar çekmecede numara ve miktar satır kırmaz; müşteri adı kırılabilir. */
+.batch-candidates td:not(:nth-child(4)) {
+  white-space: nowrap;
+}
+
+.recipe-table .table {
+  table-layout: fixed;
+}
+
+.recipe-table__material { width: 34%; }
+.recipe-table__variant { width: 13%; }
+.recipe-table__amount { width: 15%; }
+.recipe-table__waste { width: 9%; }
+.recipe-table__cost { width: 12%; }
+.recipe-table__remove { width: 40px; }
+
+.recipe-table td {
+  padding: 4px 6px;
+}
+
+.recipe-table td select,
+.recipe-table td input {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background-color: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.recipe-table td select {
+  padding-right: 26px !important;
+  text-overflow: ellipsis;
+  background-position: right 8px center !important;
+}
+
+.recipe-table td :is(select, input):focus-visible {
+  border-color: var(--primary);
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+.recipe-table__number-input {
+  text-align: right;
+}
+
+.recipe-table tbody tr:hover > td,
+.recipe-table tbody tr:nth-child(even) > td {
+  background: var(--surface);
+}
+
+.recipe-table__note {
+  font-weight: 400;
+}
+
+/* Birimli sayı kutusu: birim kutunun içinde, sağda. */
+.input-unit {
+  position: relative;
+  display: block;
+}
+
+.recipe-table .input-unit input {
+  padding-right: 44px;
+  text-align: right;
+}
+
+.input-unit__suffix {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.recipe-table__remove-cell {
+  text-align: center;
+}
+
+/* Satır içi küçük simge düğmesi (ör. satırı kaldır). */
+.icon-button {
+  display: inline-grid;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  font: inherit;
+  font-size: 1.05rem;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  place-items: center;
+}
+
+.icon-button:hover:not(:disabled) {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ───────── Ayrıntılı kayıt formları (fabrika, makine) ───────── */
+.modal--drawer:has(.factory-form, .machine-form) {
+  width: min(720px, 100vw);
+}
+
+.factory-form,
+.machine-form {
+  display: grid;
+  gap: 16px;
+}
+
+/* Kaydın özet göstergeleri: formun üstünde salt okunur şerit. */
+.stat-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  margin: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.stat-strip > div {
+  padding: 8px 12px;
+  border-left: 1px solid var(--border);
+}
+
+.stat-strip > div:first-child {
+  border-left: 0;
+}
+
+.stat-strip dt {
+  font-size: 0.74rem;
+  color: var(--muted);
+}
+
+.stat-strip dd {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 2px 0 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Maliyet özeti: toplam satırı vurgulu. */
+.cost-list {
+  padding: 4px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.cost-list > div.cost-list__total {
+  margin: 0 -14px;
+  padding: 8px 14px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.cost-list__total dt,
+.cost-list__total dd {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ───────── Simgeler ve modül renkleri ─────────
+   Simgeler metin rengini alır. Her modülün bir vurgu rengi vardır (--module, kabukta satır içi verilir); yan menü,
+   konum satırı, bölüm başlıkları ve pencere başlıkları bu rengi kullanır. */
+svg.lucide {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  stroke-width: 1.75;
+}
+
+.shell,
+.sidenav__module {
+  --module-text: var(--module, var(--primary));
+  --module-soft: color-mix(in srgb, var(--module, var(--primary)) 9%, var(--surface));
+}
+
+:root[data-theme="dark"] :is(.shell, .sidenav__module) {
+  --module-text: color-mix(in srgb, var(--module, var(--primary)) 45%, #ffffff);
+  --module-soft: color-mix(in srgb, var(--module, var(--primary)) 24%, var(--surface));
+}
+
+/* Üst çubuk */
+.appbar__icon svg.lucide {
+  width: 18px;
+  height: 18px;
+}
+
+.user-menu__chevron {
+  width: 14px !important;
+  height: 14px !important;
+  color: var(--appbar-muted);
+}
+
+.user-menu__item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.user-menu__item svg.lucide {
+  color: var(--muted);
+}
+
+.user-menu__item--danger svg.lucide {
+  color: inherit;
+}
+
+/* Hesap menüsündeki proje seçimi (dar ekranda üst çubuktaki seçici gizlenir). */
+.user-menu__section {
+  display: grid;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.user-menu__spacer {
+  display: inline-block;
+  width: 1em;
+}
+
+.global-search__icon {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  color: var(--muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.appbar .global-search__icon {
+  color: var(--appbar-muted);
+}
+
+.global-search input {
+  padding-left: 32px;
+}
+
+/* Modül sekmeleri */
+.modulebar__tab {
+  gap: 7px;
+}
+
+.modulebar__tab svg.lucide {
+  opacity: 0.8;
+}
+
+.modulebar__tab--active svg.lucide {
+  color: var(--thread);
+  opacity: 1;
+}
+
+/* Yan menü */
+.sidenav__search {
+  position: relative;
+}
+
+.sidenav__search svg.lucide {
+  position: absolute;
+  top: 19px;
+  left: 21px;
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.sidenav__search input {
+  padding-left: 30px;
+}
+
+.sidenav__module-title {
+  display: flex;
+  align-items: center;
+  padding: 10px 14px 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 0;
+}
+
+.sidenav__module-icon {
+  display: grid;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: #ffffff;
+  background: var(--module, var(--primary));
+  border-radius: var(--radius-lg);
+  place-items: center;
+}
+
+.sidenav__group-title {
+  font-size: 0.72rem;
+  color: var(--module-text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sidenav__link {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 12px 6px 18px;
+}
+
+.sidenav__link svg.lucide {
+  color: var(--muted);
+}
+
+.sidenav__link:hover svg.lucide {
+  color: var(--module-text);
+}
+
+.sidenav__link.active {
+  color: var(--module-text);
+  background: var(--module-soft);
+}
+
+.sidenav__link.active svg.lucide {
+  color: var(--module-text);
+}
+
+.sidenav__link.active::before {
+  background: var(--module, var(--primary));
+}
+
+/* Konum satırı */
+.breadcrumb__module,
+.breadcrumb__current {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.breadcrumb__module {
+  font-weight: 600;
+  color: var(--module-text);
+}
+
+.breadcrumb svg.lucide {
+  width: 14px;
+  height: 14px;
+}
+
+.breadcrumb__current svg.lucide {
+  color: var(--module-text);
+}
+
+/* Düğmeler */
+.button svg.lucide {
+  width: 15px;
+  height: 15px;
+}
+
+.button:not(.button--primary, .button--danger, .button--danger-ghost) svg.lucide {
+  color: var(--primary-text);
+}
+
+.button--ghost svg.lucide,
+.button:disabled svg.lucide {
+  color: inherit !important;
+}
+
+.button--icon svg.lucide {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-button svg.lucide {
+  width: 15px;
+  height: 15px;
+}
+
+/* Tablo başlığı: marka renginde hafif ton. */
+.table thead th {
+  color: var(--text);
+  background: color-mix(in srgb, var(--primary) 9%, var(--surface-3));
+  border-bottom-color: color-mix(in srgb, var(--primary) 35%, var(--border-strong));
+}
+
+/* Rozetler: ince çerçeveyle belirginleşir. */
+.badge {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentcolor 20%, transparent);
+}
+
+/* Uyarılar: solda durum simgesi. */
+.alert {
+  position: relative;
+  padding-left: 40px;
+}
+
+.alert::before {
+  position: absolute;
+  top: 13px;
+  left: 14px;
+  width: 16px;
+  height: 16px;
+  content: "";
+  background: currentcolor;
+  mask: var(--alert-icon) center / contain no-repeat;
+}
+
+.alert--error {
+  --alert-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 8v4M12 16h.01'/%3E%3C/svg%3E");
+}
+
+.alert--info {
+  --alert-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4M12 8h.01'/%3E%3C/svg%3E");
+}
+
+/* Pencere ve bölüm başlıkları modül renginde çizgi taşır. */
+.modal__header {
+  border-top: 3px solid var(--module, var(--primary));
+}
+
+.page:has(> h1.visually-hidden:first-child) > .section-title,
+.section-title:has(+ .table-wrap),
+.section-title:has(+ .toolbar) {
+  box-shadow: inset 3px 0 0 var(--module, var(--primary));
+}
+
+.stat-strip {
+  border-top: 2px solid var(--module, var(--primary));
+}
+
+/* Pano göstergeleri: solda durum renginde simge kutusu. */
+.stat {
+  --tone: var(--primary-text);
+  --tone-bg: var(--primary-soft);
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  border-top: 3px solid var(--tone);
+}
+
+.stat--ok {
+  --tone: var(--ok);
+  --tone-bg: var(--ok-bg);
+}
+
+.stat--warning {
+  --tone: var(--warning);
+  --tone-bg: var(--warning-bg);
+}
+
+.stat--danger {
+  --tone: var(--danger);
+  --tone-bg: var(--danger-bg);
+}
+
+.stat__icon {
+  display: grid;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  color: var(--tone);
+  background: var(--tone-bg);
+  border-radius: var(--radius-lg);
+  place-items: center;
+}
+
+.stat__icon svg.lucide {
+  width: 20px;
+  height: 20px;
+}
+
+.stat__body {
+  min-width: 0;
+}
+
+.stat__value {
+  margin-top: 4px;
+}
+
+/* Ekrana götüren gösterge: bağlantı görünümü değil, kart davranışı. */
+.stat--link,
+.stat--link:hover {
+  color: inherit;
+  text-decoration: none;
+}
+
+.stat--link:hover {
+  border-color: var(--tone);
+  border-top-color: var(--tone);
+}
+
+.stat--link :is(.stat__label, .stat__value, .stat__detail) {
+  text-decoration: none;
+}
+
+/* Altı göstergeli pano: geniş ekranda tek satır, sıkı. */
+.cards--stats-compact {
+  grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+  gap: 8px;
+}
+
+.cards--stats-compact .stat {
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.cards--stats-compact .stat__icon {
+  width: 32px;
+  height: 32px;
+}
+
+.cards--stats-compact .stat__icon svg.lucide {
+  width: 16px;
+  height: 16px;
+}
+
+.cards--stats-compact .stat__label {
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+}
+
+.cards--stats-compact .stat__value {
+  font-size: 1.35rem;
+}
+
+.cards--stats-compact .stat__detail {
+  font-size: 0.74rem;
+}
+
+/* Ana sayfa işleri: solda ekranın simgesi, sağda bekleyen sayısı. */
+.task__icon {
+  display: grid;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  color: var(--module-text);
+  background: var(--module-soft);
+  border-radius: var(--radius-lg);
+  place-items: center;
+}
+
+.task__icon svg.lucide {
+  width: 18px;
+  height: 18px;
+}
+
+.task__count {
+  min-width: 36px;
+  padding: 2px 8px;
+  font-size: 0.95rem;
+  color: var(--on-primary);
+  background: var(--primary);
+  border-radius: 999px;
+}
+
+.task:hover .task__go {
+  color: var(--primary-text);
+}
+
+/* Seçili modül sekmesi modülün rengini alır; yan menü simgeleri de aynı renktedir. */
+.modulebar__tab--active,
+.modulebar__tab--active:hover {
+  background: color-mix(in srgb, var(--module, var(--primary)) 82%, #000000);
+}
+
+.sidenav__link svg.lucide {
+  color: color-mix(in srgb, var(--module-text) 75%, var(--muted));
+}
+
+/* Modül şeridi düğmedir: yalnızca yan menüyü değiştirir. */
+button.modulebar__tab {
+  font-family: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   Sekmeli çalışma alanı: açık ekranlar sekme şeridinde, konum bilgisi durum çubuğunda.
+   --------------------------------------------------------------------------- */
+.shell__main {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.tabstrip {
+  position: sticky;
+  top: var(--header-height);
+  z-index: 15;
+  display: flex;
+  align-items: flex-end;
+  height: 34px;
+  padding: 0 8px 0 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.tabstrip__tabs {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tabstrip__tab {
+  display: flex;
+  flex: 0 1 190px;
+  align-items: center;
+  min-width: 96px;
+  height: 28px;
+  margin-bottom: -1px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+
+.tabstrip__tab:hover {
+  color: var(--text-2);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.tabstrip__tab--active,
+.tabstrip__tab--active:hover {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border-strong);
+  box-shadow: inset 0 2px 0 var(--module, var(--primary));
+}
+
+.tabstrip__link {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
+  padding: 0 4px 0 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tabstrip__tab--active .tabstrip__link {
+  font-weight: 600;
+}
+
+.tabstrip__link span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabstrip__link svg.lucide,
+.tabstrip__close svg.lucide,
+.tabstrip__menu svg.lucide {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+.tabstrip__close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin-right: 5px;
+  color: var(--muted);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.tabstrip__close:hover {
+  color: var(--on-primary);
+  background: var(--danger, #b3261e);
+}
+
+.tabstrip__menu {
+  align-self: center;
+  margin-left: 4px;
+}
+
+.tabstrip__menu > summary {
+  padding: 4px 6px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tabstrip__menu > summary:hover {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.tabpanes {
+  flex: 1;
+  min-width: 0;
+}
+
+.statusbar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  height: 24px;
+  padding: 0 12px;
+  overflow: hidden;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border-strong);
+}
+
+.statusbar svg.lucide {
+  width: 13px;
+  height: 13px;
+}
+
+.statusbar__spacer {
+  flex: 1;
+}
+
+.statusbar > span + span:not(.statusbar__spacer, .breadcrumb__current) {
+  padding-left: 8px;
+}
+
+/* Ana sayfa kısayolları: kullanıcının kendi seçtiği ekranlar. Kart yok; modül renginde simge, altında ad (uzunsa iki satır). */
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 96px);
+  gap: 4px 8px;
+  margin-top: 12px;
+}
+
+.shortcut {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  padding: 6px 4px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
+  border-radius: var(--radius);
+}
+
+.shortcut__icon {
+  display: grid;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  color: var(--module, var(--primary));
+  background: color-mix(in srgb, var(--module, var(--primary)) 13%, transparent);
+  border-radius: var(--radius-lg);
+  place-items: center;
+  transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
+}
+
+.shortcut__icon svg.lucide {
+  width: 20px;
+  height: 20px;
+}
+
+.shortcut__label {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.shortcut:hover .shortcut__icon,
+.shortcut:focus-visible .shortcut__icon {
+  color: #ffffff;
+  background: var(--module, var(--primary));
+}
+
+.shortcut:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.section-title--with-action {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.shortcut-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 16px;
+  max-height: 60vh;
+}
+
+.shortcut-editor__column {
+  min-height: 0;
+  padding-right: 4px;
+  overflow-y: auto;
+}
+
+.shortcut-editor h3 {
+  margin: 10px 0 4px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.shortcut-editor h3:first-child {
+  margin-top: 0;
+}
+
+.shortcut-editor__picked {
+  display: grid;
+  gap: 4px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.shortcut-editor__picked li {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 3px 4px 3px 8px;
+  font-size: 0.85rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.shortcut-editor__picked li span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media print {
+  .tabstrip,
+  .statusbar {
+    display: none;
+  }
+
+  .shell__main {
+    display: block;
+    min-height: 0;
+  }
+}
+
+/* Sayfa başlığındaki seçim kutusu (ör. malzeme deposu) form alanlarıyla aynı görünür. */
+.page__actions select {
+  min-height: var(--control-height);
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+/* Tedarik önerisi: ihtiyacı doğuran siparişler, miktarın altında küçük bağlantılar olarak. */
+.supply-demands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  justify-content: flex-end;
+  font-size: 0.78rem;
+}
+
+.supply-table .table__number,
+.supply-table td:nth-child(3) {
+  white-space: nowrap;
+}
+
+.supply-table td > input[type='checkbox'] {
+  width: 16px;
+  min-width: 0;
+  height: 16px;
+  padding: 0;
+}
+
+.supply-table td > input.matrix-input {
+  width: 110px;
+}
+
+.supply-table td > select {
+  min-width: 180px;
+}
+
+/* ───────── El terminali ─────────
+   Barkod okuyucuyla kullanılan dar, tek sütunlu ekran. Dokunmatik el cihazında da masaüstünde de aynıdır. */
+.terminal {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+}
+
+.terminal > h1,
+.terminal__header h1 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.terminal__header {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.terminal-menu,
+.terminal-list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.terminal-menu__item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 12px 14px;
+  font: inherit;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.terminal-menu__item:hover,
+.terminal-list__row--pick:hover {
+  border-color: var(--primary);
+}
+
+.terminal-menu__item svg {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  color: var(--primary);
+}
+
+.terminal-menu__item span {
+  display: grid;
+  gap: 2px;
+}
+
+.terminal-menu__item .muted,
+.terminal .muted {
+  font-size: 0.85rem;
+}
+
+.terminal p a svg {
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+}
+
+.scan {
+  display: grid;
+  gap: 4px;
+}
+
+.scan label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.scan__row {
+  display: flex;
+  gap: 8px;
+}
+
+.scan__row input {
+  flex: 1;
+  min-width: 0;
+  min-height: 40px;
+  padding: 6px 12px;
+  font: inherit;
+  font-family: var(--font-mono, monospace);
+  color: var(--text);
+  text-transform: uppercase;
+  background: var(--surface);
+  border: 2px solid var(--primary);
+  border-radius: var(--radius-sm);
+}
+
+.scan__row input::placeholder {
+  font-family: var(--font-sans, inherit);
+  text-transform: none;
+}
+
+.scan__row input:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+.scan__row .button {
+  min-height: 40px;
+}
+
+.terminal-card {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.terminal-card h2 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.terminal-card p {
+  margin: 0;
+}
+
+.terminal-list__row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--text);
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.terminal-list__row--pick {
+  cursor: pointer;
+}
+
+.terminal-list__row strong {
+  flex: none;
+  white-space: nowrap;
+}
+
+.terminal-list__main {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.terminal-facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.terminal-facts dt {
+  color: var(--muted);
+}
+
+.terminal-facts dd {
+  margin: 0;
+}
+
+.terminal-card .field input {
+  min-height: 40px;
+  font-size: 1rem;
+}
+
+.terminal-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.terminal-actions .button {
+  min-height: 40px;
+}
+
+.alert--ok {
+  --alert-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E");
+  color: var(--ok);
+  background: var(--ok-bg);
+  border-color: currentcolor;
+}
+
+/* El cihazı görünümü: uygulama kabuğu olmadan yalnızca terminal. */
+.handheld {
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.handheld__bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 12px;
+  color: #fff;
+  background: #101826;
+}
+
+.handheld__bar .appbar__icon {
+  color: inherit;
+}
+
+.handheld__user {
+  margin-left: auto;
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+.handheld main {
+  padding: 12px;
+}
+
+/* Müşteri siparişi: ürün başına bir adet tablosu. */
+/* ───────── Sipariş formu (belge düzeni): üstte başlık bilgileri, altında tek kalem tablosu ───────── */
+.order-form {
+  gap: 12px;
+}
+
+.order-form > .card > h2:first-child {
+  margin-bottom: 12px;
+}
+
+/* Alanlar geniş ekranda yayılmaz. */
+.order-form__head {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px 16px;
+  align-items: start;
+  max-width: 1280px;
+}
+
+.order-form__wide {
+  grid-column: span 2;
+}
+
+.order-form__full {
+  grid-column: 1 / -1;
+}
+
+.order-form__head select {
+  width: 100%;
+}
+
+.order-form__head textarea {
+  min-height: var(--control-height);
+}
+
+/* Kalem paneli: başlık şeridi ve kenardan kenara tablo. Seçim listeleri panelin dışına taşabilsin diye kesilmez. */
+.order-lines {
+  padding: 0;
+}
+
+.order-lines__bar {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 5px 8px 5px 16px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.order-lines__bar h2 {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.order-lines__tools {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+.order-lines__tools .field {
+  width: 170px;
+}
+
+.order-lines__tools .field input,
+.order-lines__tools .button {
+  min-height: 26px;
+  height: 26px;
+  font-size: 0.82rem;
+}
+
+.order-lines__tools .button {
+  padding: 0 10px;
+}
+
+/* Satır = ürün + renk; bedenler sütun. */
+.order-grid {
+  font-variant-numeric: tabular-nums;
+}
+
+.order-grid th,
+.order-grid td {
+  padding: 3px 6px;
+}
+
+.order-grid thead th {
+  height: 30px;
+}
+
+.order-grid .field input,
+.order-grid .matrix-input {
+  min-height: 28px;
+  height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.order-grid .field {
+  gap: 0;
+}
+
+.order-grid__no {
+  width: 40px;
+  padding-left: 14px !important;
+  color: var(--muted);
+  text-align: right !important;
+}
+
+.order-grid__product .field,
+.order-grid td:nth-child(2) .field {
+  max-width: 460px;
+}
+
+.order-grid__product {
+  min-width: 260px;
+}
+
+.order-grid__color {
+  width: 210px;
+  min-width: 170px;
+}
+
+.order-grid__size {
+  width: 76px;
+  text-align: right !important;
+}
+
+.order-grid td.order-grid__size .matrix-input {
+  width: 64px;
+}
+
+.order-grid__hint {
+  font-weight: 400 !important;
+  color: var(--muted) !important;
+}
+
+.order-grid__total {
+  width: 76px;
+}
+
+.order-grid__price {
+  width: 118px;
+}
+
+.order-grid__price-input {
+  width: 100px;
+}
+
+.order-grid__price-input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.order-grid__amount {
+  width: 140px;
+}
+
+.order-grid__remove {
+  width: 40px;
+  padding-right: 10px !important;
+}
+
+.order-grid__remove .matrix-editor__remove {
+  width: 24px;
+  height: 24px;
+}
+
+.order-grid__remove .matrix-editor__remove svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Eksik satır: kaydetme denemesinden sonra solda işaretlenir. */
+.order-grid__row--invalid > td:first-child {
+  font-weight: 600;
+  color: var(--danger);
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.order-grid tfoot th,
+.order-grid tfoot td {
+  height: 32px;
+}
+
+.order-grid tfoot tr > :first-child {
+  padding-left: 14px;
+  border-bottom-left-radius: var(--radius-lg);
+}
+
+.order-grid tfoot tr > :last-child {
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+/* Özet rakamları (detay sayfası): küçük etiket, yanında belirgin değer. */
+.order-figures {
+  display: flex;
+  gap: 24px;
+  margin: 0;
+}
+
+.order-figures > div {
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+}
+
+.order-figures dt {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.order-figures dd {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* Detay sayfasında ürün başlığı: tablonun üst şeridi. */
+.section-title.order-product {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.order-product h3 {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.order-product h3 code {
+  margin-right: 6px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.order-product .order-figures > div {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.order-product .order-figures dd {
+  font-size: 0.85rem;
+}
+
+@media (width <= 1100px) {
+  .order-form__head {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ───────── Renk × beden adet tablosu (üretim ve müşteri siparişi formları) ───────── */
+.matrix-editor {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+.matrix-editor > legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.matrix-editor__bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.matrix-editor__bar > .field {
+  width: 220px;
+}
+
+.matrix-editor__empty {
+  padding: 14px;
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+  text-align: center;
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+}
+
+/* Tablo içeriği kadar yer kaplar; sütunlar sayfa genişliğine yayılmaz. */
+.matrix-editor .table-wrap {
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 0;
+}
+
+.matrix-editor .table {
+  width: auto;
+}
+
+.matrix-editor .table th,
+.matrix-editor .table td {
+  padding: 4px 8px;
+}
+
+.matrix-editor .table thead th:first-child,
+.matrix-editor .table th[scope='row'] {
+  min-width: 190px;
+}
+
+.matrix-editor .table thead th:last-child,
+.matrix-editor .table td:last-child {
+  min-width: 84px;
+  padding-right: 12px;
+}
+
+.matrix-editor .matrix-input {
+  width: 78px;
+  min-height: 28px;
+  padding: 2px 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.matrix-editor__axis {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.matrix-editor__axis--size {
+  justify-content: flex-end;
+}
+
+.matrix-editor__remove {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  opacity: 0.7;
+}
+
+.matrix-editor__remove:hover,
+.matrix-editor__remove:focus-visible {
+  color: var(--danger);
+  background: var(--danger-bg);
+  opacity: 1;
+}
+
+.matrix-editor__remove svg {
+  width: 12px;
+  height: 12px;
+}
+
+.terminal-list__row--done {
+  color: var(--ok);
+  background: var(--ok-bg);
+  border-color: currentcolor;
+}
+
+.terminal-list__row strong svg {
+  width: 14px;
+  height: 14px;
+  margin-right: 4px;
+  vertical-align: -2px;
+}
+
+.terminal-card .field select,
+.terminal > .field select,
+.terminal > .field input {
+  min-height: 40px;
+}
+
+/* ───────── Sekmeler: düğme olarak sekme, özel sekme işareti ───────── */
+.tabstrip__link {
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.tabstrip__link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+/* Kullanıcının eklediği özel sekme: toplu kapatmada kalır; üstte dikiş rengi çizgiyle ayırt edilir. */
+.tabstrip__tab--custom {
+  box-shadow: inset 0 2px 0 var(--thread);
+}
+
+.tabstrip__tab--custom.tabstrip__tab--active {
+  box-shadow:
+    inset 0 2px 0 var(--module, var(--primary)),
+    inset 0 4px 0 var(--thread);
+}
+
+.statusbar__notice {
+  overflow: hidden;
+  font-weight: 500;
+  color: var(--primary-text);
+  text-overflow: ellipsis;
+}
+
+/* ───────── Sağ tık menüsü ───────── */
+.context-menu {
+  position: fixed;
+  z-index: 60;
+  display: grid;
+  min-width: 220px;
+  padding: 4px 0;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+
+.context-menu__item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  padding: 6px 16px 6px 10px;
+  font: inherit;
+  font-size: 0.84rem;
+  color: var(--text);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.context-menu__item:hover:not(:disabled),
+.context-menu__item:focus-visible {
+  background: var(--primary-soft);
+  outline: 0;
+}
+
+.context-menu__item:disabled {
+  color: var(--muted);
+  cursor: default;
+  opacity: 0.6;
+}
+
+.context-menu__item--separated {
+  margin-top: 4px;
+  box-shadow: 0 -5px 0 -4px var(--border);
+}
+
+.context-menu__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+
+.context-menu__icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+/* ───────── Ayrı pencereler: şeritten koparılan sekme ───────── */
+.tabstrip__tabs {
+  user-select: none;
+}
+
+/* Pencere şeridin üzerine sürüklenince: bırakılırsa sekmeye yerleşir. */
+.tabstrip--drop {
+  background: var(--primary-soft);
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+
+.window {
+  position: fixed;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.window[hidden] {
+  display: none;
+}
+
+.window--focused {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.window--dragging {
+  user-select: none;
+  opacity: 0.92;
+}
+
+.window__bar {
+  display: flex;
+  flex: none;
+  gap: 6px;
+  align-items: center;
+  height: 30px;
+  padding: 0 4px 0 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-2);
+  cursor: move;
+  touch-action: none;
+  user-select: none;
+  background: var(--surface-3);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.window--focused > .window__bar {
+  color: var(--on-primary);
+  background: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.window__bar > svg {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+.window__title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.window__button {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.window__button:hover {
+  background: color-mix(in srgb, currentcolor 16%, transparent);
+}
+
+.window__button--close:hover {
+  color: #fff;
+  background: var(--danger-hover);
+}
+
+.window__button svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Pencerenin içi kendi başına kayar; sayfa yüksekliğine göre boyutlanan ekranlar pencereye göre boyutlanır. */
+.window__body {
+  --pane-height: 100%;
+  --pane-min-height: 100%;
+
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.window__grip {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  touch-action: none;
+  background: linear-gradient(135deg, transparent 50%, var(--border-strong) 50%, var(--border-strong) 60%, transparent 60%, transparent 72%, var(--border-strong) 72%, var(--border-strong) 82%, transparent 82%);
+}
+
+/* Koparılan sekmenin açılacağı yerin taslağı. */
+.window-ghost {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border: 2px dashed var(--primary);
+  border-radius: var(--radius-lg);
+}
+
+/* Simge durumundaki pencereler: durum çubuğunun üstünde. */
+.windowbar {
+  position: sticky;
+  bottom: 24px;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 3px 12px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--border-strong);
+}
+
+.windowbar__item {
+  display: flex;
+  align-items: center;
+  max-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+}
+
+.windowbar__open {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+  height: 24px;
+  padding: 0 4px 0 8px;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
+.windowbar__open span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.windowbar__open:hover {
+  color: var(--primary-text);
+}
+
+.windowbar__open svg,
+.windowbar__close svg {
+  flex: none;
+  width: 13px;
+  height: 13px;
+}
+
+.windowbar__close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  margin-right: 3px;
+  color: var(--muted);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+}
+
+.windowbar__close:hover {
+  color: #fff;
+  background: var(--danger-hover);
+}
+
+/* ───────── Sağ tık menüsü: alt menü ───────── */
+.context-menu__parent {
+  position: relative;
+  display: grid;
+}
+
+.context-menu__chevron {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.context-menu__parent > .context-menu__item {
+  padding-right: 6px;
+}
+
+.context-menu--sub {
+  position: absolute;
+  top: -5px;
+  left: calc(100% - 3px);
+  min-width: 190px;
+}
+
+.context-menu--sub-left {
+  right: calc(100% - 3px);
+  left: auto;
+}
+
+/* Sekme adının yerinde düzenlenmesi. */
+.tabstrip__link--editing {
+  cursor: default;
+}
+
+.tabstrip__rename {
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  padding: 0 4px;
+  font: inherit;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  outline: 0;
+  box-shadow: 0 0 0 2px var(--focus);
+}
+
+/* Sürüklenen sekme: sıradaki yeni yeri imleçle birlikte değişir. */
+.tabstrip__tab--dragging,
+.tabstrip__tab--dragging:hover {
+  color: var(--text);
+  cursor: grabbing;
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.tabstrip__tab--dragging .tabstrip__link {
+  cursor: grabbing;
+}
+
+/* Hücre içinde, değerin altında duran satır işlemi. */
+.table__actions--inline {
+  margin-top: 4px;
+  text-align: left !important;
+}
+
+.table__actions--inline .button {
+  margin-left: 0;
+}
+
+/* ───────── Bildirim zili: bekleyen işler ───────── */
+.notifications {
+  position: relative;
+}
+
+.notifications__button {
+  position: relative;
+}
+
+.notifications__button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.notifications__badge {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 16px;
+  padding: 0 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 16px;
+  color: #fff;
+  text-align: center;
+  background: var(--danger-hover);
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--appbar);
+}
+
+.notifications__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  width: min(380px, calc(100vw - 24px));
+  max-height: min(480px, calc(100vh - 80px));
+  overflow-y: auto;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.notifications__header {
+  position: sticky;
+  top: 0;
+  display: flex;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.notifications__empty {
+  padding: 18px 14px;
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.notifications__item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 14px;
+  color: var(--text);
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.notifications__item:last-child {
+  border-bottom: 0;
+}
+
+.notifications__item:hover,
+.notifications__item:focus-visible {
+  background: var(--primary-soft);
+  outline: 0;
+}
+
+.notifications__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: var(--primary-text);
+  background: var(--primary-soft);
+  border-radius: var(--radius);
+}
+
+.notifications__icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.notifications__body {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+  font-size: 0.84rem;
+}
+
+.notifications__body strong {
+  font-weight: 600;
+}
+
+.notifications__body span {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.notifications__count {
+  flex: none;
+  min-width: 24px;
+  padding: 0 7px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 20px;
+  color: var(--warning);
+  text-align: center;
+  background: var(--warning-bg);
+  border-radius: 10px;
+}
+
+.notifications__more {
+  display: block;
+  padding: 6px 14px 6px 52px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border);
+}
+
+.notifications__more:hover {
+  text-decoration: underline;
+}
+
+.notifications__divider {
+  padding: 5px 14px;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+/* İletinin sağında işlem düğmesi olan uyarı. */
+.alert--with-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.table__actions--inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+/* Müşteri buyer tablosu */
+.buyer-table__code { width: 14%; }
+.buyer-table__contact { width: 18%; }
+.buyer-table__phone { width: 13%; }
+.buyer-table__active { width: 56px; }
+.buyer-table td.buyer-table__check { text-align: center; }
+.buyer-table td.buyer-table__check input { width: auto; height: auto; }
+
+.combobox__detail {
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Döviz kurları */
+.rate-toolbar__date {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.rate-table td input {
+  width: 100%;
+  min-width: 90px;
+  height: 28px;
+  padding: 0 6px;
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: right;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm, 3px);
+}
+
+.rate-table td input::placeholder {
+  color: var(--muted);
+}
+
+.rate-table__row--dirty td {
+  background: var(--primary-soft);
+}
+
+.rate-table__badge {
+  margin-left: 6px;
+}
+
+/* Fiyat listesi kalemleri */
+.price-table__variant { width: 16%; }
+.price-table__price { width: 18%; }
+.price-table td .field { margin: 0; }
+.price-table td .combobox input { height: 30px; font-size: 0.85rem; }
+.price-table__input { text-align: right; }
+.price-table__row--invalid td { background: var(--danger-bg); }
+
+.modal--drawer:has(.price-list-form) {
+  width: min(880px, 100vw);
+}
+
+/* Sipariş formu: artikel, fiyat önerisi, taslak */
+.order-grid__article {
+  width: 110px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.order-grid__price-cell {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.order-grid__split,
+.order-grid__warn {
+  display: inline-flex;
+  width: 22px;
+  height: 22px;
+  align-items: center;
+  justify-content: center;
+  color: var(--warning-text, #9a6700);
+}
+
+.order-grid__split svg,
+.order-grid__warn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.order-grid__price-input::placeholder {
+  color: var(--muted);
+}
+
+.matrix-input--conflict {
+  border-color: var(--danger) !important;
+  background: var(--danger-bg) !important;
+}
+
+.order-form__draft {
+  align-self: center;
+  font-size: 0.8rem;
+}
+
+.order-form__restore {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.order-form__restore span {
+  margin-right: auto;
+}
+
+.order-lines__note {
+  margin-left: 10px;
+  font-size: 0.8rem;
+}
+
+.order-lines__footnote {
+  padding: 6px 14px 10px;
+  margin: 0;
+  font-size: 0.78rem;
+}
+
+/* Geciken sipariş satırı: teslim tarihi geçmiş, kapanmamış ve sevk edilecek adedi var. */
+.table__row--overdue > td:first-child {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.table__row--overdue > td {
+  background: color-mix(in srgb, var(--danger-bg) 55%, transparent);
+}
+
+.order-overdue {
+  margin-left: 6px;
+}
+
+/* ───────── Proforma (A4, yazdırılabilir) ───────── */
+.proforma-page__bar {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.proforma-page__bar .button {
+  margin-left: auto;
+}
+
+.proforma {
+  max-width: 210mm;
+  padding: 14mm 12mm;
+  margin: 0 auto;
+  font-size: 9.5pt;
+  line-height: 1.4;
+  color: #111;
+  background: #fff;
+  border: 1px solid var(--border-strong);
+}
+
+.proforma h1 {
+  margin: 0;
+  font-size: 16pt;
+  letter-spacing: 0.02em;
+}
+
+.proforma h3 {
+  margin: 0 0 4px;
+  font-size: 8pt;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.proforma__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #0d5c6e;
+}
+
+.proforma__meta {
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 12px;
+  margin: 0;
+}
+
+.proforma__meta div {
+  display: contents;
+}
+
+.proforma__meta dt {
+  color: #555;
+}
+
+.proforma__meta dd {
+  margin: 0;
+  font-weight: 600;
+  text-align: right;
+}
+
+.proforma__parties {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.proforma__table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+}
+
+.proforma__table th,
+.proforma__table td {
+  padding: 4px 5px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #ddd;
+}
+
+.proforma__table thead th {
+  font-size: 8pt;
+  background: #eef3f5;
+  border-bottom: 1px solid #999;
+}
+
+.proforma__table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.proforma__table tfoot th,
+.proforma__table tfoot td {
+  font-weight: 600;
+  border-bottom: 0;
+}
+
+.proforma__totals {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 8px;
+}
+
+.proforma__totals dl {
+  min-width: 300px;
+  margin: 0;
+}
+
+.proforma__totals dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 2px 0;
+}
+
+.proforma__totals dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.proforma__grand {
+  padding-top: 4px !important;
+  margin-top: 2px;
+  font-size: 11pt;
+  font-weight: 700;
+  border-top: 1px solid #111;
+}
+
+.proforma__notes {
+  margin-top: 10px;
+}
+
+.proforma__foot {
+  margin-top: 18px;
+  font-size: 8pt;
+  color: #555;
+}
+
+.proforma__sign {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 24px;
+}
+
+.proforma__sign div {
+  padding-top: 26px;
+  border-bottom: 1px solid #999;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  .proforma-page {
+    padding: 0 !important;
+  }
+
+  .proforma {
+    max-width: none;
+    padding: 0;
+    border: 0;
+  }
+}
+
+/* ───────── Sipariş özeti + dar onay paneli ───────── */
+.order-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 12px;
+  align-items: start;
+}
+
+/* Sipariş bilgileri iki sütun: dar ekranda tek sütun. */
+.order-summary .status-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+}
+
+.order-summary .status-list > div:nth-child(2) {
+  padding-top: 0;
+}
+
+.order-summary .status-list > div:nth-last-child(2):nth-child(odd) {
+  border-bottom: 0;
+}
+
+@media (max-width: 1100px) {
+  .order-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .order-summary .status-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.approval-panel {
+  padding: 12px 14px;
+  font-size: 0.82rem;
+}
+
+.approval-panel h2 {
+  margin-bottom: 8px;
+}
+
+.approval-panel__subtitle {
+  margin: 12px 0 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.approval-panel__empty {
+  margin: 0;
+}
+
+.approval-steps,
+.approval-events {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.approval-steps__item,
+.approval-events__item {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 6px;
+  align-items: start;
+}
+
+.approval-steps__icon svg,
+.approval-events__icon svg {
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+}
+
+.approval-steps__name {
+  font-weight: 600;
+}
+
+.approval-steps__who,
+.approval-events__time {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.approval-steps__item--muted .approval-steps__icon,
+.approval-steps__item--muted .approval-steps__name {
+  color: var(--muted);
+}
+
+.approval-steps__item--pending .approval-steps__icon {
+  color: var(--warning-text, #9a6700);
+}
+
+.approval-steps__item--ok .approval-steps__icon,
+.approval-events__icon--approved {
+  color: var(--ok-text, #1a7f37);
+}
+
+.approval-steps__item--danger .approval-steps__icon,
+.approval-events__icon--rejected,
+.approval-events__icon--cancelled {
+  color: var(--danger);
+}
+
+.approval-events__icon--submitted,
+.approval-events__icon--revised {
+  color: var(--primary-text);
+}
+
+.approval-events__note {
+  padding: 3px 7px;
+  margin: 3px 0 0;
+  white-space: pre-line;
+  background: var(--surface-2);
+  border-left: 2px solid var(--border-strong);
+}
+
+.approval-legacy {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.approval-legacy dt {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+.approval-legacy dd {
+  margin: 0;
+}
+
+/* ───────── Onay akışı düzenleme ───────── */
+.approval-flow {
+  padding: 0;
+}
+
+.approval-flow__head {
+  display: flex;
+  gap: 24px;
+  align-items: end;
+  padding: 12px 14px;
+  margin: 0;
+  border: 0;
+}
+
+.approval-flow__head .field {
+  width: 340px;
+}
+
+.approval-flow__table {
+  margin: 0;
+}
+
+.approval-flow__no { width: 52px; }
+.approval-flow__name { width: 22%; }
+.approval-flow__type { width: 15%; }
+.approval-flow__amount { width: 15%; }
+.approval-flow__tools { width: 100px; }
+
+.approval-flow__users {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.approval-flow__users .chip {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  height: 26px;
+}
+
+.approval-flow__users .chip button {
+  display: inline-flex;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.approval-flow__users .chip svg {
+  width: 12px;
+  height: 12px;
+}
+
+.approval-flow__users select {
+  width: auto !important;
+  min-width: 140px;
+  flex: 1;
+}
+
+.approval-flow__amount-input {
+  text-align: right;
+}
+
+.approval-flow__tools-cell {
+  white-space: nowrap;
+}
+
+.approval-flow__add {
+  padding: 8px 14px 0;
+}
+
+.approval-flow .form__note {
+  padding: 8px 14px 12px;
+  margin: 0;
+}
+
+/* Planlanacak müşteri siparişleri */
+.demand-sizes {
+  max-width: 320px;
+  font-size: 0.8rem;
+  color: var(--text-2);
+}
+
+.demand-items .matrix-input {
+  width: 80px;
+}
+
+/* Sipariş karşılama */
+.coverage__head {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.coverage__head h2 {
+  margin: 0;
+}
+
+.coverage__hint {
+  margin-right: auto;
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.coverage__input {
+  width: 80px;
+}
+
+.coverage__sub {
+  font-size: 0.72rem;
+}
+
+.coverage__diff td {
+  background: var(--warning-bg, #fff8e1);
+}
+
+.coverage__diff-note {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.coverage__diff-note .icon-button svg {
+  width: 14px;
+  height: 14px;
+}
+
+.coverage__change {
+  font-size: 0.85rem;
+}
+
+.login__options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.85rem;
+}
+
+/* Menü öğesi sarmalayıcısı. */
+.sidenav__item {
+  position: relative;
+  display: grid;
+}
+
+/* Satın alma siparişi kalemleri: tek satır tablo */
+.modal:has(.purchase-order-form) {
+  width: min(900px, calc(100vw - 32px));
+}
+
+.purchase-items__no { width: 40px; }
+.purchase-items__number { width: 15%; }
+.purchase-items__amount { width: 16%; }
+.purchase-items__index { color: var(--muted); }
+.purchase-items .table th,
+.purchase-items .table td { padding-right: 8px; padding-left: 8px; }
+.purchase-items .table td { vertical-align: top; }
+.purchase-items__index,
+.purchase-items .table td.table__number { line-height: 30px; }
+.purchase-items td .field { margin: 0; }
+.purchase-items td .combobox input { height: 30px; font-size: 0.85rem; }
+.purchase-items__input { text-align: right; }
+
+.purchase-items__link,
+.material-purchase {
+  margin-top: 3px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.purchase-items__link .link-button {
+  padding: 0;
+  margin-left: 8px;
+  font: inherit;
+  color: var(--primary-text);
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+/* Malzeme ihtiyacı: öteki depolardaki stok ve satır işlemleri */
+.material-stocks {
+  padding: 0;
+  margin: 3px 0 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  list-style: none;
+  white-space: nowrap;
+}
+
+.material-actions {
+  white-space: nowrap;
+}
+
+/* ───────── Plan önerisi ───────── */
+.modal:has(.plan-suggestions) {
+  width: min(960px, calc(100vw - 32px));
+}
+
+.plan-suggestions {
+  display: grid;
+  gap: 12px;
+}
+
+.plan-suggestions__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 28px;
+  margin: 0;
+}
+
+.plan-suggestions__facts dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.plan-suggestions__facts dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+}
+
+.plan-suggestions .table {
+  table-layout: fixed;
+}
+
+.plan-suggestions .table td,
+.plan-suggestions .table th {
+  white-space: nowrap;
+}
+
+.plan-suggestions__line { width: 22%; }
+.plan-suggestions__rate { width: 15%; }
+.plan-suggestions__hours { width: 9%; }
+.plan-suggestions__time { width: 15%; }
+.plan-suggestions__due { width: 12%; }
+.plan-suggestions__action { width: 90px; }
+
+.plan-suggestions .table td.table__number .muted {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plan-suggestions__row--off td {
+  background: var(--surface-2);
+}
+
+.plan-suggestions__row--off code {
+  color: var(--muted);
+}
+
+.plan-suggestions__reason {
+  margin-left: 8px;
+  color: var(--muted);
+  white-space: normal;
+}
+
+/* ───────── Stok satırı işlem paneli ───────── */
+.stock-row__toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
+}
+
+.stock-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.stock-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stock-panel__heading {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin-bottom: 6px;
+  font-size: 0.85rem;
+}
+
+.stock-panel__history .table {
+  background: var(--surface);
+}
+
+/* ───────── Geçişler ─────────
+   Kısa ve sade: yalnızca opaklık ve renk. Transform bilerek kullanılmaz; animasyon süresince sabit konumlu
+   öğelerin (açılır listeler) yerini kaydırır. Hareket azaltma tercihinde hepsi kapanır. */
+:root {
+  --motion-fast: 110ms;
+  --motion-base: 170ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+/* Ekran açılışı ve sekme geçişi: gizli sekme görünür olunca (ya da yenilenince) içerik yumuşakça belirir. */
+.tabframe:not([hidden]),
+.window:not([hidden]) {
+  animation: fade-in var(--motion-base) var(--motion-ease);
+}
+
+/* Modül değişince ekran paneli. */
+.navpanel .sidenav__module {
+  animation: fade-in var(--motion-fast) var(--motion-ease);
+}
+
+/* Pencere (modal) ve arka planı; çekmecenin kendi kayma animasyonu vardır. */
+.modal[open]:not(.modal--drawer),
+.modal[open]::backdrop {
+  animation: fade-in var(--motion-base) var(--motion-ease);
+}
+
+/* Açılır listeler ve sağ tık menüleri. */
+.combobox__list,
+.context-menu {
+  animation: fade-in var(--motion-fast) var(--motion-ease);
+}
+
+/* Gezinme öğelerinde renk geçişi. */
+.sidenav__link,
+.modulebar__tab,
+.tabstrip__tab,
+.table tbody tr > td {
+  transition:
+    color var(--motion-fast) var(--motion-ease),
+    background-color var(--motion-fast) var(--motion-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tabframe,
+  .window,
+  .navpanel .sidenav__module,
+  .modal[open],
+  .modal[open]::backdrop,
+  .combobox__list,
+  .context-menu {
+    animation: none !important;
+  }
+}
+
+/* Bilgi listesinde yerinde değiştirilen küçük seçim kutusu (ör. siparişin operasyon sırası). */
+.inline-select {
+  min-height: 26px;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.inline-select:focus-visible {
+  outline: 0;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+/* Araç çubuğunda birden çok form: alanlar çubuğun kendi düzenine katılır. */
+.toolbar__group {
+  display: contents;
+}
+
+.defect-table__type {
+  width: 42%;
+}
+
+.defect-table__number {
+  width: 15%;
+}

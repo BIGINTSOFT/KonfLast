@@ -1,0 +1,19 @@
+/* Giriş formu: beyaz zemin, ortada form; kurulum bilgisi altta tek satır */
+.login__panel { position: relative; }
+.login__panel:has(.login__foot) { padding-bottom: 64px; }
+.login__input { position: relative; display: block; }
+.login__input > svg { position: absolute; top: 50%; left: 12px; width: 16px; height: 16px; color: var(--muted); pointer-events: none; transform: translateY(-50%); }
+.login__card .login__input input { width: 100%; min-height: 44px; padding-left: 38px; }
+.login__card .login__input:has(.login__reveal) input { padding-right: 42px; }
+.login__reveal { position: absolute; top: 50%; right: 7px; display: grid; width: 30px; height: 30px; padding: 0; color: var(--muted); cursor: pointer; background: none; border: 0; border-radius: 6px; transform: translateY(-50%); place-items: center; }
+.login__reveal:hover { color: var(--text); background: var(--surface-2); }
+.login__reveal svg { width: 16px; height: 16px; }
+.login__caps { font-size: 0.8rem; color: var(--warning); }
+.login__card .button--primary { display: inline-flex; gap: 8px; align-items: center; justify-content: center; }
+.login__card .button--primary svg { width: 16px; height: 16px; }
+.login__card .login__footnote { margin: 0; text-align: center; }
+.login__foot { position: absolute; right: 32px; bottom: 22px; left: 32px; display: flex; gap: 16px; align-items: center; justify-content: space-between; font-size: 0.78rem; color: var(--muted); }
+.login__status { display: inline-flex; flex: none; gap: 7px; align-items: center; }
+.login__status::before { width: 7px; height: 7px; content: ''; background: #1d8a5a; border-radius: 50%; }
+.login__status--down { color: var(--danger); }
+.login__status--down::before { background: var(--danger); }

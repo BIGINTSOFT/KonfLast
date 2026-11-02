@@ -1,0 +1,175 @@
+/*
+  Örme planlama ekranları: kapasite planı zaman çizelgesi ve ihtiyaç planı alt satırları.
+  Renkler index.css'teki tema değişkenlerinden gelir; sabit renk kullanılmaz.
+*/
+.orme-timeline {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow-x: auto;
+}
+
+.orme-timeline__row {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  min-width: 960px;
+  border-top: 1px solid var(--border);
+}
+
+.orme-timeline__row:first-child {
+  border-top: 0;
+}
+
+.orme-timeline__head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-3);
+}
+
+.orme-timeline__label {
+  padding: 4px 8px;
+  border-right: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.35;
+  overflow: hidden;
+}
+
+.orme-timeline__label strong {
+  font-size: 13px;
+}
+
+.orme-timeline__track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--orme-days), minmax(0, 1fr));
+  min-height: 36px;
+}
+
+.orme-timeline__day {
+  border-left: 1px solid var(--border);
+}
+
+.orme-timeline__day:first-child {
+  border-left: 0;
+}
+
+.orme-timeline__day--weekend {
+  background: var(--surface-2);
+}
+
+.orme-timeline__head .orme-timeline__day {
+  padding: 2px 0;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--muted);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.orme-timeline__head .orme-timeline__day--today {
+  color: var(--primary-text);
+  font-weight: 600;
+}
+
+.orme-timeline__now {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--thread);
+  pointer-events: none;
+}
+
+.orme-bar {
+  position: absolute;
+  top: 7px;
+  height: 22px;
+  min-width: 4px;
+  padding: 0 4px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font: inherit;
+  font-size: 11px;
+  line-height: 20px;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+button.orme-bar {
+  cursor: pointer;
+}
+
+button.orme-bar:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.orme-bar--running {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.orme-bar--late {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.orme-bar--running.orme-bar--late {
+  background: var(--danger);
+  color: var(--on-primary);
+}
+
+.orme-bar--missing {
+  width: 12px;
+  border-style: dashed;
+  border-color: var(--warning);
+  background: var(--warning-bg);
+}
+
+.orme-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.orme-legend .orme-bar {
+  position: static;
+  display: inline-block;
+  width: 22px;
+  height: 12px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+.orme-loads {
+  display: flex;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.orme-negative {
+  color: var(--danger);
+}
+
+.orme-subrow > td {
+  background: var(--surface-2);
+  padding-top: 4px;
+  padding-bottom: 8px;
+}
+
+.orme-machine-head > th,
+.orme-machine-head > td {
+  background: var(--surface-3);
+}
