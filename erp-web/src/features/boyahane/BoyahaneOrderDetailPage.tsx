@@ -1,4 +1,4 @@
-import { Archive, Check, FileText, Pencil, RotateCcw, Trash2, XCircle } from 'lucide-react'
+import { Archive, Check, FileText, FlaskConical, Link2, Pencil, RotateCcw, Trash2, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -306,14 +306,14 @@ export function BoyahaneOrderDetailPage() {
                         </div>
                       )}
                     </td>
-                    <td className="table__number">
+                    <td className="table__number table__nowrap">
                       {formatQuantity(line.quantity)} {orderUnitLabels[line.unit]}
                       <div className="muted">Fatura: {orderUnitLabels[line.effectiveBillingUnit]}</div>
                     </td>
-                    <td className="table__number">{line.unitPrice !== null ? formatMoney(line.unitPrice, order.currency) : '—'}</td>
-                    <td className="table__number">{line.amount !== null ? formatMoney(line.amount, order.currency) : '—'}</td>
-                    <td className="table__number">{line.fabricId !== null ? `${line.assignedRollCount} top` : `${line.assignedYarnLotCount} lot`}</td>
-                    <td className="table__number">
+                    <td className="table__number table__nowrap">{line.unitPrice !== null ? formatMoney(line.unitPrice, order.currency) : '—'}</td>
+                    <td className="table__number table__nowrap">{line.amount !== null ? formatMoney(line.amount, order.currency) : '—'}</td>
+                    <td className="table__number table__nowrap">{line.fabricId !== null ? `${line.assignedRollCount} top` : `${line.assignedYarnLotCount} lot`}</td>
+                    <td className="table__number table__nowrap">
                       {formatQuantity(line.unit === 'METER' ? line.assignedMeters : line.assignedKilograms)} {orderUnitLabels[line.unit]}
                       {line.assignedDifferencePercent !== null && (
                         <div>
@@ -328,13 +328,17 @@ export function BoyahaneOrderDetailPage() {
                         <Link to={`/boyahane/lab/${line.labRequestId}`}>
                           {line.recipeTrialCode ? `Onaylı: ${line.recipeTrialCode}` : 'Laboratuvarda'}
                         </Link>
-                      ) : (line.processType === 'FABRIC_DYEING' || line.processType === 'YARN_DYEING') && open && canOpenLab ? (
-                        <button type="button" className="button button--tiny" onClick={() => setLabLine(line)}>Lab</button>
+                      ) : (line.processType === 'FABRIC_DYEING' || line.processType === 'YARN_DYEING') ? (
+                        <span className="muted table__nowrap">Talep yok</span>
                       ) : '—'}
                     </td>
-                    <td>
+                    {/* Satır işlemleri yan yana: lab talebi (boyama satırında, talep yoksa) ve top / lot bağlama. */}
+                    <td className="table__actions">
+                      {line.labRequestId === null && (line.processType === 'FABRIC_DYEING' || line.processType === 'YARN_DYEING') && open && canOpenLab && (
+                        <button type="button" className="button" onClick={() => setLabLine(line)}><FlaskConical aria-hidden="true" />Lab talebi</button>
+                      )}
                       {canManage && open && (
-                        <button type="button" className="button button--tiny" onClick={() => setAssigning(line)}>{line.fabricId !== null ? 'Top bağla' : 'Lot bağla'}</button>
+                        <button type="button" className="button" onClick={() => setAssigning(line)}><Link2 aria-hidden="true" />{line.fabricId !== null ? 'Top bağla' : 'Lot bağla'}</button>
                       )}
                     </td>
                   </tr>
@@ -343,7 +347,7 @@ export function BoyahaneOrderDetailPage() {
               <tfoot>
                 <tr>
                   <th colSpan={5} scope="row">Toplam</th>
-                  <td className="table__number">{order.totalAmount > 0 ? formatMoney(order.totalAmount, order.currency) : '—'}</td>
+                  <td className="table__number table__nowrap">{order.totalAmount > 0 ? formatMoney(order.totalAmount, order.currency) : '—'}</td>
                   <td colSpan={4} />
                 </tr>
               </tfoot>

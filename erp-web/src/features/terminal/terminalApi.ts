@@ -61,7 +61,7 @@ export const terminalApi = baseApi.injectEndpoints({
       query: (params) => ({ url: '/stock/scan', params }),
       providesTags: ['Stock', 'MasterData'],
     }),
-    // Toplama listesi sipariş numarasıyla bulunur; depo personelinin üretim siparişi yetkisi gerekmez.
+    // Toplama listesi sipariş numarasıyla bulunur; depo personelinin iş emri yetkisi gerekmez.
     getTerminalPickList: build.query<PickList, { orderNo: string; warehouseId?: number }>({
       query: (params) => ({ url: '/stock/pick-list', params }),
       providesTags: ['Stock', 'Material', 'Bundle'],

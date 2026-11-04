@@ -65,7 +65,7 @@ public sealed class ProductionOrderService(
     TimeProvider timeProvider,
     IOptions<ProductionOrderOptions> options) : IProductionOrderService
 {
-    private static readonly Error NotFound = new(ErrorCodes.NotFound, "Üretim siparişi bulunamadı.", ErrorType.NotFound);
+    private static readonly Error NotFound = new(ErrorCodes.NotFound, "İş emri bulunamadı.", ErrorType.NotFound);
 
     private static readonly Error ConcurrencyConflict = new(
         ErrorCodes.ConcurrencyConflict,
@@ -134,7 +134,8 @@ public sealed class ProductionOrderService(
                 o.OrderDate,
                 o.DueDate,
                 o.Status,
-                o.Items.Sum(i => (int?)i.Quantity) ?? 0))
+                o.Items.Sum(i => (int?)i.Quantity) ?? 0,
+                o.SalesOrder == null ? null : o.SalesOrder.OrderNo))
             .ToPagedResultAsync(query, cancellationToken);
     }
 
@@ -224,7 +225,7 @@ public sealed class ProductionOrderService(
         if (order.SalesOrderId is not null && (request.ProductId != order.ProductId || request.CustomerId != order.CustomerId))
         {
             const string message =
-                "Bu üretim siparişi bir müşteri siparişinden açıldı; ürünü ve müşterisi değiştirilemez. "
+                "Bu iş emri bir müşteri siparişinden açıldı; ürünü ve müşterisi değiştirilemez. "
                 + "Farklı ürün için bu siparişi silip müşteri siparişini revize edin.";
             return new Error(
                 ErrorCodes.OrderLinkedToSalesOrder, message, ErrorType.BusinessRule,

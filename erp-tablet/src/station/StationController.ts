@@ -7,7 +7,9 @@ import type {
   MachineStatus,
   OperationProgress,
   PauseType,
+  PerformancePeriod,
   TabletContext,
+  TabletPerformance,
   TabletSession,
 } from '../api/types';
 import type { ReportOutbox } from '../production/outbox';
@@ -168,6 +170,11 @@ export class StationController {
   }
 
   /** Düzenli çağrılır: kalp atışı, bekleyen bildirimler ve (gerekiyorsa) ilk eşitleme. */
+  /** Oturumu açık operatörün performansı (performans sayfası ve sol panel için; ekran durumunu değiştirmez). */
+  fetchPerformance(period: PerformancePeriod): Promise<TabletPerformance | null> {
+    return this.api.getPerformance(period);
+  }
+
   async tick(): Promise<void> {
     if (this.state.busy || this.state.needsEnrollment) {
       return;
@@ -188,8 +195,26 @@ export class StationController {
         this.update(sessionState(await this.api.getSession()));
       }
       await this.refreshJob();
+      await this.refreshOperationChoice();
     } catch (error) {
       this.fail(error, { silent: true });
+    }
+  }
+
+  /**
+   * Açık duran operasyon listesi demetin güncel hâliyle yenilenir: başka yerden (ör. web'den elle bildirim)
+   * tamamlanan adım listede "Hazır" kalmaz, sıradaki adım seçilebilir olur.
+   */
+  private async refreshOperationChoice(): Promise<void> {
+    const choice = this.state.operationChoice;
+    if (!choice) {
+      return;
+    }
+
+    const bundle = await this.api.getBundle(choice.bundle.bundleId);
+    // Yenileme sürerken liste kapatıldıysa ya da başka demet okutulduysa sonuç atılır.
+    if (this.state.operationChoice?.bundle.bundleId === bundle.bundleId) {
+      this.update({ operationChoice: { bundle, options: (bundle.operations ?? []).filter(step => step.canStart) } });
     }
   }
 

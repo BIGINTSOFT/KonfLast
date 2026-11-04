@@ -2,11 +2,13 @@ import { useEffect, useState } from 'react'
 import type { ChangeEvent } from 'react'
 import { isRequestError } from '../../api/envelope'
 import { CheckboxList, ErrorAlert, TextField } from '../../components/FormControls'
+import { SearchableCheckList } from '../../components/SearchableCheckList'
 import { usePermission } from '../../hooks/usePermission'
 import { Permissions } from '../../types/permissions'
 import { useGetLookupQuery } from '../masterData/masterDataApi'
 import type { FormExtraProps } from '../masterData/resources'
 import { useAssignCardMutation, useReleaseCardMutation } from '../rfid/rfidApi'
+import { cardScanHandlers } from '../rfid/cardScan'
 import { photoDataUri, preparePhoto } from './operatorPhoto'
 import type { PhotoUpload } from './operatorPhoto'
 import { initialsOf, mergeOptions, sameCardNumber } from './workSessionPresentation'
@@ -18,14 +20,7 @@ import {
   useSaveOperatorQualificationsMutation,
 } from './workSessionsApi'
 
-const toggle = (ids: number[], id: number) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id])
-
-type Tab = 'general' | 'qualifications'
-
-const tabs: { key: Tab; label: string }[] = [
-  { key: 'general', label: 'Genel' },
-  { key: 'qualifications', label: 'Yetkinlikler' },
-]
+type Tab = 'general' | 'permissions' | 'operations' | 'machines'
 
 /**
  * Operatör formunun ek bölümleri: fotoğraf, personel kartı ve yetkinlikler. Bunlar operatör kaydının
@@ -87,6 +82,17 @@ export function OperatorFormExtra({
   const storedMachines = currentQualifications.data?.machines ?? []
   const operationIds = operationChoice ?? storedOperations.map((item) => item.id)
   const machineIds = machineChoice ?? storedMachines.map((item) => item.id)
+  const qualificationsReady = Boolean(operations.data && machines.data && (skip || currentQualifications.data))
+  const qualificationsLoading = currentQualifications.isLoading || operations.isLoading || machines.isLoading
+  const qualificationsError = currentQualifications.error ?? operations.error ?? machines.error
+
+  // Yetkinlikler ayrı sekmelerdedir: uzun operasyon / makine listeleri formu aşağı doğru uzatmaz.
+  const tabs: { key: Tab; label: string }[] = [
+    { key: 'general', label: 'Genel' },
+    { key: 'permissions', label: 'Tablet yetkileri' },
+    { key: 'operations', label: qualificationsReady ? `Operasyonlar (${operationIds.length})` : 'Operasyonlar' },
+    { key: 'machines', label: qualificationsReady ? `Makineler (${machineIds.length})` : 'Makineler' },
+  ]
 
   // Form kaydedilince çalışır; her çizimde güncel seçimleri görür.
   useEffect(() => {
@@ -228,62 +234,72 @@ export function OperatorFormExtra({
         maxLength={10}
         disabled={disabled || !canAssignCard}
         hint={canAssignCard ? undefined : 'Personel kartı atama yetkiniz yok.'}
-        onChange={(event) => setCard(event.target.value)}
         autoComplete="off"
-        // Okuyucu numaradan sonra Enter gönderir; formun yanlışlıkla kaydedilmesini önler.
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault()
-          }
-        }}
+        // Okuyucu numaradan sonra Enter gönderir; formun yanlışlıkla kaydedilmesini önler, NOCARD'ı yutar.
+        {...cardScanHandlers(setCard)}
       />
       </div>
 
       <div
         className="tabs__panel"
         role="tabpanel"
-        id="operator-panel-qualifications"
-        aria-labelledby="operator-tab-qualifications"
-        hidden={tab !== 'qualifications'}
+        id="operator-panel-permissions"
+        aria-labelledby="operator-tab-permissions"
+        hidden={tab !== 'permissions'}
       >
       <CheckboxList legend="Kişiye özel ek tablet yetkileri">
         {fields.canPause}
         {fields.canReportBreakdown}
       </CheckboxList>
-      {(currentQualifications.isLoading || operations.isLoading || machines.isLoading) && <p role="status">Yükleniyor…</p>}
-      <ErrorAlert error={currentQualifications.error ?? operations.error ?? machines.error} />
-      {operations.data && machines.data && (skip || currentQualifications.data) && (
-        <>
-          <CheckboxList legend="Yapabildiği operasyonlar">
-            {mergeOptions(operations.data, storedOperations).map((item) => (
-              <label key={item.id} className="checkbox">
-                <input
-                  type="checkbox"
-                  disabled={disabled}
-                  checked={operationIds.includes(item.id)}
-                  onChange={() => setOperationChoice(toggle(operationIds, item.id))}
-                />
-                {item.code} — {item.name}
-              </label>
-            ))}
-          </CheckboxList>
-          {operationIds.length === 0 && (
-            <p className="alert alert--info">Hiç operasyon seçilmezse operatör hiçbir makinede oturum açamaz.</p>
-          )}
+      </div>
 
-          <CheckboxList legend="Çalışabileceği makineler">
-            {mergeOptions(machines.data, storedMachines).map((item) => (
-              <label key={item.id} className="checkbox">
-                <input
-                  type="checkbox"
-                  disabled={disabled}
-                  checked={machineIds.includes(item.id)}
-                  onChange={() => setMachineChoice(toggle(machineIds, item.id))}
-                />
-                {item.code} — {item.name}
-              </label>
-            ))}
-          </CheckboxList>
+      <div
+        className="tabs__panel"
+        role="tabpanel"
+        id="operator-panel-operations"
+        aria-labelledby="operator-tab-operations"
+        hidden={tab !== 'operations'}
+      >
+      {qualificationsLoading && <p role="status">Yükleniyor…</p>}
+      <ErrorAlert error={qualificationsError} />
+      {qualificationsReady && (
+        <>
+          {/* Uyarı açıklamanın yerinde çıkar: listenin altında yeni satır açıp formu uzatmaz. */}
+          {operationIds.length === 0 ? (
+            <p className="field__error" role="status">Hiç operasyon seçilmezse operatör hiçbir makinede oturum açamaz.</p>
+          ) : (
+            <p className="muted">Operatör yalnızca seçilen operasyonların makinelerinde oturum açabilir.</p>
+          )}
+          <SearchableCheckList
+            label="Operasyon"
+            items={mergeOptions(operations.data!, storedOperations)}
+            selected={operationIds}
+            onChange={setOperationChoice}
+            disabled={disabled}
+          />
+        </>
+      )}
+      </div>
+
+      <div
+        className="tabs__panel"
+        role="tabpanel"
+        id="operator-panel-machines"
+        aria-labelledby="operator-tab-machines"
+        hidden={tab !== 'machines'}
+      >
+      {qualificationsLoading && <p role="status">Yükleniyor…</p>}
+      <ErrorAlert error={qualificationsError} />
+      {qualificationsReady && (
+        <>
+          <p className="muted">Operatörün çalışabileceği makineler.</p>
+          <SearchableCheckList
+            label="Makine"
+            items={mergeOptions(machines.data!, storedMachines)}
+            selected={machineIds}
+            onChange={setMachineChoice}
+            disabled={disabled}
+          />
         </>
       )}
       </div>

@@ -425,7 +425,7 @@ public sealed class StockReservationsReport(IKonfeksiyonDbContext db) : IReport
 {
     public ReportDefinition Definition { get; } = new(
         "stock-reservations", "Rezerve stok",
-        "Üretim siparişlerine ayrılmış malzemeler: hangi sipariş, hangi depoda, ne kadar. Termini en yakın sipariş üsttedir. En fazla 5.000 satır.",
+        "İş emirlerine ayrılmış malzemeler: hangi sipariş, hangi depoda, ne kadar. Termini en yakın sipariş üsttedir. En fazla 5.000 satır.",
         RequiresDateRange: false, SearchLabel: "Sipariş no ya da kart", Group: StockLabels.Group);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
@@ -449,7 +449,7 @@ public sealed class StockReservationsReport(IKonfeksiyonDbContext db) : IReport
 
         return new ReportData(
             [
-                new("orderNo", "Sipariş"),
+                new("orderNo", "İş emri"),
                 new("dueDate", "Termin", Date),
                 new("code", "Kart kodu"),
                 new("name", "Ad"),

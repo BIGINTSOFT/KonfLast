@@ -71,6 +71,11 @@ export interface FieldDef {
   defaultValue?: string | boolean
   /** Alanı değiştirmek ayrıca bu yetkiyi ister; yetkisi olmayan kullanıcıda alan salt okunur gösterilir. */
   permission?: string
+  /**
+   * Kart okuyucu alanı: masaüstü okuyucu klavye gibi kart numarasını yazıp Enter gönderir. Bu alanda Enter
+   * formu göndermez; alana girilince içerik seçilir, okutulan kart eski numaranın yerine yazılır.
+   */
+  scan?: boolean
 }
 
 export interface ColumnDef {
@@ -435,7 +440,7 @@ export const resources: ResourceConfig[] = [
       { key: 'assignedTo', label: 'Atandığı yer' },
     ],
     fields: [
-      { name: 'uid', label: 'Kart numarası', type: 'text', required: true, maxLength: 10, hint: 'Kartı okutun ya da numarasını yazın.' },
+      { name: 'uid', label: 'Kart numarası', type: 'text', required: true, maxLength: 10, scan: true, hint: 'Kartı okutun ya da numarasını yazın; harf ve rakam kullanılabilir.' },
       { name: 'cardType', label: 'Tür', type: 'select', options: optionsOf(boyahaneCardTypeLabels) },
       { name: 'label', label: 'Etiket', type: 'text', maxLength: 50, hint: 'Kartın üzerinde yazan numara.' },
     ],
@@ -490,7 +495,7 @@ export const resources: ResourceConfig[] = [
       { name: 'firstName', label: 'Ad', type: 'text', required: true, maxLength: 100 },
       { name: 'lastName', label: 'Soyad', type: 'text', required: true, maxLength: 100 },
       { name: 'role', label: 'Görev', type: 'select', options: optionsOf(boyahaneOperatorRoleLabels), hint: 'Vardiya amiri her tablette ara ve arıza işlemlerini kartıyla yapar; bakım personeli arıza bildirir ve kapatır.' },
-      { name: 'cardUid', label: 'Personel kartı numarası', type: 'text', maxLength: 10, hint: 'RFID Kartları ekranında tanımlı personel kartını okutun ya da numarasını yazın.' },
+      { name: 'cardUid', label: 'Personel kartı numarası', type: 'text', maxLength: 10, scan: true, hint: 'RFID Kartları ekranında tanımlı personel kartını okutun ya da numarasını yazın.' },
       { name: 'breakGroupId', label: 'Mola grubu', type: 'lookup', lookup: 'boyahane-break-groups', hint: 'Boş bırakılırsa yalnızca herkese açık molaları görür.' },
       { name: 'canPause', label: 'Kendi kartıyla ara verebilir', type: 'checkbox' },
       { name: 'canReportBreakdown', label: 'Kendi kartıyla arıza bildirebilir', type: 'checkbox' },
@@ -1087,7 +1092,8 @@ export const resources: ResourceConfig[] = [
         type: 'text',
         required: true,
         maxLength: 10,
-        hint: 'Kartı okuyucuya okutun ya da kart numarasını yazın (örn. 0012629368).',
+        scan: true,
+        hint: 'Kartı okuyucuya okutun ya da kart numarasını yazın; harf ve rakam kullanılabilir (örn. 0012629368).',
       },
       {
         name: 'cardType',
@@ -1651,7 +1657,7 @@ export const resources: ResourceConfig[] = [
       { key: 'assignedTo', label: 'Atandığı personel' },
     ],
     fields: [
-      { name: 'uid', label: 'Kart numarası', type: 'text', required: true, maxLength: 10, hint: 'Kartı okutun ya da numarasını yazın.' },
+      { name: 'uid', label: 'Kart numarası', type: 'text', required: true, maxLength: 10, scan: true, hint: 'Kartı okutun ya da numarasını yazın; harf ve rakam kullanılabilir.' },
       { name: 'label', label: 'Etiket', type: 'text', maxLength: 50, hint: 'Kartın üzerinde yazan numara.' },
     ],
   },
@@ -1680,7 +1686,7 @@ export const resources: ResourceConfig[] = [
       { name: 'firstName', label: 'Ad', type: 'text', required: true, maxLength: 100 },
       { name: 'lastName', label: 'Soyad', type: 'text', required: true, maxLength: 100 },
       { name: 'role', label: 'Görev', type: 'select', options: optionsOf(dokumaOperatorRoleLabels), defaultValue: 'WEAVER', hint: 'Vardiya amiri her tablette ara ve arıza işlemlerini kartıyla yapar; bakım personeli arıza bildirir ve kapatır.' },
-      { name: 'cardUid', label: 'Personel kartı numarası', type: 'text', maxLength: 10, hint: 'RFID Kartları ekranında tanımlı kartı okutun ya da numarasını yazın.' },
+      { name: 'cardUid', label: 'Personel kartı numarası', type: 'text', maxLength: 10, scan: true, hint: 'RFID Kartları ekranında tanımlı kartı okutun ya da numarasını yazın.' },
       { name: 'breakGroupId', label: 'Mola grubu', type: 'lookup', lookup: 'dokuma-break-groups', hint: 'Boş bırakılırsa yalnızca herkese açık molaları görür.' },
       { name: 'canPause', label: 'Kendi kartıyla ara verebilir', type: 'checkbox' },
       { name: 'canReportBreakdown', label: 'Kendi kartıyla arıza bildirebilir', type: 'checkbox' },
@@ -1992,7 +1998,7 @@ export const resources: ResourceConfig[] = [
       { key: 'assignedTo', label: 'Atandığı personel' },
     ],
     fields: [
-      { name: 'uid', label: 'Kart numarası', type: 'text', required: true, maxLength: 10, hint: 'Kartı okutun ya da numarasını yazın.' },
+      { name: 'uid', label: 'Kart numarası', type: 'text', required: true, maxLength: 10, scan: true, hint: 'Kartı okutun ya da numarasını yazın; harf ve rakam kullanılabilir.' },
       { name: 'label', label: 'Etiket', type: 'text', maxLength: 50, hint: 'Kartın üzerinde yazan numara.' },
     ],
   },
@@ -2021,7 +2027,7 @@ export const resources: ResourceConfig[] = [
       { name: 'firstName', label: 'Ad', type: 'text', required: true, maxLength: 100 },
       { name: 'lastName', label: 'Soyad', type: 'text', required: true, maxLength: 100 },
       { name: 'role', label: 'Görev', type: 'select', options: optionsOf(ormeOperatorRoleLabels), defaultValue: 'KNITTER', hint: 'Vardiya amiri her tablette ara ve arıza işlemlerini kartıyla yapar; bakım personeli arıza bildirir ve kapatır.' },
-      { name: 'cardUid', label: 'Personel kartı numarası', type: 'text', maxLength: 10, hint: 'RFID Kartları ekranında tanımlı kartı okutun ya da numarasını yazın.' },
+      { name: 'cardUid', label: 'Personel kartı numarası', type: 'text', maxLength: 10, scan: true, hint: 'RFID Kartları ekranında tanımlı kartı okutun ya da numarasını yazın.' },
       { name: 'breakGroupId', label: 'Mola grubu', type: 'lookup', lookup: 'orme-break-groups', hint: 'Boş bırakılırsa yalnızca herkese açık molaları görür.' },
       { name: 'canPause', label: 'Kendi kartıyla ara verebilir', type: 'checkbox' },
       { name: 'canReportBreakdown', label: 'Kendi kartıyla arıza bildirebilir', type: 'checkbox' },

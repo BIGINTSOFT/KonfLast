@@ -85,7 +85,7 @@ export function TerminalPick() {
       )}
 
       <ScanInput
-        label={list ? 'Aldığınız topu (ya da kartı) okutun' : 'Üretim siparişi numarasını okutun ya da yazın'}
+        label={list ? 'Aldığınız topu (ya da kartı) okutun' : 'İş emri numarasını okutun ya da yazın'}
         onScan={(code) => void handleScan(code)}
         busy={state.isFetching}
         focusToken={step}
@@ -97,7 +97,7 @@ export function TerminalPick() {
       {list && (
         <>
           <dl className="terminal-facts">
-            <dt>Sipariş</dt>
+            <dt>İş emri</dt>
             <dd><code>{list.orderNo}</code> · {list.productCode}</dd>
             <dt>Depo</dt>
             <dd>{list.warehouseCode}</dd>

@@ -14,7 +14,7 @@ public sealed class DailyProductionReport(IKonfeksiyonDbContext db, IFactoryCloc
     public ReportDefinition Definition { get; } = new(
         "daily-production", "Günlük üretim",
         "Gün gün üretilen ve hatalı adet. \"Biten\", demetin son operasyon(lar)ından çıkan parça adedidir; her parça bir kez sayılır.",
-        MaxRangeDays: 92);
+        MaxRangeDays: 92, Group: ReportGroups.Production);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
     {
@@ -147,7 +147,7 @@ public sealed class BundleMovementsReport(IKonfeksiyonDbContext db) : IReport
     public ReportDefinition Definition { get; } = new(
         "bundle-movements", "Demet hareketleri",
         "Demetlerin üretim olayları, eskiden yeniye. En fazla 5.000 satır; daraltmak için demet ya da sipariş no ile arayın.",
-        SearchLabel: "Demet no veya sipariş no");
+        SearchLabel: "Demet no veya sipariş no", Group: ReportGroups.Production);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
     {
@@ -174,7 +174,7 @@ public sealed class BundleMovementsReport(IKonfeksiyonDbContext db) : IReport
                 OperationName = e.BundleOperation.Operation.Name,
                 e.EventType,
                 e.Machine.MachineCode,
-                Operator = e.Operator.FirstName + " " + e.Operator.LastName,
+                Operator = e.Operator == null ? Production.ProductionService.NoOperatorName : e.Operator.FirstName + " " + e.Operator.LastName,
                 e.ProducedQuantity,
                 e.RejectedQuantity,
             })
@@ -184,7 +184,7 @@ public sealed class BundleMovementsReport(IKonfeksiyonDbContext db) : IReport
             [
                 new("occurredAt", "Zaman", ReportColumnType.DateTime),
                 new("bundleNo", "Demet"),
-                new("orderNo", "Sipariş"),
+                new("orderNo", "İş emri"),
                 new("sequenceNo", "Sıra", Integer),
                 new("operation", "Operasyon"),
                 new("event", "Olay"),
@@ -211,7 +211,7 @@ public sealed class MachineDowntimeReport(IKonfeksiyonDbContext db, IFactoryCloc
     public ReportDefinition Definition { get; } = new(
         "machine-downtime", "Makine duruşları",
         "Makinelerin arızada, bakımda, kapalı ve boşta geçirdiği süreler. En uzun süre arızada kalan makine üsttedir.",
-        MaxRangeDays: 92);
+        MaxRangeDays: 92, Group: ReportGroups.Machine);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
     {

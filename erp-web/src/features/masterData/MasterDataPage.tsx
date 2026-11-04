@@ -1,6 +1,6 @@
 import { Check, Plus, Search, Trash2, Upload } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
-import type { FormEvent, ReactNode } from 'react'
+import type { ChangeEvent, FormEvent, ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { fieldErrors } from '../../api/envelope'
 import { ErrorAlert, TextField } from '../../components/FormControls'
@@ -17,10 +17,19 @@ import { LookupSelect } from './LookupSelect'
 import { initialValues, toRequestBody } from './masterDataForm'
 import { useDeleteMasterRecordMutation, useGetMasterListQuery, useSaveMasterRecordMutation } from './masterDataApi'
 import type { MasterRow } from './masterDataApi'
+import { cardScanHandlers } from '../rfid/cardScan'
 import type { AfterSave, ColumnDef, FieldDef, ResourceConfig } from './resources'
 import { ClearFiltersButton } from '../../components/grid/ClearFiltersButton'
 
 const PAGE_SIZE = 20
+
+/** "Makine Tipi" → "makine tipi"; kısaltmalar korunur: "RFID kartı" → "RFID kartı" (Türkçe küçültme "rfıd" yapar). */
+function lowerCaseLabel(text: string): string {
+  return text
+    .split(' ')
+    .map((word) => (word.length > 1 && word === word.toLocaleUpperCase('tr-TR') ? word : word.toLocaleLowerCase('tr-TR')))
+    .join(' ')
+}
 
 /** Hücre içeriği; sayısal sütunlar Türkçe sayı biçimiyle yazılır. */
 function cellContent(column: ColumnDef, row: MasterRow): ReactNode {
@@ -257,7 +266,9 @@ function RecordDialog({
       maxLength={field.maxLength}
       value={value as string}
       disabled={locked}
-      onChange={(event) => setValue(field.name, event.target.value)}
+      {...(field.scan
+        ? cardScanHandlers((next) => setValue(field.name, next))
+        : { onChange: (event: ChangeEvent<HTMLInputElement>) => setValue(field.name, event.target.value) })}
       errors={errors}
       hint={hint}
       autoFocus={index === 0}
@@ -268,7 +279,7 @@ function RecordDialog({
 
   return (
     <Modal
-      title={row ? `${config.singular} düzenle` : `Yeni ${config.singular.toLocaleLowerCase('tr-TR')}`}
+      title={row ? `${config.singular} düzenle` : `Yeni ${lowerCaseLabel(config.singular)}`}
       onClose={onClose}
       variant="drawer"
     >
@@ -420,7 +431,7 @@ export function MasterDataPage({ config }: { config: ResourceConfig }) {
               </button>
               <button type="button" className="button button--primary" onClick={() => setDialog({ kind: 'create' })}>
                 <Plus aria-hidden="true" />
-                Yeni {config.singular.toLocaleLowerCase('tr-TR')}
+                Yeni {lowerCaseLabel(config.singular)}
               </button>
             </div>
           )}

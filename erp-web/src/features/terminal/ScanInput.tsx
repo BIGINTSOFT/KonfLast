@@ -1,6 +1,7 @@
 import { ScanBarcode } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { cardScanHandlers } from '../rfid/cardScan'
 import { formatStockQuantity } from '../stock/stockPresentation'
 import type { ScanBalance } from './terminalApi'
 
@@ -49,7 +50,7 @@ export function ScanInput({ label, onScan, busy, focusToken, placeholder = 'Bark
           enterKeyHint="go"
           placeholder={placeholder}
           value={value}
-          onChange={(event) => setValue(event.target.value)}
+          {...cardScanHandlers(setValue, { submitOnEnter: true })}
         />
         <button type="submit" className="button" disabled={busy || value.trim() === ''}>
           <ScanBarcode aria-hidden="true" />

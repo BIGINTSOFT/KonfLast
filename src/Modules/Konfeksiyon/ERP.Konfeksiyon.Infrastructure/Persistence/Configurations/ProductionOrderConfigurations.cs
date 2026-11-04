@@ -133,8 +133,8 @@ public sealed class SalesOrderReservationConfiguration : IEntityTypeConfiguratio
         builder.HasOne(r => r.Warehouse).WithMany().HasForeignKey(r => r.WarehouseId);
         builder.HasOne(r => r.StockItem).WithMany().HasForeignKey(r => r.StockItemId);
 
-        // Kalem başına depo başına tek ayırma; stok kontrolü (depo, kart) ile sorgular.
-        builder.HasIndex(r => new { r.SalesOrderLineId, r.WarehouseId }).IsUnique();
+        // Kalem başına depo başına kaynak (stok / üretim) başına tek ayırma; stok kontrolü (depo, kart) ile sorgular.
+        builder.HasIndex(r => new { r.SalesOrderLineId, r.WarehouseId, r.FromProduction }).IsUnique();
         builder.HasIndex(r => new { r.WarehouseId, r.StockItemId });
     }
 }

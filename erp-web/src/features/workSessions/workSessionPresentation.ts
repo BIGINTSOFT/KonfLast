@@ -56,7 +56,11 @@ export function mergeOptions(available: LookupItem[], selected: LookupItem[]): L
 
 /** İki kart numarası aynı kartı mı gösteriyor? Baştaki sıfırlar ve boşluklar önemsenmez ("12629368" = "0012629368"). */
 export function sameCardNumber(a: string, b: string): boolean {
-  const normalize = (value: string) => value.trim().replace(/^0+(?=\d)/, '')
+  // Sunucudaki kural: harfler büyük harfe çevrilir, yalnız rakamdan oluşan numarada baştaki sıfırlar önemsizdir.
+  const normalize = (value: string) => {
+    const code = value.trim().toUpperCase()
+    return /^\d+$/.test(code) ? code.replace(/^0+(?=\d)/, '') : code
+  }
   return normalize(a) === normalize(b)
 }
 

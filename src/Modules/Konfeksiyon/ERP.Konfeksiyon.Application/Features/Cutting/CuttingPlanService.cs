@@ -59,16 +59,16 @@ public sealed class CuttingPlanService(
     private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(15);
     private static readonly CultureInfo Turkish = CultureInfo.GetCultureInfo("tr-TR");
 
-    private static readonly Error NotFound = new(ErrorCodes.NotFound, "Kesim planı bulunamadı.", ErrorType.NotFound);
-    private static readonly Error OrderNotFound = new(ErrorCodes.NotFound, "Üretim siparişi bulunamadı.", ErrorType.NotFound);
+    private static readonly Error NotFound = new(ErrorCodes.NotFound, "Kesim föyü bulunamadı.", ErrorType.NotFound);
+    private static readonly Error OrderNotFound = new(ErrorCodes.NotFound, "İş emri bulunamadı.", ErrorType.NotFound);
 
     private static readonly Error ConcurrencyConflict = new(
         ErrorCodes.ConcurrencyConflict,
-        "Kesim planı siz açtıktan sonra değişti. Sayfayı yenileyip tekrar deneyin.",
+        "Kesim föyü siz açtıktan sonra değişti. Sayfayı yenileyip tekrar deneyin.",
         ErrorType.Conflict);
 
     private static readonly Error Busy = new(
-        ErrorCodes.ResourceBusy, "Bu kesim planı şu an başka bir işlemle kaydediliyor. Lütfen tekrar deneyin.", ErrorType.Conflict);
+        ErrorCodes.ResourceBusy, "Bu kesim föyü şu an başka bir işlemle kaydediliyor. Lütfen tekrar deneyin.", ErrorType.Conflict);
 
     /// <summary>Siparişin bir renk-bedeninin kesim durumu.</summary>
     private sealed record ItemState(
@@ -293,12 +293,12 @@ public sealed class CuttingPlanService(
 
             if (!plan.IsEditable)
             {
-                return new Error(InvalidState, "Yalnızca taslak kesim planı değiştirilebilir.", ErrorType.Conflict);
+                return new Error(InvalidState, "Yalnızca taslak kesim föyü değiştirilebilir.", ErrorType.Conflict);
             }
 
             if (plan.ProductionOrderId != request.ProductionOrderId)
             {
-                return ReferenceValidation.InvalidReference("productionOrderId", "Kesim planının siparişi değiştirilemez.");
+                return ReferenceValidation.InvalidReference("productionOrderId", "Kesim föyünün siparişi değiştirilemez.");
             }
         }
 
@@ -308,7 +308,7 @@ public sealed class CuttingPlanService(
             .SingleOrDefaultAsync(o => o.Id == request.ProductionOrderId, cancellationToken);
         if (order is null)
         {
-            return ReferenceValidation.InvalidReference("productionOrderId", "Üretim siparişi bulunamadı.");
+            return ReferenceValidation.InvalidReference("productionOrderId", "İş emri bulunamadı.");
         }
 
         if (PlanBlockedReason(order.Status) is { } blocked)
@@ -419,7 +419,7 @@ public sealed class CuttingPlanService(
         {
             return new Error(
                 InvalidState,
-                "Yalnızca taslak kesim planı iptal edilebilir. Kesilmiş planın demetleri gerekirse demet ekranından iptal edilir.",
+                "Yalnızca taslak kesim föyü iptal edilebilir. Kesilmiş planın demetleri gerekirse demet ekranından iptal edilir.",
                 ErrorType.Conflict);
         }
 
@@ -461,7 +461,7 @@ public sealed class CuttingPlanService(
 
         if (!plan.IsEditable)
         {
-            return new Error(InvalidState, "Yalnızca taslak kesim planının kesimi kaydedilebilir.", ErrorType.Conflict);
+            return new Error(InvalidState, "Yalnızca taslak kesim föyünün kesimi kaydedilebilir.", ErrorType.Conflict);
         }
 
         // Beden adetleri: girilmeyen beden oran × gerçek kat sayılır.
@@ -672,7 +672,7 @@ public sealed class CuttingPlanService(
     private static string? PlanBlockedReason(ProductionOrderStatus status) =>
         status is ProductionOrderStatus.Released or ProductionOrderStatus.InProduction
             ? null
-            : "Kesim planı yalnızca onaylı veya üretimdeki siparişler için açılabilir ve kesilebilir.";
+            : "Kesim föyü yalnızca onaylı veya üretimdeki siparişler için açılabilir ve kesilebilir.";
 
     /// <summary>Kesim kaydedilebilir mi: kesim demet açtığı için modelin etkin rotası da gerekir.</summary>
     private async Task<string?> CutBlockedReasonAsync(ProductionOrder order, CancellationToken cancellationToken)

@@ -101,6 +101,7 @@ public static class DependencyInjection
         services.AddScoped<IMasterDataService<BreakScheduleDto, BreakScheduleRequest>, BreakScheduleService>();
         services.AddScoped<IProductionTrackingService, ProductionTrackingService>();
         services.AddScoped<IPerformanceService, PerformanceService>();
+        services.AddScoped<ITabletPerformanceService, TabletPerformanceService>();
         services.AddScoped<ILiveDashboardService, LiveDashboardService>();
         services.AddScoped<IMasterDataService<DefectTypeDto, DefectTypeRequest>, DefectTypeService>();
         services.AddScoped<IMasterDataService<StopReasonDto, StopReasonRequest>, StopReasonService>();
@@ -120,6 +121,7 @@ public static class DependencyInjection
         services.AddScoped<StockService>();
         services.AddScoped<IStockService>(provider => provider.GetRequiredService<StockService>());
         services.AddScoped<IStockLedger>(provider => provider.GetRequiredService<StockService>());
+        services.AddScoped<IStockReservationService, StockReservationService>();
         services.AddOptions<StockCountOptions>()
             .BindConfiguration(StockCountOptions.SectionName)
             .ValidateDataAnnotations()
@@ -142,6 +144,7 @@ public static class DependencyInjection
             .ValidateOnStart();
         services.AddScoped<IShipmentService, ShipmentService>();
         services.AddScoped<IShipmentPackingService, ShipmentPackingService>();
+        services.AddScoped<IShipmentPickingService, ShipmentPickingService>();
         services.AddScoped<IAssortmentTemplateService, AssortmentTemplateService>();
 
         // Raporlar: her IReport kataloğa kendiliğinden girer.
@@ -183,6 +186,8 @@ public static class DependencyInjection
         services.AddSingleton<IIntegrationEventCatalog, KonfeksiyonIntegrationEventCatalog>();
         services.AddScoped<IReferenceUsageProbe, KonfeksiyonReferenceUsageProbe>();
         services.AddSingleton<ILiveTopicSource, KonfeksiyonLiveTopics>();
+        services.AddSingleton<ILiveTargetSource, KonfeksiyonLiveTargets>();
+        services.AddScoped<ILiveTabletDirectory, KonfeksiyonLiveTablets>();
 
         return services;
     }

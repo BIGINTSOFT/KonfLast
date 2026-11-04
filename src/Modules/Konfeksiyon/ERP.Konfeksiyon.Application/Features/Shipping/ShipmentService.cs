@@ -22,8 +22,11 @@ public interface IShipmentService
     Task<Result<ShipmentDto>> CreateAsync(ShipmentRequest request, CancellationToken cancellationToken);
     Task<Result<ShipmentDto>> UpdateAsync(int id, ShipmentRequest request, CancellationToken cancellationToken);
 
-    /// <summary>Taslağı sevk eder: kalemler depodan düşer ve sevkiyat kesinleşir.</summary>
-    Task<Result<ShipmentDto>> ShipAsync(int id, string rowVersion, CancellationToken cancellationToken);
+    /// <summary>
+    /// Toplanmış sevkiyatın irsaliyesini keser: kontrol adetleri toplananla tutmalıdır; kalemler toplandıkları
+    /// adreslerden düşer ve sevkiyat kesinleşir.
+    /// </summary>
+    Task<Result<ShipmentDto>> DispatchAsync(int id, ShipmentDispatchRequest request, CancellationToken cancellationToken);
 
     Task<Result<ShipmentDto>> CancelAsync(int id, string rowVersion, CancellationToken cancellationToken);
     Task<Result> DeleteAsync(int id, CancellationToken cancellationToken);
@@ -63,6 +66,8 @@ public sealed class ShipmentService(
     private static readonly IReadOnlyDictionary<ShipmentStatus, string> StatusLabels = new Dictionary<ShipmentStatus, string>
     {
         [ShipmentStatus.Draft] = "Taslak",
+        [ShipmentStatus.Picking] = "Toplamada",
+        [ShipmentStatus.Picked] = "Toplandı",
         [ShipmentStatus.Shipped] = "Sevk edildi",
         [ShipmentStatus.Cancelled] = "İptal",
     };
@@ -132,7 +137,9 @@ public sealed class ShipmentService(
                 s.Items.Count,
                 s.Items.Sum(i => (decimal?)i.Quantity) ?? 0,
                 s.SalesOrder != null ? s.SalesOrder.CustomerOrderNo : null,
-                s.Cartons.Count))
+                s.Cartons.Count,
+                s.Items.Sum(i => (decimal?)i.PickedQuantity) ?? 0,
+                s.PickingBy))
             .ToPagedResultAsync(query, cancellationToken);
     }
 
@@ -191,12 +198,16 @@ public sealed class ShipmentService(
                 .OrderBy(i => i.StockItem.Code, StringComparer.Ordinal)
                 .Select(i => new ShipmentItemDto(
                     i.Id, i.StockItemId, i.StockItem.Code, i.StockItem.Name, i.StockItem.Unit, i.Quantity,
-                    available.GetValueOrDefault(i.StockItemId)))
+                    available.GetValueOrDefault(i.StockItemId), i.PickedQuantity, i.RequestedQuantity, i.CheckedQuantity))
                 .ToList(),
             shipment.SalesOrderId,
             shipment.SalesOrder?.OrderNo,
             shipment.SalesOrder?.CustomerOrderNo,
-            cartons);
+            cartons,
+            new ShipmentWorkflowDto(
+                shipment.CanSendToPicking, shipment.CanReturnToDraft, shipment.CanCompletePicking, shipment.CanReopenPicking,
+                shipment.PickingBy, shipment.PickingStartedAt, shipment.PickedAt, shipment.PickedBy, shipment.VehiclePlate,
+                shipment.DriverName, shipment.DriverIdentityNo, shipment.DespatchUuid));
     }
 
     public async Task<Result<ShipmentDto>> CreateAsync(ShipmentRequest request, CancellationToken cancellationToken)
@@ -214,15 +225,21 @@ public sealed class ShipmentService(
             shipment.Items.Add(new ShipmentItem { StockItemId = item.StockItemId, Quantity = item.Quantity });
         }
 
-        // Numara ve sevkiyat aynı transaction'da: kayıt başarısız olursa numara da geri alınır.
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        // Numara ve sevkiyat aynı transaction'da: kayıt başarısız olursa numara da geri alınır. Çağıranın açık
+        // transaction'ı varsa (siparişten aktarma) onun parçası olur; commit'i çağıran yapar.
+        await using var transaction = db.Database.CurrentTransaction is null
+            ? await db.Database.BeginTransactionAsync(cancellationToken)
+            : null;
         var year = timeProvider.GetLocalNow().Year;
         var sequence = await numberGenerator.NextAsync(DocumentSeries.Shipment, year, cancellationToken);
         shipment.ShipmentNo = $"{_options.NumberPrefix}-{year}-{sequence.ToString().PadLeft(_options.NumberDigits, '0')}";
 
         db.Shipments.Add(shipment);
         await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
 
         return await GetAsync(shipment.Id, cancellationToken);
     }
@@ -257,8 +274,9 @@ public sealed class ShipmentService(
         return await SaveAndReloadAsync(shipment, cancellationToken);
     }
 
-    public async Task<Result<ShipmentDto>> ShipAsync(int id, string rowVersion, CancellationToken cancellationToken)
+    public async Task<Result<ShipmentDto>> DispatchAsync(int id, ShipmentDispatchRequest request, CancellationToken cancellationToken)
     {
+        var rowVersion = request.RowVersion;
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
 
         // Aynı sevkiyatın iki kez sevk edilmesi (çift tıklama, iki kullanıcı) sıraya girer; ikincisi durumu görür.
@@ -269,7 +287,8 @@ public sealed class ShipmentService(
                 ErrorType.Conflict);
         }
 
-        var shipment = await db.Shipments.Include(s => s.Items).SingleOrDefaultAsync(s => s.Id == id, cancellationToken);
+        var shipment = await db.Shipments.Include(s => s.Items).Include(s => s.Picks)
+            .SingleOrDefaultAsync(s => s.Id == id, cancellationToken);
         if (shipment is null)
         {
             return NotFound;
@@ -280,10 +299,35 @@ public sealed class ShipmentService(
             return versionError;
         }
 
-        if (shipment.Status != ShipmentStatus.Draft)
+        if (shipment.Status != ShipmentStatus.Picked)
         {
             return new Error(
-                ErrorCodes.InvalidStatusTransition, $"{StatusLabels[shipment.Status]} durumundaki sevkiyat sevk edilemez.");
+                ErrorCodes.InvalidStatusTransition,
+                shipment.Status is ShipmentStatus.Draft or ShipmentStatus.Picking
+                    ? "İrsaliye yalnızca toplaması bitmiş sevkiyata kesilir; önce depoda toplanmalıdır."
+                    : $"{StatusLabels[shipment.Status]} durumundaki sevkiyata irsaliye kesilemez.");
+        }
+
+        var itemIds = shipment.Items.Select(i => i.StockItemId).ToList();
+        var codes = await db.StockItems.AsNoTracking().IgnoreQueryFilters().Where(i => itemIds.Contains(i.Id))
+            .ToDictionaryAsync(i => i.Id, i => i.Code, cancellationToken);
+
+        // Son kontrol: her kalem sayılmış olmalı ve sayılan adet toplananla (sevk edilecekle) birebir tutmalıdır.
+        var checks = request.Checks.GroupBy(c => c.ShipmentItemId).ToDictionary(g => g.Key, g => g.Last().Quantity);
+        var checkProblems = shipment.Items
+            .Select(item => (item, counted: checks.TryGetValue(item.Id, out var counted) ? counted : (decimal?)null))
+            .Where(x => x.counted != x.item.Quantity)
+            .Select(x => x.counted is null
+                ? $"{codes[x.item.StockItemId]}: kontrol adedi girilmemiş."
+                : $"{codes[x.item.StockItemId]}: toplanan {x.item.Quantity:0.###}, sayılan {x.counted:0.###}.")
+            .ToList();
+        if (checkProblems.Count > 0)
+        {
+            return new Error(
+                ErrorCodes.DespatchCheckMismatch,
+                "Kontrol adetleri toplananla tutmuyor; farkı giderin ya da sevkiyatı yeniden toplamaya açın.",
+                ErrorType.BusinessRule,
+                new Dictionary<string, string[]> { ["checks"] = [.. checkProblems] });
         }
 
         if (!shipment.CanShip)
@@ -314,21 +358,45 @@ public sealed class ShipmentService(
             return orderError;
         }
 
+        shipment.DocumentNo = NullIfBlank(request.DocumentNo) ?? shipment.DocumentNo ?? await NextDespatchNoAsync(cancellationToken);
+        shipment.Carrier = NullIfBlank(request.Carrier) ?? shipment.Carrier;
+        shipment.VehiclePlate = NullIfBlank(request.VehiclePlate)?.ToUpperInvariant();
+        shipment.DriverName = NullIfBlank(request.DriverName);
+        shipment.DriverIdentityNo = NullIfBlank(request.DriverIdentityNo);
+        if (await db.Shipments.AnyAsync(s => s.Id != shipment.Id && s.DocumentNo == shipment.DocumentNo, cancellationToken))
+        {
+            var message = $"{shipment.DocumentNo} numaralı irsaliye başka bir sevkiyatta kullanılmış.";
+            return new Error(ErrorCodes.DespatchNoInUse, message, ErrorType.Conflict, new Dictionary<string, string[]> { ["documentNo"] = [message] });
+        }
+
+        // Kalemlerin toplandığı adresler: stok önce oradan düşer.
+        var picked = shipment.Picks
+            .GroupBy(p => shipment.Items.Single(i => i.Id == p.ShipmentItemId).StockItemId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<(int LocationId, decimal Quantity)>)g.GroupBy(p => p.LocationId)
+                    .Select(l => (l.Key, l.Sum(p => p.Quantity))).ToList());
+
         var stockError = await stockLedger.PostShipmentAsync(
             shipment.WarehouseId,
             shipment.Id,
             shipment.ProductionOrderId,
             shipment.SalesOrderId,
             shipment.Items.Select(i => (i.StockItemId, stockItems[i.StockItemId].Code, i.Quantity)).ToList(),
-            // İrsaliye numarası yoksa hareket, sevkiyat numarasıyla izlenir.
-            shipment.DocumentNo ?? shipment.ShipmentNo,
-            cancellationToken);
+            shipment.DocumentNo,
+            cancellationToken,
+            picked);
         if (stockError is not null)
         {
             return stockError;
         }
 
-        shipment.Ship(timeProvider.GetUtcNow().UtcDateTime, currentUser.UserName ?? SystemUser);
+        foreach (var item in shipment.Items)
+        {
+            item.CheckedQuantity = checks[item.Id];
+        }
+
+        shipment.Ship(timeProvider.GetUtcNow().UtcDateTime, currentUser.UserName ?? SystemUser, Guid.NewGuid());
         await EnqueueShippedAsync(shipment, stockItems, cancellationToken);
 
         try
@@ -590,13 +658,13 @@ public sealed class ShipmentService(
                 .SingleOrDefaultAsync(cancellationToken);
             if (order is null || order.IsDeleted)
             {
-                return LinkError("Sevkiyatın bağlı olduğu üretim siparişi silinmiş; sevkiyat sevk edilemez.");
+                return LinkError("Sevkiyatın bağlı olduğu iş emri silinmiş; sevkiyat sevk edilemez.");
             }
 
             if (order.Status is ProductionOrderStatus.Draft or ProductionOrderStatus.Cancelled)
             {
                 return LinkError(
-                    $"{order.OrderNo} üretim siparişi {(order.Status == ProductionOrderStatus.Draft ? "taslak" : "iptal edilmiş")} durumda; sevkiyat sevk edilemez.");
+                    $"{order.OrderNo} iş emri {(order.Status == ProductionOrderStatus.Draft ? "taslak" : "iptal edilmiş")} durumda; sevkiyat sevk edilemez.");
             }
         }
 
@@ -685,7 +753,7 @@ public sealed class ShipmentService(
             .SingleOrDefaultAsync(cancellationToken);
         if (order is null)
         {
-            return ReferenceValidation.InvalidReference("productionOrderId", "Üretim siparişi bulunamadı.");
+            return ReferenceValidation.InvalidReference("productionOrderId", "İş emri bulunamadı.");
         }
 
         if (order.Status is ProductionOrderStatus.Draft or ProductionOrderStatus.Cancelled)
@@ -700,7 +768,7 @@ public sealed class ShipmentService(
 
         if (request.SalesOrderId is not null && order.SalesOrderId != request.SalesOrderId)
         {
-            return OrderError($"{order.OrderNo} üretim siparişi seçilen müşteri siparişine ait değil.");
+            return OrderError($"{order.OrderNo} iş emri seçilen müşteri siparişine ait değil.");
         }
 
         return stockItems.Values.FirstOrDefault(i => i.ProductId != order.ProductId) is { } foreign
@@ -810,6 +878,16 @@ public sealed class ShipmentService(
                     .OrderBy(l => l.ItemCode, StringComparer.Ordinal)
                     .ToList()));
     }
+
+    /// <summary>Sıradaki irsaliye numarası: {önek}{yıl}{9 haneli sıra} (e-İrsaliye belge numarası biçimi).</summary>
+    private async Task<string> NextDespatchNoAsync(CancellationToken cancellationToken)
+    {
+        var year = timeProvider.GetLocalNow().Year;
+        var sequence = await numberGenerator.NextAsync(DespatchSeries, year, cancellationToken);
+        return $"{_options.DespatchPrefix}{year}{sequence.ToString().PadLeft(9, '0')}";
+    }
+
+    private const string DespatchSeries = "KonfeksiyonDespatch";
 
     private static Error NotEditable(Shipment shipment, string verb) => new(
         ErrorCodes.ShipmentNotEditable, $"{StatusLabels[shipment.Status]} durumundaki sevkiyat {verb}.");

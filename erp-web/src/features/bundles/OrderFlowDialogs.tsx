@@ -5,6 +5,7 @@ import { ErrorAlert, TextField } from '../../components/FormControls'
 import { Modal } from '../../components/Modal'
 import { formatQuantity } from '../../utils/format'
 import { useGetLookupQuery } from '../masterData/masterDataApi'
+import { cardScanHandlers } from '../rfid/cardScan'
 import { useAssignCardMutation } from '../rfid/rfidApi'
 import { useGetReceivableBundlesQuery, useReceiveFromProductionMutation } from '../stock/stockApi'
 import { useGenerateBundlesMutation, useGetBundlesQuery } from './bundlesApi'
@@ -176,7 +177,7 @@ export function AssignCardsDialog({ orderId, onClose }: { orderId: number; onClo
               label="Kart numarası"
               value={uid}
               maxLength={10}
-              onChange={(event) => setUid(event.target.value)}
+              {...cardScanHandlers(setUid, { submitOnEnter: true })}
               errors={fieldErrors(error, 'uid')}
               hint="Kartı okutun; atama yapılır ve sıradaki demete geçilir."
               autoFocus

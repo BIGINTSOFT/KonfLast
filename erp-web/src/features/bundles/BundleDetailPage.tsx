@@ -9,7 +9,7 @@ import { formatDateTime, formatQuantity } from '../../utils/format'
 import { BundleQualitySection } from '../quality/BundleQualitySection'
 import { AssignCardDialog, ReleaseCardDialog } from '../rfid/CardDialogs'
 import { BundleStatusBadge, OperationStatusBadge } from './BundleBadges'
-import { eventQuantity, eventTypeLabels, groupOperationsByStage } from './bundlePresentation'
+import { eventQuantity, eventTypeLabels, groupOperationsByStage, operationStatusPresentation } from './bundlePresentation'
 import { ManualReportDialog } from './ManualReportDialog'
 import { operationSequenceHints, operationSequenceLabels } from '../productionOrders/productionOrdersApi'
 import { useCancelBundleMutation, useGetBundleEventsQuery, useGetBundleQuery, useReleaseBundleOperationMutation } from './bundlesApi'
@@ -50,6 +50,16 @@ export function BundleDetailPage() {
   const bundleOpen = !['COMPLETED', 'CLOSED', 'CANCELLED', 'QUALITY_HOLD'].includes(bundle.status)
   const manualAllowed = (operation: BundleOperation) =>
     bundleOpen && ['READY', 'PAUSED', 'IN_PROGRESS'].includes(operation.status)
+  const rowActions = (operation: BundleOperation) => ({
+    manual: canManualReport && manualAllowed(operation),
+    release: canRelease && operation.status === 'IN_PROGRESS',
+  })
+  const hasRowActions = bundle.operations.some((operation) => {
+    const actions = rowActions(operation)
+    return actions.manual || actions.release
+  })
+  // Sıralı demette öncül her zaman bir önceki adımdır; yalnızca sırasız / rotalı demette gösterilir.
+  const showPredecessors = bundle.sequenceMode !== 'SEQUENTIAL'
 
   const runRelease = async () => {
     const operation = releasing
@@ -92,64 +102,68 @@ export function BundleDetailPage() {
 
       <ErrorAlert error={cancelState.error} />
 
-      <div className="cards">
-        <article className="card">
-          <h2>Demet</h2>
-          <dl className="status-list">
-            <div>
-              <dt>Sipariş</dt>
-              <dd><RecordLink to={`/production-orders/${bundle.productionOrderId}`}>{bundle.orderNo}</RecordLink></dd>
-            </div>
-            <div><dt>Müşteri</dt><dd>{bundle.customerName}</dd></div>
-            <div><dt>Model</dt><dd>{bundle.modelCode} · rota v{bundle.routeVersion}</dd></div>
-            <div><dt>Renk / beden</dt><dd>{bundle.colorName} / {bundle.sizeName}</dd></div>
-            <div><dt>Adet</dt><dd>{formatQuantity(bundle.quantity)}</dd></div>
-            <div><dt>Operasyon sırası</dt><dd title={operationSequenceHints[bundle.sequenceMode]}>{operationSequenceLabels[bundle.sequenceMode]}</dd></div>
-          </dl>
-        </article>
-        <article className="card">
-          <h2>RFID kartı</h2>
-          {bundle.rfidUid ? (
-            <p><code>{bundle.rfidUid}</code></p>
-          ) : (
-            <p className="muted">Kart atanmamış. Demet, kartı atanınca üretime hazır olur.</p>
-          )}
-          {canManage && bundle.canAssignCard && (
-            <button type="button" className="button button--primary" onClick={() => setCardDialog('assign')}>
-              Kart ata
-            </button>
-          )}
-          {canReleaseCard && bundle.rfidUid && (
-            <button type="button" className="button" onClick={() => setCardDialog('release')}>Kartı bırak</button>
-          )}
-        </article>
-        <article className="card">
-          <h2>Şu an nerede?</h2>
-          {bundle.currentOperations.length > 0 ? (
-            <ul className="plain-list">
-              {bundle.currentOperations.map((name) => (
-                <li key={name}><strong>{name}</strong></li>
-              ))}
-            </ul>
-          ) : (
-            <p className="muted">Demetin bekleyen ya da süren operasyonu yok.</p>
-          )}
-        </article>
-      </div>
+      {/* Demetin özeti tek şeritte: kart ve "şu an nerede" ayrı büyük kartlarda yer kaplamaz. */}
+      <dl className="bundle-summary">
+        <div>
+          <dt>İş emri</dt>
+          <dd><RecordLink to={`/production-orders/${bundle.productionOrderId}`}>{bundle.orderNo}</RecordLink></dd>
+        </div>
+        <div><dt>Müşteri</dt><dd>{bundle.customerName}</dd></div>
+        <div><dt>Model</dt><dd>{bundle.modelCode} <span className="muted">· rota v{bundle.routeVersion}</span></dd></div>
+        <div><dt>Renk / beden</dt><dd>{bundle.colorName} / {bundle.sizeName}</dd></div>
+        <div><dt>Adet</dt><dd>{formatQuantity(bundle.quantity)}</dd></div>
+        <div>
+          <dt>Operasyon sırası</dt>
+          <dd title={operationSequenceHints[bundle.sequenceMode]}>{operationSequenceLabels[bundle.sequenceMode]}</dd>
+        </div>
+        <div className="bundle-summary__wide">
+          <dt>Şu an nerede?</dt>
+          <dd>
+            {bundle.currentOperations.length > 0
+              ? <strong>{bundle.currentOperations.join(', ')}</strong>
+              : <span className="muted">Bekleyen ya da süren operasyon yok</span>}
+          </dd>
+        </div>
+        <div className="bundle-summary__wide">
+          <dt>RFID kartı</dt>
+          <dd className="bundle-summary__card">
+            {bundle.rfidUid ? <code>{bundle.rfidUid}</code> : <span className="muted">Atanmamış</span>}
+            {canManage && bundle.canAssignCard && (
+              <button type="button" className="button button--inline button--primary" onClick={() => setCardDialog('assign')}>
+                Kart ata
+              </button>
+            )}
+            {canReleaseCard && bundle.rfidUid && (
+              <button type="button" className="button button--inline" onClick={() => setCardDialog('release')}>Kartı bırak</button>
+            )}
+          </dd>
+        </div>
+      </dl>
+      {!bundle.rfidUid && bundle.canAssignCard && (
+        <p className="muted">Demet, kartı atanınca üretime hazır olur.</p>
+      )}
 
-      <h2 className="section-title">Akış</h2>
-      <ol className="route-flow" aria-label="Demet operasyon akışı">
-        {groupOperationsByStage(bundle.operations).map((operations, index) => (
-          <li key={operations[0].stage} className="route-flow__stage">
-            <div className="route-flow__stage-title">
-              {index + 1}. aşama{operations.length > 1 && ' · paralel'}
-            </div>
-            {operations.map((operation) => (
-              <div key={operation.id} className="route-flow__step">
-                <strong>{operation.sequenceNo}</strong> {operation.operationName}
-                <div><OperationStatusBadge status={operation.status} /></div>
-              </div>
-            ))}
+      <h2 className="section-title">
+        Akış <span className="muted">· {bundle.operations.filter((operation) => operation.status === 'COMPLETED').length} / {bundle.operations.length} tamamlandı</span>
+      </h2>
+      {/* Adımlar sırayla tek akışta; paralel aşama tek grupta. Renk durumu, ikon ve metin de söyler. */}
+      <ol className="route-steps" aria-label="Demet operasyon akışı">
+        {groupOperationsByStage(bundle.operations).map((operations) => (
+          <li
+            key={operations[0].stage}
+            className={operations.length > 1 ? 'route-steps__stage route-steps__stage--parallel' : 'route-steps__stage'}
+            title={operations.length > 1 ? 'Paralel aşama: adımlar aynı anda yapılabilir.' : undefined}
+          >
+            {operations.map((operation) => {
+              const { label, icon, tone } = operationStatusPresentation[operation.status]
+              return (
+                <span key={operation.id} className={`route-steps__step route-steps__step--${tone}${operation.status === 'COMPLETED' ? ' route-steps__step--done' : ''}`} title={label}>
+                  <span aria-hidden="true">{icon}</span>
+                  <strong>{operation.sequenceNo}</strong> {operation.operationName}
+                  <span className="visually-hidden"> ({label})</span>
+                </span>
+              )
+            })}
           </li>
         ))}
       </ol>
@@ -170,35 +184,24 @@ export function BundleDetailPage() {
               <th>Operatör</th>
               <th>Başlangıç</th>
               <th>Bitiş</th>
+              {hasRowActions && <th aria-label="İşlemler" />}
             </tr>
           </thead>
           <tbody>
-            {bundle.operations.map((operation) => (
-              <tr key={operation.id}>
+            {bundle.operations.map((operation) => {
+              const actions = rowActions(operation)
+              // Sıradaki (hazır) ya da süren operasyon vurgulanır.
+              const current = ['READY', 'IN_PROGRESS', 'PAUSED'].includes(operation.status)
+              return (
+              <tr key={operation.id} className={current ? 'table__row--current' : undefined}>
                 <td className="table__number"><strong>{operation.sequenceNo}</strong></td>
                 <td>
                   {operation.operationName}
-                  {operation.predecessors.length > 0 && (
+                  {showPredecessors && operation.predecessors.length > 0 && (
                     <div className="muted">önce: {operation.predecessors.join(', ')}</div>
                   )}
                 </td>
-                <td>
-                  <OperationStatusBadge status={operation.status} />
-                  {((canRelease && operation.status === 'IN_PROGRESS') || (canManualReport && manualAllowed(operation))) && (
-                    <div className="table__actions table__actions--inline">
-                      {canManualReport && manualAllowed(operation) && (
-                        <button type="button" className="button" onClick={() => setManualOperation(operation)}>
-                          Elle bildir
-                        </button>
-                      )}
-                      {canRelease && operation.status === 'IN_PROGRESS' && (
-                        <button type="button" className="button" disabled={releaseState.isLoading} onClick={() => setReleasing(operation)}>
-                          Süren işi bırak
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </td>
+                <td><OperationStatusBadge status={operation.status} /></td>
                 <td className="table__number">{formatQuantity(operation.producedQuantity)}</td>
                 <td className="table__number">{formatQuantity(operation.rejectedQuantity)}</td>
                 <td className="table__number">
@@ -209,8 +212,23 @@ export function BundleDetailPage() {
                 <td>{operation.operatorName ?? '—'}</td>
                 <td>{formatDateTime(operation.startedAt)}</td>
                 <td>{formatDateTime(operation.completedAt)}</td>
+                {hasRowActions && (
+                  <td className="table__actions">
+                    {actions.manual && (
+                      <button type="button" className="button" onClick={() => setManualOperation(operation)}>
+                        Elle bildir
+                      </button>
+                    )}
+                    {actions.release && (
+                      <button type="button" className="button" disabled={releaseState.isLoading} onClick={() => setReleasing(operation)}>
+                        Süren işi bırak
+                      </button>
+                    )}
+                  </td>
+                )}
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       </div>
@@ -221,7 +239,8 @@ export function BundleDetailPage() {
       <ErrorAlert error={eventsError} />
       {events && events.length === 0 && <p className="muted">Bu demette henüz üretim hareketi yok.</p>}
       {events && events.length > 0 && (
-        <div className="table-wrap">
+        // Hareketler uzar: tablo sabit yükseklikte kendi içinde kayar, başlık satırı üstte kalır.
+        <div className="table-wrap table-wrap--scroll">
           <table className="table table--compact">
             <thead>
               <tr>
@@ -242,7 +261,12 @@ export function BundleDetailPage() {
                   <td>{eventTypeLabels[event.eventType]}</td>
                   <td className="table__number">{eventQuantity(event) ?? '—'}</td>
                   <td>{event.machineCode}</td>
-                  <td>{event.operatorName}</td>
+                  <td>
+                    {event.operatorName}
+                    {event.enteredBy && !event.countsForPerformance && event.operatorName !== 'Ofis kapatması' && (
+                      <span className="muted" title="Bu adet operatörün performansına ve primine sayılmaz"> · performansa sayılmaz</span>
+                    )}
+                  </td>
                   <td>{event.enteredBy ? <span title="Ofisten, tablet ve kart olmadan girildi">Elle · {event.enteredBy}</span> : 'Tablet'}</td>
                 </tr>
               ))}

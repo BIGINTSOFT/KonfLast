@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { InputHTMLAttributes, ReactNode, Ref } from 'react'
 import { isRequestError } from '../api/envelope'
 
@@ -33,14 +34,26 @@ export function ErrorAlert({ error, fields = [] }: { error: unknown; fields?: st
     return null
   }
 
-  const details = Object.values(error.details ?? {}).flat()
+  return <ErrorAlertBox message={error.message} details={Object.values(error.details ?? {}).flat()} error={error} />
+}
+
+/**
+ * Hata kutusu görünür alana kaydırılır: uzun formlarda (ör. çok satırlı sipariş) kutu Kaydet'in hemen üstünde,
+ * kaydırma alanının altında kalıp görünmüyordu. Her yeni hatada (aynı mesaj tekrar gelse de) yeniden kaydırılır.
+ */
+function ErrorAlertBox({ message, details, error }: { message: string; details: string[]; error: unknown }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    ref.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [error])
+
   return (
-    <div className="alert alert--error" role="alert">
-      {error.message}
+    <div ref={ref} className="alert alert--error" role="alert">
+      {message}
       {details.length > 0 && (
         <ul>
-          {details.map((message) => (
-            <li key={message}>{message}</li>
+          {details.map((item) => (
+            <li key={item}>{item}</li>
           ))}
         </ul>
       )}

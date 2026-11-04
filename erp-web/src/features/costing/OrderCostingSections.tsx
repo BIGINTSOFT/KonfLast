@@ -48,7 +48,7 @@ export function OrderMaterialsSection({ orderId, orderNo }: { orderId: number; o
 
   const short = data?.lines.filter((line) => line.shortage > 0) ?? []
   const shortages = short.length
-  const source = orderNo ? `${orderNo} üretim siparişinin eksik malzemesi` : 'Üretim siparişinin eksik malzemesi'
+  const source = orderNo ? `${orderNo} iş emrinin eksik malzemesi` : 'İş emrinin eksik malzemesi'
   const hasReservation = data?.lines.some((line) => line.reserved > 0) ?? false
   const hasNeed = data?.lines.some((line) => line.remainingNeed > 0) ?? false
   const warehouseKnown = data?.warehouseId != null

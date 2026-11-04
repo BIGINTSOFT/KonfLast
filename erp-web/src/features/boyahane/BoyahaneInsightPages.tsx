@@ -11,6 +11,7 @@ import { Pagination } from '../../components/Pagination'
 import { usePermission } from '../../hooks/usePermission'
 import { Permissions } from '../../types/permissions'
 import { formatDate, formatDateTime, formatQuantity, todayIsoDate } from '../../utils/format'
+import { cardScanHandlers } from '../rfid/cardScan'
 import { batchStatusPresentation, batchStepStatusPresentation, colorCheckResultLabels, useSetBatchCardMutation } from './boyahaneBatchesApi'
 import type { Batch } from './boyahaneBatchesApi'
 import { BoyahaneCapacityPlanPage } from './BoyahaneCapacityPlanPage'
@@ -263,7 +264,7 @@ export function BoyahaneCardReleasePage() {
     <section className="page">
       <h1 className="visually-hidden">Kart Boşaltma</h1>
       <form className="toolbar" onSubmit={submit}>
-        <input aria-label="Kart numarası" placeholder="Kartı okutun" maxLength={10} autoFocus value={input} onChange={(event) => setInput(event.target.value)} />
+        <input aria-label="Kart numarası" placeholder="Kartı okutun" maxLength={10} autoFocus autoComplete="off" value={input} {...cardScanHandlers(setInput, { submitOnEnter: true })} />
         <button type="submit" className="button" disabled={input.trim() === ''}>Kartı bul</button>
       </form>
       {released && <div className="alert alert--info">Kart {released} partisinden çıkarıldı.</div>}

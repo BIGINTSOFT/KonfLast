@@ -95,7 +95,7 @@ public sealed class WorkspaceService(
         {
             var drafts = db.ProductionOrders.AsNoTracking().Where(o => o.Status == ProductionOrderStatus.Draft);
             Add(
-                "orders-draft", "Onay bekleyen üretim siparişleri", "Taslak siparişler onaylanınca demetlenebilir.",
+                "orders-draft", "Onay bekleyen iş emirleri", "Taslak siparişler onaylanınca demetlenebilir.",
                 await drafts.CountAsync(cancellationToken),
                 "/production-orders?status=DRAFT",
                 // Tek tek bildirim, kararı verecek kişiye (onay yetkisi olana) gösterilir.
@@ -189,9 +189,13 @@ public sealed class WorkspaceService(
         if (granted.Contains(KP.Shipment.View))
         {
             Add(
-                "shipments-draft", "Sevk bekleyen sevkiyatlar", "Taslak sevkiyat stoğu etkilemez; sevk edilince düşer.",
-                await db.Shipments.CountAsync(s => s.Status == ShipmentStatus.Draft, cancellationToken),
-                "/shipments");
+                "shipments-picking", "Toplama bekleyen sevkiyatlar", "Depoya toplamaya verilmiş; el terminalinden toplanır.",
+                await db.Shipments.CountAsync(s => s.Status == ShipmentStatus.Picking, cancellationToken),
+                "/picking");
+            Add(
+                "shipments-picked", "İrsaliye bekleyen sevkiyatlar", "Toplandı; son adet kontrolünden sonra irsaliyesi kesilir.",
+                await db.Shipments.CountAsync(s => s.Status == ShipmentStatus.Picked, cancellationToken),
+                "/despatch-queue");
         }
 
         if (granted.Contains(KP.Machine.View))
@@ -227,7 +231,7 @@ public sealed class WorkspaceService(
                 .OrderByDescending(o => o.Id)
                 .Take(HitsPerType)
                 .Select(o => new SearchHitDto(
-                    "Üretim siparişi", o.OrderNo, o.Customer.Name + " · " + o.Product.Name, "/production-orders/" + o.Id))
+                    "İş emri", o.OrderNo, o.Customer.Name + " · " + o.Product.Name, "/production-orders/" + o.Id))
                 .ToListAsync(cancellationToken));
         }
 
@@ -369,7 +373,7 @@ public sealed class WorkspaceService(
                 await db.ProductMaterials.Select(m => m.ProductId).Distinct().CountAsync(cancellationToken), true),
             ("lines", "Planlama", "Bantlar", "Üretim bantları; planlama ve bant dengeleme için.", "/production-lines",
                 await db.ProductionLines.CountAsync(cancellationToken), true),
-            ("orders", "İlk üretim", "Üretim siparişi", "İlk siparişi açıp onaylayın; ardından demet oluşturun.",
+            ("orders", "İlk üretim", "İş emri", "İlk siparişi açıp onaylayın; ardından demet oluşturun.",
                 "/production-orders", await db.ProductionOrders.CountAsync(cancellationToken), false),
         ];
 

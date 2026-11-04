@@ -6,6 +6,7 @@ import { Modal } from '../../components/Modal'
 import { formatQuantity } from '../../utils/format'
 import { LookupSelect } from '../masterData/LookupSelect'
 import { useGetManualReportOptionsQuery, useManualReportMutation } from './bundlesApi'
+import type { ManualReportAttribution } from './bundlesApi'
 
 interface ManualReportDialogProps {
   operationId: number
@@ -15,19 +16,36 @@ interface ManualReportDialogProps {
 
 const toQuantity = (text: string) => (text.trim() === '' ? 0 : Number(text))
 
+const attributions: { value: ManualReportAttribution; label: string; hint: string }[] = [
+  { value: 'OPERATOR', label: 'Operatör adına', hint: 'Adet operatörün performansına ve primine sayılır.' },
+  {
+    value: 'OPERATOR_NOT_COUNTED',
+    label: 'Operatör adına, performansa sayılmaz',
+    hint: 'Operatörün adı kayıtta görünür; verim ve prim hesabına girmez.',
+  },
+  {
+    value: 'NO_OPERATOR',
+    label: 'Operatörsüz (ofis kapatması)',
+    hint: 'Kimseye yazılmaz; yalnızca demet ve sipariş ilerler.',
+  },
+]
+
 /**
  * Ofisten elle üretim bildirimi: tablet arızalandığında ya da iş askıda kaldığında operasyon tablet ve kart
- * olmadan ilerletilir. İşlemdeki işte makine ve operatör o işinkidir; başlamamış / bekleyen işte seçilir.
+ * olmadan ilerletilir. İşlemdeki işte makine ve operatör o işinkidir; başlamamış / bekleyen işte seçilir. Adedin
+ * operatöre yazılıp performansına / primine sayılacağı ya da operatörsüz (ofis kapatması) girileceği seçilir.
  */
 export function ManualReportDialog({ operationId, bundleNo, onClose }: ManualReportDialogProps) {
   const { data: options, error: optionsError } = useGetManualReportOptionsQuery(operationId)
   const [report, { isLoading, error }] = useManualReportMutation()
   // Çift tıklama / ağ tekrarı aynı kimlikle gelir ve ikinci kez işlenmez.
   const [requestId] = useState(() => crypto.randomUUID())
-  const [produced, setProduced] = useState('')
-  const [rejected, setRejected] = useState('')
+  // Boşsa kalan adedin tamamı sağlam sayılır (seçenekler gelince doldurulur).
+  const [produced, setProduced] = useState<string | null>(null)
+  const [rejected, setRejected] = useState('0')
   const [machineId, setMachineId] = useState<number | null>(null)
   const [operatorId, setOperatorId] = useState<number | null>(null)
+  const [attribution, setAttribution] = useState<ManualReportAttribution>('OPERATOR')
 
   const title = options
     ? `Elle bildir: Demet ${bundleNo} · ${options.sequenceNo} ${options.operationName}`
@@ -41,20 +59,45 @@ export function ManualReportDialog({ operationId, bundleNo, onClose }: ManualRep
     )
   }
 
-  const total = toQuantity(produced) + toQuantity(rejected)
+  const remaining = options.remainingQuantity
+  const producedText = produced ?? String(remaining)
+  const producedCount = toQuantity(producedText)
+  const rejectedCount = toQuantity(rejected)
+  const total = producedCount + rejectedCount
+  const left = remaining - total
+  // Sağlam ve hatalının toplamı kalanı geçemez: biri artınca taşan kısım diğerinden düşülür (tablettekiyle aynı).
+  const clamp = (value: number) => (Number.isFinite(value) ? Math.max(0, Math.min(remaining, Math.trunc(value))) : 0)
+  const changeProduced = (text: string) => {
+    setProduced(text)
+    const next = clamp(toQuantity(text))
+    if (next + rejectedCount > remaining) {
+      setRejected(String(remaining - next))
+    }
+  }
+  const changeRejected = (text: string) => {
+    setRejected(text)
+    const next = clamp(toQuantity(text))
+    if (producedCount + next > remaining) {
+      setProduced(String(remaining - next))
+    }
+  }
   const machineCount = options.machines.length
   const selectedMachine = options.inProgress ? options.machineId : (machineId ?? (machineCount === 1 ? options.machines[0].id : null))
-  const valid = Number.isInteger(total) && total > 0 && (options.inProgress || (selectedMachine !== null && operatorId !== null))
+  const withOperator = attribution !== 'NO_OPERATOR'
+  const valid =
+    Number.isInteger(total) && total > 0 && left >= 0
+    && (options.inProgress || (selectedMachine !== null && (!withOperator || operatorId !== null)))
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
     const result = await report({
       operationId,
       requestId,
-      producedQuantity: toQuantity(produced),
-      rejectedQuantity: toQuantity(rejected),
-      operatorId: options.inProgress ? null : operatorId,
+      producedQuantity: producedCount,
+      rejectedQuantity: rejectedCount,
+      operatorId: options.inProgress || !withOperator ? null : operatorId,
       machineId: options.inProgress ? null : selectedMachine,
+      attribution,
     })
     if (!('error' in result)) {
       onClose()
@@ -67,11 +110,34 @@ export function ManualReportDialog({ operationId, bundleNo, onClose }: ManualRep
         {options.inProgress ? (
           <p>
             İş <strong>{options.machineCode}</strong> makinesinde <strong>{options.operatorName}</strong> tarafından başlatılmış ve
-            işlemde görünüyor. Bildirilen adet bu operatör ve makine adına yazılır; makine serbest kalır.
+            işlemde görünüyor. Bildirilen adet bu makineye yazılır; operatöre yazılıp yazılmayacağını aşağıda seçin. Makine
+            serbest kalır.
           </p>
         ) : (
-          <p>İşi yapan operatörü ve makineyi seçin; operasyon tablet ve kart olmadan ilerletilir.</p>
+          <p>İşin yapıldığı makineyi ve adedin kime yazılacağını seçin; operasyon tablet ve kart olmadan ilerletilir.</p>
         )}
+
+        <fieldset className="attribution-options">
+          <legend>Kimin adına</legend>
+          {attributions.map((option) => (
+            <label key={option.value} className={attribution === option.value ? 'attribution-option attribution-option--active' : 'attribution-option'}>
+              <input
+                type="radio"
+                name="attribution"
+                value={option.value}
+                checked={attribution === option.value}
+                onChange={() => setAttribution(option.value)}
+              />
+              <span>
+                <strong>
+                  {option.label}
+                  {options.inProgress && option.value !== 'NO_OPERATOR' && options.operatorName ? ` · ${options.operatorName}` : ''}
+                </strong>
+                <small>{option.hint}</small>
+              </span>
+            </label>
+          ))}
+        </fieldset>
         <p className="muted">Kalan adet: <strong>{formatQuantity(options.remainingQuantity)}</strong>. Kalan biterse operasyon tamamlanır, bitmezse bekletilir.</p>
 
         {!options.inProgress && (
@@ -93,14 +159,16 @@ export function ManualReportDialog({ operationId, bundleNo, onClose }: ManualRep
                 <small key={message} className="field__error">{message}</small>
               ))}
             </label>
-            <LookupSelect
-              resource="operators"
-              label="Operatör"
-              value={operatorId}
-              onChange={setOperatorId}
-              required
-              errors={fieldErrors(error, 'operatorId')}
-            />
+            {withOperator && (
+              <LookupSelect
+                resource="operators"
+                label="Operatör"
+                value={operatorId}
+                onChange={setOperatorId}
+                required
+                errors={fieldErrors(error, 'operatorId')}
+              />
+            )}
           </div>
         )}
 
@@ -111,8 +179,8 @@ export function ManualReportDialog({ operationId, bundleNo, onClose }: ManualRep
             inputMode="numeric"
             min={0}
             max={options.remainingQuantity}
-            value={produced}
-            onChange={(event) => setProduced(event.target.value)}
+            value={producedText}
+            onChange={(event) => changeProduced(event.target.value)}
             errors={fieldErrors(error, 'producedQuantity')}
             autoFocus
           />
@@ -123,7 +191,7 @@ export function ManualReportDialog({ operationId, bundleNo, onClose }: ManualRep
             min={0}
             max={options.remainingQuantity}
             value={rejected}
-            onChange={(event) => setRejected(event.target.value)}
+            onChange={(event) => changeRejected(event.target.value)}
             errors={fieldErrors(error, 'rejectedQuantity')}
           />
         </div>
@@ -132,7 +200,7 @@ export function ManualReportDialog({ operationId, bundleNo, onClose }: ManualRep
         <footer className="form__actions">
           <button type="button" className="button" onClick={onClose}>Vazgeç</button>
           <button type="submit" className="button button--primary" disabled={!valid || isLoading}>
-            {isLoading ? 'Kaydediliyor…' : 'Bildir'}
+            {isLoading ? 'Kaydediliyor…' : left === 0 ? 'Bildir ve tamamla' : `Bildir (${formatQuantity(left)} adet kalır)`}
           </button>
         </footer>
       </form>

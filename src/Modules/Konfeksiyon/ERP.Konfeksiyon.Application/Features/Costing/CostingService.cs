@@ -200,7 +200,7 @@ public sealed class ProductMaterialService(IKonfeksiyonDbContext db, IPayrollSer
 /// </summary>
 public sealed class CostingService(IKonfeksiyonDbContext db, IPayrollService payroll, IStockLedger stockLedger) : ICostingService
 {
-    private static readonly Error OrderNotFound = new(ErrorCodes.NotFound, "Üretim siparişi bulunamadı.", ErrorType.NotFound);
+    private static readonly Error OrderNotFound = new(ErrorCodes.NotFound, "İş emri bulunamadı.", ErrorType.NotFound);
 
     private sealed record ItemInfo(string Code, string Name, StockUnit Unit, decimal? UnitCost);
 

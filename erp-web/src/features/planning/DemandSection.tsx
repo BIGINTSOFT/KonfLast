@@ -12,7 +12,7 @@ import { useCreateProductionFromDemandMutation, useGetPlanningDemandQuery } from
 import type { PlanningDemand } from './planningApi'
 import { dueText } from './planningPresentation'
 
-/** Planlanacak adetten üretim siparişi: renk / beden adetleri (planlanacak kadar önerilir), termin ve not. */
+/** Planlanacak adetten iş emri: renk / beden adetleri (planlanacak kadar önerilir), termin ve not. */
 function CreateProductionDialog({ demand, onClose, onCreated }: {
   demand: PlanningDemand
   onClose: () => void
@@ -40,11 +40,11 @@ function CreateProductionDialog({ demand, onClose, onCreated }: {
   }
 
   return (
-    <Modal title={`Üretim siparişi aç · ${demand.salesOrderNo} · ${demand.productCode}`} onClose={onClose}>
+    <Modal title={`İş emri aç · ${demand.salesOrderNo} · ${demand.productCode}`} onClose={onClose}>
       <form className="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
         <p className="muted">
-          Adetler, stoktan ve açık üretim siparişlerinden karşılanmayan kısım kadar önerildi. Fire payı için artırabilirsiniz.
-          Üretim siparişi taslak açılır; Üretim Siparişleri ekranında onaylanıp banta planlanır.
+          Adetler, stoktan ve açık iş emirlerinden karşılanmayan kısım kadar önerildi. Fire payı için artırabilirsiniz.
+          İş emri taslak açılır; İş Emirleri ekranında onaylanıp banta planlanır.
         </p>
         <div className="table-wrap">
           <table className="table table--compact demand-items">
@@ -100,7 +100,7 @@ function CreateProductionDialog({ demand, onClose, onCreated }: {
         <footer className="form__actions">
           <button type="button" className="button" onClick={onClose}>Vazgeç</button>
           <button type="submit" className="button button--primary" disabled={isLoading || total === 0}>
-            {isLoading ? 'Açılıyor…' : 'Üretim siparişi aç'}
+            {isLoading ? 'Açılıyor…' : 'İş emri aç'}
           </button>
         </footer>
       </form>
@@ -109,8 +109,8 @@ function CreateProductionDialog({ demand, onClose, onCreated }: {
 }
 
 /**
- * Planlanacak müşteri siparişleri: onaylı siparişlerin stoktan ya da üretim siparişinden karşılanmamış adedi. Satış
- * siparişi doğrudan üretime gitmez; planlamacı buradan üretim siparişi açar.
+ * Planlanacak müşteri siparişleri: onaylı siparişlerin stoktan ya da iş emrinden karşılanmamış adedi. Satış
+ * siparişi doğrudan üretime gitmez; planlamacı buradan iş emri açar.
  */
 export function DemandSection() {
   const canCreate = usePermission(Permissions.ProductionOrderCreate)
@@ -122,12 +122,12 @@ export function DemandSection() {
     <>
       <h2 className="section-title">Planlanacak müşteri siparişleri</h2>
       <p className="muted">
-        Onaylanan siparişlerin stoktan ayrılamayan ve henüz üretim siparişine dönüşmemiş adedi. Üretim siparişi açılınca
-        sipariş buradan düşer ve Üretim Siparişleri ekranına geçer.
+        Onaylanan siparişlerin stoktan ayrılamayan ve henüz iş emrine dönüşmemiş adedi. İş emri açılınca
+        sipariş buradan düşer ve İş Emirleri ekranına geçer.
       </p>
       {created && (
         <p className="alert alert--info" role="status">
-          <RecordLink to={`/production-orders/${created.id}`}>{created.orderNo}</RecordLink> numaralı taslak üretim siparişi açıldı.
+          <RecordLink to={`/production-orders/${created.id}`}>{created.orderNo}</RecordLink> numaralı taslak iş emri açıldı.
         </p>
       )}
       {isLoading && <p role="status">Yükleniyor…</p>}
@@ -174,7 +174,7 @@ export function DemandSection() {
                     {canCreate && (
                       <button type="button" className="button" onClick={() => setCreating(demand)}>
                         <Factory aria-hidden="true" />
-                        Üretim siparişi aç
+                        İş emri aç
                       </button>
                     )}
                   </td>

@@ -1,7 +1,7 @@
-import type { MachineStatus, SessionStatus, StaffRole } from '../api/types';
+import type { SessionStatus, StaffRole, TabletPerformance } from '../api/types';
 import type { StationState } from '../station/StationController';
 import { BigButton } from '../ui/controls';
-import { SidebarOperator, SidebarSignedOut, StationSidebarFrame } from '../ui/StationSidebarFrame';
+import { SidebarOperator, SidebarPerformance, SidebarSignedOut, StationSidebarFrame } from '../ui/StationSidebarFrame';
 import { formatClock, formatElapsed } from '../util/time';
 
 interface StationSidebarProps {
@@ -11,16 +11,9 @@ interface StationSidebarProps {
   /** Markaya uzun basılınca sistem ayarları açılır (yönetici işlemi). */
   onOpenSetup: () => void;
   onSignOut: () => void;
+  /** Oturumu açık personelin bugünkü performansı; henüz alınmadıysa null. */
+  todayPerformance?: TabletPerformance | null;
 }
-
-const machineStatus: Record<MachineStatus, { label: string; color: string }> = {
-  AVAILABLE: { label: 'Müsait', color: '#3ecf8e' },
-  RUNNING: { label: 'Çalışıyor', color: '#4fc3d9' },
-  IDLE: { label: 'Boşta', color: '#aab6c7' },
-  BREAKDOWN: { label: 'Arızalı', color: '#ff8a80' },
-  MAINTENANCE: { label: 'Bakımda', color: '#f0bd5b' },
-  OFFLINE: { label: 'Çevrimdışı', color: '#aab6c7' },
-};
 
 const sessionStatus: Record<SessionStatus, { label: string; color: string }> = {
   ACTIVE: { label: 'Çalışıyor', color: '#3ecf8e' },
@@ -38,7 +31,7 @@ export const staffRoleLabels: Record<StaffRole, string> = {
 };
 
 /** Sol panel: marka, istasyon (makine / operasyon / bant) ve oturumu açık personel. */
-export function StationSidebar({ state, tabletCode, now, onOpenSetup, onSignOut }: StationSidebarProps) {
+export function StationSidebar({ state, tabletCode, now, onOpenSetup, onSignOut, todayPerformance }: StationSidebarProps) {
   const { context, session } = state;
   const machine = context?.machine;
   const loginAt = session ? new Date(session.loginAt) : null;
@@ -48,21 +41,24 @@ export function StationSidebar({ state, tabletCode, now, onOpenSetup, onSignOut 
       moduleName="Konfeksiyon"
       title={machine ? machine.machineCode : tabletCode}
       subtitle={machine ? context?.operation?.name ?? 'Operasyon tanımsız' : undefined}
-      meta={[context?.line?.name, machine?.machineName, tabletCode].filter(Boolean).join(' · ')}
-      status={machine ? { label: `Makine: ${machineStatus[machine.status].label}`, color: machineStatus[machine.status].color } : undefined}
-      statusReason={machine?.status === 'BREAKDOWN' ? machine.statusReason : null}
+      details={[
+        ...(context?.line?.name ? [{ label: 'Bant', value: context.line.name }] : []),
+        ...(machine?.machineName ? [{ label: 'Makine', value: machine.machineName }] : []),
+        { label: 'Tablet', value: tabletCode },
+        ...(context?.currentPlan ? [{ label: 'Plan', value: `${context.currentPlan.orderNo} · ${context.currentPlan.modelCode}` }] : []),
+      ]}
+      // Makine durumu etiketi gösterilmez: arıza üst çubukta ("Arızayı kapat") ve iş alanında nedeniyle görünür.
       onOpenSetup={onOpenSetup}
+      // Düğme hep yerinde durur (alanlar kaymaz); oturum yokken ya da süren iş varken pasiftir.
       footer={
-        session && !state.job && !state.needsEnrollment ? (
-          <BigButton
-            label="Oturumu kapat"
-            tone="ghost"
-            size="compact"
-            disabled={state.busy}
-            onPress={onSignOut}
-            testID="station-sign-out"
-          />
-        ) : undefined
+        <BigButton
+          label="Oturumu kapat"
+          tone="ghost"
+          size="compact"
+          disabled={state.busy || !session || state.job !== null || state.needsEnrollment}
+          onPress={onSignOut}
+          testID="station-sign-out"
+        />
       }>
       {session && loginAt ? (
         <SidebarOperator
@@ -74,8 +70,15 @@ export function StationSidebar({ state, tabletCode, now, onOpenSetup, onSignOut 
           facts={[
             { label: 'Giriş saati', value: formatClock(loginAt), testID: 'operator-login-at' },
             { label: 'Oturum süresi', value: formatElapsed(now.getTime() - loginAt.getTime()), testID: 'operator-elapsed' },
-          ]}
-        />
+          ]}>
+          {/* Performans sayfasına geçmeden bir bakışta görülür. */}
+          <SidebarPerformance
+            efficiencyPercent={todayPerformance?.efficiencyPercent ?? null}
+            qualityPercent={todayPerformance?.qualityPercent ?? null}
+            produced={todayPerformance?.produced ?? null}
+            targetQuantity={todayPerformance?.targetQuantity ?? null}
+          />
+        </SidebarOperator>
       ) : (
         <SidebarSignedOut hint="Çalışmaya başlamak için personel kartınızı okutun." />
       )}

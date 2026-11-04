@@ -74,7 +74,7 @@ public sealed class StockScanService(IKonfeksiyonDbContext db, ICostingService c
             : await db.ProductionOrders.AsNoTracking().Where(o => o.OrderNo == text).Select(o => (int?)o.Id).SingleOrDefaultAsync(cancellationToken);
         if (orderId is null)
         {
-            return new Error(ErrorCodes.NotFound, $"{text}: bu numarayla bir üretim siparişi bulunamadı.", ErrorType.NotFound);
+            return new Error(ErrorCodes.NotFound, $"{text}: bu numarayla bir iş emri bulunamadı.", ErrorType.NotFound);
         }
 
         return await costing.GetPickListAsync(orderId.Value, warehouseId, cancellationToken);

@@ -60,7 +60,7 @@ export function HomePage() {
           <p className="muted">Kısayollarınız ve bekleyen işleriniz aşağıda. Bir ekranı ayrı sekmede açmak için sağ tıklayın.</p>
         </div>
         <div className="page__actions">
-          {konfeksiyon && canCreateOrder && <Link to="/production-orders/new" className="button"><Plus aria-hidden="true" />Yeni üretim siparişi</Link>}
+          {konfeksiyon && canCreateOrder && <Link to="/production-orders/new" className="button"><Plus aria-hidden="true" />Yeni iş emri</Link>}
           {dashboardPath && <Link to={dashboardPath} className="button button--primary"><LayoutDashboard aria-hidden="true" />Canlı Pano</Link>}
         </div>
       </header>

@@ -24,7 +24,7 @@ const CLOSED: BundleStatus[] = ['COMPLETED', 'CANCELLED', 'CLOSED']
 
 const columns: GridColumn[] = [
   { key: 'bundleNo', label: 'Demet no' },
-  { key: 'orderNo', label: 'Sipariş' },
+  { key: 'orderNo', label: 'İş emri' },
   { key: 'modelCode', label: 'Model' },
   { key: 'colorName', label: 'Renk' },
   { key: 'sizeName', label: 'Beden' },

@@ -27,7 +27,7 @@ public sealed class DokumaOperatorRequestValidator : AbstractValidator<DokumaOpe
         RuleFor(x => x.LastName).ValidName(100);
         RuleFor(x => x.Role).IsInEnum().WithMessage("Geçerli bir görev seçin.");
         RuleFor(x => x.CardUid)
-            .Must(uid => RfidUid.Normalize(uid) is not null).WithMessage("Kart numarası 1-10 rakam olmalıdır.")
+            .Must(uid => RfidUid.Normalize(uid) is not null).WithMessage("Kart numarası en fazla 10 harf ya da rakam olmalıdır.")
             .When(x => !string.IsNullOrWhiteSpace(x.CardUid));
     }
 }
@@ -107,7 +107,7 @@ public sealed class DokumaRfidCardRequestValidator : AbstractValidator<DokumaRfi
 {
     public DokumaRfidCardRequestValidator()
     {
-        RuleFor(x => x.Uid).Must(uid => RfidUid.Normalize(uid) is not null).WithMessage("Kart numarası 1-10 rakam olmalıdır.");
+        RuleFor(x => x.Uid).Must(uid => RfidUid.Normalize(uid) is not null).WithMessage("Kart numarası en fazla 10 harf ya da rakam olmalıdır.");
         RuleFor(x => x.Label).OptionalText(50);
     }
 }

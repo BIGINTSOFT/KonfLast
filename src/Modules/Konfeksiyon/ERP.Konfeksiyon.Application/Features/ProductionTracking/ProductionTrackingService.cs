@@ -58,7 +58,7 @@ public sealed class ProductionTrackingService(IKonfeksiyonDbContext db) : IProdu
             .SingleOrDefaultAsync(cancellationToken);
         if (order is null)
         {
-            return new Error(ErrorCodes.NotFound, "Üretim siparişi bulunamadı.", ErrorType.NotFound);
+            return new Error(ErrorCodes.NotFound, "İş emri bulunamadı.", ErrorType.NotFound);
         }
 
         var items = await db.ProductionOrderItems
@@ -301,9 +301,12 @@ public sealed class ProductionTrackingService(IKonfeksiyonDbContext db) : IProdu
                 Id = e.BundleOperation.OperationId, Code = e.BundleOperation.Operation.OperationCode,
                 Name = e.BundleOperation.Operation.Name, e.ProducedQuantity, e.RejectedQuantity, e.BundleId,
             }),
+            // Operatörsüz elle kapatılan adet (ofis kapatması) ayrı satırda toplanır.
             _ => events.Select(e => new
             {
-                Id = e.OperatorId, Code = e.Operator.OperatorCode, Name = e.Operator.FirstName + " " + e.Operator.LastName,
+                Id = e.OperatorId ?? 0,
+                Code = e.Operator == null ? "—" : e.Operator.OperatorCode,
+                Name = e.Operator == null ? "Ofis kapatması (operatörsüz)" : e.Operator.FirstName + " " + e.Operator.LastName,
                 e.ProducedQuantity, e.RejectedQuantity, e.BundleId,
             }),
         };

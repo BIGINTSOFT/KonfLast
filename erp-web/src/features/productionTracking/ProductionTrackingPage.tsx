@@ -12,15 +12,52 @@ import {
   useGetWipBundlesQuery,
   useGetWipQuery,
 } from './trackingApi'
-import type { OutputGroupBy, WipOperation } from './trackingApi'
+import type { MachineActivity, OutputGroupBy, WipOperation } from './trackingApi'
 import { dayRangeToUtc, groupByLabels, operatorStatePresentation } from './trackingPresentation'
 
 const FALLBACK_REFRESH_MS = 30_000
 const PAGE_SIZE = 20
 
+type MachineView = 'all' | 'session' | 'attention' | 'offline'
+
+const machineViewLabels: Record<MachineView, string> = {
+  all: 'Tümü',
+  session: 'Oturum açık',
+  attention: 'Dikkat isteyen',
+  offline: 'Oturum yok',
+}
+
+/** Arıza, bakım, demet bekleme ve ara: ustabaşının bakması gereken makineler. */
+const needsAttention = (machine: MachineActivity) =>
+  ['BREAKDOWN', 'MAINTENANCE'].includes(machine.status)
+  || ['WAITING_FOR_BUNDLE', 'PAUSED', 'MACHINE_BREAKDOWN'].includes(machine.operatorState)
+
+const normalize = (text: string) => text.toLocaleLowerCase('tr-TR')
+
 function MachinesSection() {
   const pollingInterval = useLivePolling(FALLBACK_REFRESH_MS)
   const { data, error, isLoading } = useGetMachineActivityQuery(undefined, { pollingInterval })
+  const [search, setSearch] = useState('')
+  const [line, setLine] = useState('')
+  const [view, setView] = useState<MachineView>('all')
+
+  const machines = data ?? []
+  const lines = [...new Set(machines.map((machine) => machine.lineCode).filter((code): code is string => code !== null))].sort()
+  const term = normalize(search.trim())
+  const visible = machines
+    .filter((machine) => line === '' || machine.lineCode === line)
+    .filter((machine) =>
+      view === 'all'
+      || (view === 'session' && machine.operatorState !== 'OFFLINE')
+      || (view === 'attention' && needsAttention(machine))
+      || (view === 'offline' && machine.operatorState === 'OFFLINE'))
+    .filter((machine) =>
+      term === ''
+      || normalize(`${machine.machineCode} ${machine.machineName} ${machine.operationName ?? ''} ${machine.operatorName ?? ''}`).includes(term))
+    // Oturum açık makineler üstte: canlı iş önce görünür.
+    .sort((a, b) => Number(a.operatorState === 'OFFLINE') - Number(b.operatorState === 'OFFLINE'))
+
+  const count = (predicate: (machine: MachineActivity) => boolean) => machines.filter(predicate).length
 
   return (
     <>
@@ -28,56 +65,105 @@ function MachinesSection() {
       {isLoading && <p role="status">Yükleniyor…</p>}
       <ErrorAlert error={error} />
       {data && (
-        <div className="table-wrap">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Makine</th>
-                <th>Bant</th>
-                <th>Operasyon</th>
-                <th>Durum</th>
-                <th>Operatör</th>
-                <th>Operatör durumu</th>
-                <th>Süren iş</th>
-                <th className="table__number">Kalan</th>
-                <th>İş başlangıcı</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((machine) => (
-                <tr key={machine.machineId}>
-                  <td><code>{machine.machineCode}</code> <span className="muted">{machine.machineName}</span></td>
-                  <td>{machine.lineCode ?? '—'}</td>
-                  <td>{machine.operationName ?? '—'}</td>
-                  <td><MachineStatusBadge status={machine.status} /></td>
-                  <td>{machine.operatorName ?? '—'}</td>
-                  <td>
-                    <span className={`badge badge--${operatorStatePresentation[machine.operatorState].tone}`}>
-                      <span aria-hidden="true">{operatorStatePresentation[machine.operatorState].icon}</span>{' '}
-                      {operatorStatePresentation[machine.operatorState].label}
-                    </span>
-                  </td>
-                  <td>
-                    {machine.bundleId ? (
-                      <RecordLink to={`/bundles/${machine.bundleId}`}>Demet {machine.bundleNo}</RecordLink>
-                    ) : (
-                      '—'
-                    )}
-                  </td>
-                  <td className="table__number">
-                    {machine.remainingQuantity === null ? '—' : formatQuantity(machine.remainingQuantity)}
-                  </td>
-                  <td>{formatDateTime(machine.jobStartedAt)}</td>
-                </tr>
+        <>
+          <dl className="stat-strip">
+            <div><dt>Makine</dt><dd>{machines.length}</dd></div>
+            <div><dt>Oturum açık</dt><dd>{count((m) => m.operatorState !== 'OFFLINE')}</dd></div>
+            <div><dt>Üretiyor</dt><dd>{count((m) => m.operatorState === 'PRODUCING')}</dd></div>
+            <div><dt>Demet bekliyor</dt><dd>{count((m) => m.operatorState === 'WAITING_FOR_BUNDLE')}</dd></div>
+            <div><dt>Ara / mola</dt><dd>{count((m) => m.operatorState === 'PAUSED' || m.operatorState === 'BREAK')}</dd></div>
+            <div><dt>Arıza / bakım</dt><dd>{count((m) => ['BREAKDOWN', 'MAINTENANCE'].includes(m.status))}</dd></div>
+          </dl>
+
+          <div className="toolbar">
+            <input
+              type="search"
+              placeholder="Makine, operasyon ya da operatör"
+              aria-label="Makinelerde ara"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+            <select aria-label="Bant" value={line} onChange={(event) => setLine(event.target.value)}>
+              <option value="">Tüm bantlar</option>
+              {lines.map((code) => <option key={code} value={code}>{code}</option>)}
+            </select>
+            <div className="segmented" role="group" aria-label="Görünüm">
+              {(Object.keys(machineViewLabels) as MachineView[]).map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={view === key ? 'segmented__item segmented__item--active' : 'segmented__item'}
+                  aria-pressed={view === key}
+                  onClick={() => setView(key)}
+                >
+                  {machineViewLabels[key]}
+                </button>
               ))}
-              {data.length === 0 && (
+            </div>
+            <span className="muted toolbar__actions">{visible.length} / {machines.length} makine</span>
+          </div>
+
+          {/* Sabit yükseklikte kayar: ara stok ve üretim çıktısı sayfanın altına itilmez. */}
+          <div className="table-wrap table-wrap--scroll">
+            <table className="table table--compact">
+              <thead>
                 <tr>
-                  <td colSpan={9} className="table__empty">Aktif makine yok.</td>
+                  <th>Makine</th>
+                  <th>Bant</th>
+                  <th>Operasyon</th>
+                  <th>Durum</th>
+                  <th>Operatör</th>
+                  <th>Operatör durumu</th>
+                  <th>Süren iş</th>
+                  <th className="table__number">Kalan</th>
+                  <th>İş başlangıcı</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {visible.map((machine) => {
+                  const state = operatorStatePresentation[machine.operatorState]
+                  return (
+                    <tr key={machine.machineId} className={needsAttention(machine) ? 'table__row--attention' : undefined}>
+                      <td><code>{machine.machineCode}</code> <span className="muted">{machine.machineName}</span></td>
+                      <td>{machine.lineCode ?? '—'}</td>
+                      <td>{machine.operationName ?? '—'}</td>
+                      <td><MachineStatusBadge status={machine.status} /></td>
+                      <td>{machine.operatorName ?? '—'}</td>
+                      <td>
+                        {/* Oturum yoksa rozet yerine sade çizgi: satır satır tekrar eden "Oturum yok" kalabalık yapmaz. */}
+                        {machine.operatorState === 'OFFLINE' ? (
+                          <span className="muted">—</span>
+                        ) : (
+                          <span className={`badge badge--${state.tone}`}>
+                            <span aria-hidden="true">{state.icon}</span> {state.label}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {machine.bundleId ? (
+                          <RecordLink to={`/bundles/${machine.bundleId}`}>Demet {machine.bundleNo}</RecordLink>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
+                      <td className="table__number">
+                        {machine.remainingQuantity === null ? '—' : formatQuantity(machine.remainingQuantity)}
+                      </td>
+                      <td>{formatDateTime(machine.jobStartedAt)}</td>
+                    </tr>
+                  )
+                })}
+                {visible.length === 0 && (
+                  <tr>
+                    <td colSpan={9} className="table__empty">
+                      {machines.length === 0 ? 'Aktif makine yok.' : 'Süzgece uyan makine yok.'}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </>
   )

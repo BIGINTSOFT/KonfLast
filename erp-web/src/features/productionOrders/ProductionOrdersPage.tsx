@@ -18,10 +18,10 @@ import { ClearFiltersButton } from '../../components/grid/ClearFiltersButton'
 const PAGE_SIZE = 20
 
 const columns: GridColumn[] = [
-  { key: 'orderNo', label: 'Sipariş no' },
+  { key: 'orderNo', label: 'İş emri no' },
   { key: 'customerName', label: 'Müşteri' },
   { key: 'productCode', label: 'Ürün' },
-  { key: 'orderDate', label: 'Sipariş tarihi', filter: 'date' },
+  { key: 'orderDate', label: 'İş emri tarihi', filter: 'date' },
   { key: 'dueDate', label: 'Termin', filter: 'date' },
   { key: 'totalQuantity', label: 'Adet', numeric: true },
   {
@@ -57,13 +57,13 @@ export function ProductionOrdersPage() {
 
   return (
     <section className="page">
-      <h1 className="visually-hidden">Üretim Siparişleri</h1>
+      <h1 className="visually-hidden">İş Emirleri</h1>
 
       <form className="toolbar" onSubmit={handleSearch} role="search">
         <input
           type="search"
-          placeholder="Sipariş no, müşteri, ürün kodu"
-          aria-label="Sipariş ara"
+          placeholder="İş emri no, müşteri, ürün kodu"
+          aria-label="İş emri ara"
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
         />
@@ -71,7 +71,7 @@ export function ProductionOrdersPage() {
         <ClearFiltersButton grid={grid} />
         <div className="toolbar__actions">
           {canCreate && (
-            <Link to="/production-orders/new" className="button button--primary"><Plus aria-hidden="true" />Yeni sipariş</Link>
+            <Link to="/production-orders/new" className="button button--primary"><Plus aria-hidden="true" />Yeni iş emri</Link>
           )}
         </div>
       </form>
@@ -89,6 +89,11 @@ export function ProductionOrdersPage() {
                   <tr key={order.id}>
                     <td>
                       <Link to={`/production-orders/${order.id}`}><code>{order.orderNo}</code></Link>
+                      {order.salesOrderNo === null && (
+                        <span className="badge badge--neutral" title="Müşteri siparişine bağlı değil; fiyat ve termin sipariş üzerinden izlenmez">
+                          Siparişsiz
+                        </span>
+                      )}
                       {order.customerOrderNo && <div className="muted">{order.customerOrderNo}</div>}
                     </td>
                     <td>{order.customerName}</td>

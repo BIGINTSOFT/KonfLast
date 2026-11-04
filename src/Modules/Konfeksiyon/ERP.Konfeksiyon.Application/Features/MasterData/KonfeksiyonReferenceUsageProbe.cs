@@ -47,7 +47,7 @@ public sealed class KonfeksiyonReferenceUsageProbe(IKonfeksiyonDbContext db) : I
             }
 
             return await db.ProductionOrders.AnyAsync(o => o.CustomerId == id, cancellationToken)
-                ? "üretim siparişleri"
+                ? "iş emirleri"
                 : null;
         }
 
@@ -69,7 +69,7 @@ public sealed class KonfeksiyonReferenceUsageProbe(IKonfeksiyonDbContext db) : I
         {
             if (await db.ProductionOrders.AnyAsync(o => o.ProductId == id, cancellationToken))
             {
-                return "üretim siparişleri";
+                return "iş emirleri";
             }
 
             return await db.SalesOrderLines.AnyAsync(l => l.ProductId == id, cancellationToken)
@@ -85,7 +85,7 @@ public sealed class KonfeksiyonReferenceUsageProbe(IKonfeksiyonDbContext db) : I
         if (entityType == typeof(Color))
         {
             return await db.ProductionOrderItems.AnyAsync(i => i.ColorId == id, cancellationToken)
-                ? "üretim siparişleri"
+                ? "iş emirleri"
                 : null;
         }
 
@@ -93,7 +93,7 @@ public sealed class KonfeksiyonReferenceUsageProbe(IKonfeksiyonDbContext db) : I
         {
             if (await db.ProductionOrderItems.AnyAsync(i => i.SizeId == id, cancellationToken))
             {
-                return "üretim siparişleri";
+                return "iş emirleri";
             }
 
             return await db.AssortmentTemplateLines.AnyAsync(l => l.SizeId == id, cancellationToken)

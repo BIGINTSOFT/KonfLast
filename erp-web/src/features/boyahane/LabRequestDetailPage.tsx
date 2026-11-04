@@ -1,4 +1,4 @@
-import { Pencil, Plus, RotateCcw, Trash2, XCircle, X } from 'lucide-react'
+import { Check, Pencil, Plus, RotateCcw, Trash2, XCircle, X } from 'lucide-react'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
@@ -197,9 +197,19 @@ export function LabRequestDetailPage() {
             const pending = trial.decision === 'PENDING' && open
             return (
               <section key={trial.id}>
-                <h2 className="section-title">
-                  Deneme {trial.trialCode} <span className={`badge badge--${decision.tone}`}>{decision.label}</span>
-                </h2>
+                {/* Deneme başlığı ve işlemleri tek çubukta: düğmeler tablonun altında kopuk kalmaz. */}
+                <div className="section-bar trial-bar">
+                  <h2 className="section-title">
+                    Deneme {trial.trialCode} <span className={`badge badge--${decision.tone}`}>{decision.label}</span>
+                  </h2>
+                  {pending && (
+                    <div className="trial-bar__actions">
+                      {canManage && <button type="button" className="button button--inline button--danger-ghost" disabled={removeState.isLoading} onClick={() => removeTrial({ id, trialId: trial.id })}><Trash2 aria-hidden="true" />Sil</button>}
+                      {canManage && <button type="button" className="button button--inline" onClick={() => setTrialDialog(trial)}><Pencil aria-hidden="true" />Düzenle</button>}
+                      {canDecide && <button type="button" className="button button--inline button--primary" onClick={() => setDeciding(trial)}><Check aria-hidden="true" />Karar gir</button>}
+                    </div>
+                  )}
+                </div>
                 {trial.notes && <p className="muted">{trial.notes}</p>}
                 {trial.reusedFromRequestNo && <p className="muted">Önceki reçeteden kopyalandı: {trial.reusedFromRequestNo}</p>}
                 {trial.decisionBy && (
@@ -231,13 +241,6 @@ export function LabRequestDetailPage() {
                     </tbody>
                   </table>
                 </div>
-                {pending && (
-                  <div className="page__actions">
-                    {canDecide && <button type="button" className="button button--primary" onClick={() => setDeciding(trial)}>Karar gir</button>}
-                    {canManage && <button type="button" className="button" onClick={() => setTrialDialog(trial)}><Pencil aria-hidden="true" />Düzenle</button>}
-                    {canManage && <button type="button" className="button button--danger-ghost" disabled={removeState.isLoading} onClick={() => removeTrial({ id, trialId: trial.id })}><Trash2 aria-hidden="true" />Sil</button>}
-                  </div>
-                )}
               </section>
             )
           })}

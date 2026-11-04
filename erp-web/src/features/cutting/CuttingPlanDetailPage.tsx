@@ -31,7 +31,7 @@ export function CuttingPlanDetailPage() {
     return (
       <section className="page">
         <ErrorAlert error={error} />
-        <Link to="/cutting-plans">← Kesim planlarına dön</Link>
+        <Link to="/cutting-plans">← Kesim föylerine dön</Link>
       </section>
     )
   }
@@ -40,7 +40,7 @@ export function CuttingPlanDetailPage() {
 
   return (
     <section className="page">
-      <p><Link to="/cutting-plans">← Kesim planlarına dön</Link></p>
+      <p><Link to="/cutting-plans">← Kesim föylerine dön</Link></p>
 
       <header className="page__header">
         <div>
@@ -54,7 +54,7 @@ export function CuttingPlanDetailPage() {
           {plan.status !== 'CANCELLED' && (
             <Link to={`/cutting-plans/${plan.id}/sheet`} className="button">
               <Printer aria-hidden="true" />
-              Kesim föyü
+              Föyü yazdır
             </Link>
           )}
           {canManage && plan.canEdit && (
@@ -82,9 +82,9 @@ export function CuttingPlanDetailPage() {
 
       <div className="cards">
         <article className="card">
-          <h2>Sipariş</h2>
+          <h2>İş emri</h2>
           <dl className="status-list">
-            <div><dt>Üretim siparişi</dt><dd><Link to={`/production-orders/${plan.productionOrderId}`}>{plan.orderNo}</Link></dd></div>
+            <div><dt>İş emri</dt><dd><Link to={`/production-orders/${plan.productionOrderId}`}>{plan.orderNo}</Link></dd></div>
             <div><dt>Müşteri</dt><dd>{plan.customerName}</dd></div>
             <div><dt>Ürün</dt><dd><code>{plan.productCode}</code> {plan.productName}</dd></div>
             <div><dt>Model</dt><dd>{plan.modelCode}</dd></div>
@@ -233,7 +233,7 @@ export function CuttingPlanDetailPage() {
       )}
       {dialog === 'cut' && <CutDialog plan={plan} onClose={() => setDialog(null)} />}
       {dialog === 'cancel' && (
-        <Modal title="Kesim planını iptal et" onClose={() => setDialog(null)}>
+        <Modal title="Kesim föyünü iptal et" onClose={() => setDialog(null)}>
           <div className="form">
             <p>{plan.planNo} iptal edilecek. İptal edilen plan yeniden açılamaz; numarası yeniden kullanılmaz.</p>
             <footer className="form__actions">

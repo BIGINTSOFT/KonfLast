@@ -30,8 +30,15 @@ public class BundleOperationEvent
     public int MachineId { get; init; }
     public Machine Machine { get; init; } = null!;
 
-    public int OperatorId { get; init; }
-    public Operator Operator { get; init; } = null!;
+    /// <summary>İşi yapan operatör; ofisten operatörsüz kapatılan işte (ofis kapatması) boş.</summary>
+    public int? OperatorId { get; init; }
+    public Operator? Operator { get; init; }
+
+    /// <summary>
+    /// Adet operatörün performansına (verim, kazanılan dakika) ve primine sayılır mı. Tabletten gelen olaylarda her
+    /// zaman evet; ofisten elle bildirimde seçilir, operatörsüz bildirimde hayır. Bant / sipariş adetleri her durumda sayılır.
+    /// </summary>
+    public bool CountsForPerformance { get; init; } = true;
 
     /// <summary>Olay sırasında operatörün açık çalışma oturumu (varsa).</summary>
     public long? WorkSessionId { get; init; }

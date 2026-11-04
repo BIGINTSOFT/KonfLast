@@ -72,7 +72,7 @@ public sealed record BundleReadDto(
 
 public static class RfidValidation
 {
-    public const string InvalidUidMessage = "Geçerli bir kart numarası girin (en fazla 10 rakam, örn. 0012629368).";
+    public const string InvalidUidMessage = "Geçerli bir kart numarası girin (en fazla 10 harf ya da rakam, örn. 0012629368).";
 
     public static IRuleBuilderOptions<T, string> ValidUid<T>(this IRuleBuilder<T, string> rule) => rule
         .NotEmpty().WithMessage("Kart UID'si zorunludur.")

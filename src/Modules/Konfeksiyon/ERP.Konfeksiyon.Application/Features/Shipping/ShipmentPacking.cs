@@ -5,6 +5,7 @@ using ERP.Konfeksiyon.Application.Features.Sales;
 using ERP.Konfeksiyon.Domain.Entities;
 using ERP.Konfeksiyon.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace ERP.Konfeksiyon.Application.Features.Shipping;
 
@@ -58,7 +59,8 @@ public interface IShipmentPackingService
 public sealed class ShipmentPackingService(
     IKonfeksiyonDbContext db,
     ICurrentUser currentUser,
-    TimeProvider timeProvider) : IShipmentPackingService
+    TimeProvider timeProvider,
+    IOptions<ShippingOptions> shippingOptions) : IShipmentPackingService
 {
     private const string SystemUser = "system";
 
@@ -79,7 +81,7 @@ public sealed class ShipmentPackingService(
         ErrorType.Conflict);
 
     private static readonly Error NotEditable = new(
-        ErrorCodes.ShipmentNotEditable, "Koliler yalnızca taslak sevkiyatta değiştirilebilir.");
+        ErrorCodes.ShipmentNotEditable, "Koliler yalnızca taslak ya da toplanmış (irsaliye bekleyen) sevkiyatta değiştirilebilir.");
 
     public async Task<Result<ShipmentPackingDto>> GetAsync(int shipmentId, CancellationToken cancellationToken)
     {
@@ -153,7 +155,7 @@ public sealed class ShipmentPackingService(
             shipment.ShipmentNo,
             shipment.CustomerId,
             shipment.Status,
-            shipment.Status == ShipmentStatus.Draft,
+            shipment.Status is ShipmentStatus.Draft or ShipmentStatus.Picked,
             RowVersionToken.From(shipment.RowVersion),
             cartons.Count,
             cartons.Count(c => c.LoadedAt != null),
@@ -415,6 +417,8 @@ public sealed class ShipmentPackingService(
                         s.SalesOrder.DeliveryAddress.AddressLine, s.SalesOrder.DeliveryAddress.District,
                         s.SalesOrder.DeliveryAddress.City, s.SalesOrder.DeliveryAddress.CountryCode),
                 ProductionOrderNo = s.ProductionOrder == null ? null : s.ProductionOrder.OrderNo,
+                s.DespatchUuid, s.VehiclePlate, s.DriverName, s.DriverIdentityNo, s.ShippedBy,
+                s.Customer.IsEDespatchUser, s.Customer.EDespatchAlias,
             })
             .SingleOrDefaultAsync(cancellationToken);
         if (header is null)
@@ -479,14 +483,21 @@ public sealed class ShipmentPackingService(
             header.SalesOrderNo,
             header.CustomerOrderNo,
             header.ProductionOrderNo,
-            factory is null ? null : new ProformaPartyDto(factory.Name, null, null, factory.Parts.Text, factory.Phone, factory.Email),
+            factory is null
+                ? null
+                : new ProformaPartyDto(
+                    factory.Name, shippingOptions.Value.SenderTaxOffice, shippingOptions.Value.SenderTaxNumber, factory.Parts.Text,
+                    factory.Phone, factory.Email),
             header.DocumentLanguage,
             items,
             cartons
                 .Select(c => new ShipmentDocumentCartonDto(
                     c.CartonNo, ShipmentCarton.CodeOf(header.ShipmentNo, c.CartonNo), c.NetKg, c.GrossKg, c.Lines))
                 .ToList(),
-            timeProvider.GetUtcNow().UtcDateTime);
+            timeProvider.GetUtcNow().UtcDateTime,
+            new ShipmentDespatchInfoDto(
+                header.DespatchUuid, header.VehiclePlate, header.DriverName, header.DriverIdentityNo, header.IsEDespatchUser,
+                header.EDespatchAlias, header.ShippedBy));
     }
 
     public async Task<IReadOnlyList<LoadableShipmentDto>> GetLoadableAsync(string? search, CancellationToken cancellationToken)
@@ -661,7 +672,7 @@ public sealed class ShipmentPackingService(
             return versionError;
         }
 
-        if (!shipment.IsEditable)
+        if (!shipment.CanPack)
         {
             return NotEditable;
         }

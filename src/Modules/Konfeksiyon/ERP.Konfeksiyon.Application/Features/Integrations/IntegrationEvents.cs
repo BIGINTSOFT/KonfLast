@@ -22,7 +22,7 @@ public static class IntegrationEventTypes
     [
         new(ShipmentShipped, "Sevkiyat sevk edildi"),
         new(GoodsReceiptPosted, "Mal kabul yapıldı"),
-        new(ProductionOrderCompleted, "Üretim siparişi tamamlandı"),
+        new(ProductionOrderCompleted, "İş emri tamamlandı"),
     ];
 }
 

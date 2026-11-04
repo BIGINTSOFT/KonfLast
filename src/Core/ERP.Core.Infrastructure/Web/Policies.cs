@@ -15,6 +15,9 @@ public static class AuthorizationPolicies
     public const string DokumaTablet = "DokumaTablet";
     public const string OrmeTablet = "OrmeTablet";
 
+    /// <summary>Hangi modülden olursa olsun bir tabletin cihaz token'ı (tablet canlı bildirim hub'ı).</summary>
+    public const string AnyTablet = "AnyTablet";
+
     /// <summary>Oturum açmış kullanıcı (tablet cihaz token'ı değil). Varsayılan (fallback) policy ile aynıdır.</summary>
     public const string User = "User";
 }

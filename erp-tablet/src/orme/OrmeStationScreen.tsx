@@ -376,15 +376,14 @@ export function OrmeStationScreen({ api, outbox, reader, tabletCode, onOpenSetup
         moduleName="Örme"
         title={fixedMachine?.machineCode ?? tabletCode}
         subtitle={context ? fixedMachine?.machineName ?? 'Salon tableti' : undefined}
-        meta={tabletCode}
+        details={[{ label: 'Tablet', value: tabletCode }]}
         status={fixedState ? { label: `Makine: ${fixedState.label}`, color: fixedState.color } : undefined}
         statusReason={fixedMachine?.openStopReason ?? null}
         onOpenSetup={onOpenSetup}
         personnelCaption="OPERATÖR"
+        // Düğme hep yerinde durur (alanlar kaymaz); oturum yokken pasiftir.
         footer={
-          context?.operator ? (
-            <BigButton label="Oturumu kapat" tone="ghost" size="compact" onPress={logout} disabled={busy} testID="orme-logout" />
-          ) : undefined
+          <BigButton label="Oturumu kapat" tone="ghost" size="compact" onPress={logout} disabled={busy || !context?.operator} testID="orme-logout" />
         }>
         {context?.operator ? (
           <SidebarOperator
@@ -484,10 +483,10 @@ export function OrmeStationScreen({ api, outbox, reader, tabletCode, onOpenSetup
                 <View style={styles.barActions}>
                   {dueBreak && <BigButton label="Molaya çık" size="compact" onPress={takeBreak} disabled={busy} testID="orme-break" />}
                   {context?.pauseReasons.length ? (
-                    <BigButton label="Ara ver" tone="neutral" size="compact" onPress={() => setPicker('pause')} disabled={busy} testID="orme-pause" />
+                    <BigButton label="Ara ver" tone="primaryOutline" size="compact" onPress={() => setPicker('pause')} disabled={busy} testID="orme-pause" />
                   ) : null}
                   {fixedMachine && fixedMachine.knitOrderId === null && (
-                    <BigButton label="Emir bekliyorum" tone="neutral" size="compact" onPress={waitForOrder} disabled={busy} testID="orme-waiting" />
+                    <BigButton label="Emir bekliyorum" tone="primaryOutline" size="compact" onPress={waitForOrder} disabled={busy} testID="orme-waiting" />
                   )}
                 </View>
               </View>
@@ -508,7 +507,7 @@ export function OrmeStationScreen({ api, outbox, reader, tabletCode, onOpenSetup
                 </Prompt>
               )
             ) : !context.operator ? (
-              <Prompt glyph="card" step="1. ADIM" title="Personel kartınızı okutun" detail="Çalışmaya başlamak için kartınızı okuyucuya gösterin." />
+              <Prompt glyph="card" title="Personel kartınızı okutun" detail="Çalışmaya başlamak için kartınızı okuyucuya gösterin." />
             ) : pause && !waiting ? (
               <Prompt glyph="bundle" title="Çalışma duraklatıldı" detail="Top kaydetmek ya da duruş bildirmek için önce çalışmaya dönün." />
             ) : !selected ? (
@@ -674,7 +673,7 @@ function MachineCard({ machine, canGoBack, busy, onBack, onStop, onEndStop }: Ma
         </View>
       ) : (
         <View style={styles.actions}>
-          <BigButton label="Duruş bildir" tone="neutral" size="compact" onPress={onStop} disabled={busy} testID="orme-stop" />
+          <BigButton label="Duruş bildir" tone="primaryOutline" size="compact" onPress={onStop} disabled={busy} testID="orme-stop" />
         </View>
       )}
     </View>

@@ -8,6 +8,8 @@ import type {
   PauseType,
   TabletContext,
   TabletSession,
+  PerformancePeriod,
+  TabletPerformance,
   TokenResponse,
 } from './types';
 
@@ -34,6 +36,8 @@ export interface StationApi {
   heartbeat(): Promise<void>;
   /** Makinedeki açık oturum; yoksa null. */
   getSession(): Promise<TabletSession | null>;
+  /** Oturumu açık operatörün seçilen dönemdeki performansı; oturum yoksa null. */
+  getPerformance(period: PerformancePeriod): Promise<TabletPerformance | null>;
   /** Oturumu açık operatörün fotoğrafı (görüntü olarak gösterilebilir data URI); fotoğrafı yoksa null. */
   getOperatorPhoto(): Promise<string | null>;
   /** Okutulan personel kartıyla bu makinede oturum açar. */
@@ -45,6 +49,8 @@ export interface StationApi {
   /** Duraklamadan çalışmaya dönüş. */
   resume(authorizerUid?: string | null): Promise<TabletSession>;
   readBundle(uid: string, readId: string): Promise<BundleRead>;
+  /** Okutulmuş demetin güncel hâli (okutma kaydı bırakmaz): açık operasyon listesini yenilemek için. */
+  getBundle(bundleId: number): Promise<BundleRead>;
   /** Operasyonu, makinedeki açık oturumun operatörü adına başlatır. */
   startOperation(bundleOperationId: number, requestId: string): Promise<OperationProgress>;
   reportOperation(
@@ -73,6 +79,16 @@ export abstract class TabletClient {
     private readonly credentials: DeviceCredentials,
     private readonly now: () => number = Date.now,
   ) {}
+
+  /** Sunucu adresi (canlı bildirim bağlantısı için). */
+  get origin(): string {
+    return this.credentials.origin;
+  }
+
+  /** Geçerli tablet token'ı; süresi dolmak üzereyse yenilenir (canlı bildirim bağlantısı için). */
+  liveToken(): Promise<string> {
+    return this.accessToken();
+  }
 
   protected async call<T>(path: string, options: RequestOptions = {}): Promise<T> {
     try {
@@ -128,6 +144,10 @@ export class TabletApi extends TabletClient implements StationApi {
     return this.call<TabletSession | null>('/production/session');
   }
 
+  getPerformance(period: PerformancePeriod) {
+    return this.call<TabletPerformance | null>(`/production/session/performance?period=${period}`);
+  }
+
   async getOperatorPhoto() {
     const photo = await this.call<OperatorPhoto | null>('/production/session/photo');
     return photo ? `data:${photo.contentType};base64,${photo.dataBase64}` : null;
@@ -150,6 +170,10 @@ export class TabletApi extends TabletClient implements StationApi {
 
   resume(authorizerUid: string | null = null) {
     return this.call<TabletSession>('/production/session/resume', { method: 'POST', body: { authorizerUid } });
+  }
+
+  getBundle(bundleId: number) {
+    return this.call<BundleRead>(`/rfid/bundle/${bundleId}`);
   }
 
   readBundle(uid: string, readId: string) {

@@ -166,7 +166,7 @@ function CardToRelease({ card, bundleId, busy, onRelease, onCancel }: CardToRele
       </h2>
       <dl className="status-list">
         <div>
-          <dt>Sipariş</dt>
+          <dt>İş emri</dt>
           <dd><RecordLink to={`/production-orders/${bundle.productionOrderId}`}>{bundle.orderNo}</RecordLink></dd>
         </div>
         <div><dt>Model</dt><dd>{bundle.modelCode}</dd></div>

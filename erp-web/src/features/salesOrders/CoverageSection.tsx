@@ -103,7 +103,12 @@ export function CoverageSection({ salesOrderId, canManage }: { salesOrderId: num
                     </>
                   )}
                 </td>
-                <td className="table__number">{formatQuantity(line.inProduction)}</td>
+                <td className="table__number">
+                  {formatQuantity(line.inProduction)}
+                  {line.reservedFromProduction > 0 && (
+                    <div className="muted coverage__sub">{formatQuantity(line.reservedFromProduction)} depoda, sevke hazır</div>
+                  )}
+                </td>
                 <td className="table__number">{line.toPlan > 0 ? <strong>{formatQuantity(line.toPlan)}</strong> : <span className="muted">—</span>}</td>
                 <td className="table__number">
                   {line.hasStockItem ? formatQuantity(line.available) : <span className="muted" title="Bu ürün / renk / beden için mamul stok kartı yok">Kart yok</span>}
@@ -119,7 +124,7 @@ export function CoverageSection({ salesOrderId, canManage }: { salesOrderId: num
 
 const actionLabels = { CREATED: 'ekledi', UPDATED: 'değiştirdi', DELETED: 'sildi' } as const
 
-/** Üretim siparişinin sipariş adedinden farkı ve üretim kalemlerinde kimin neyi değiştirdiği. */
+/** İş emrinin sipariş adedinden farkı ve üretim kalemlerinde kimin neyi değiştirdiği. */
 export function ProductionChangesDialog({ salesOrderId, productionOrderId, onClose }: {
   salesOrderId: number
   productionOrderId: number

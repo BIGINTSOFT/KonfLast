@@ -22,7 +22,7 @@ interface RowEdit {
 }
 
 /**
- * Tedarik önerileri: açık üretim siparişlerinin ihtiyacı ve asgari stok için eksik kalan malzemeler. Seçilen
+ * Tedarik önerileri: açık iş emirlerinin ihtiyacı ve asgari stok için eksik kalan malzemeler. Seçilen
  * satırlar tedarikçi başına bir taslak satın alma siparişine dönüştürülür; onay satın alma ekranında verilir.
  */
 export function SupplySuggestionsPage() {

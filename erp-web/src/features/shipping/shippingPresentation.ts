@@ -4,6 +4,8 @@ import type { ShipmentStatus } from './shippingApi'
 /** Durum renge bırakılmaz: ikon ve metin de taşır. */
 export const shipmentStatusPresentation: Record<ShipmentStatus, { label: string; icon: string; tone: string }> = {
   DRAFT: { label: 'Taslak', icon: '✎', tone: 'neutral' },
+  PICKING: { label: 'Toplamada', icon: '▶', tone: 'info' },
+  PICKED: { label: 'İrsaliye bekliyor', icon: '■', tone: 'warning' },
   SHIPPED: { label: 'Sevk edildi', icon: '✓', tone: 'ok' },
   CANCELLED: { label: 'İptal', icon: '✕', tone: 'danger' },
 }

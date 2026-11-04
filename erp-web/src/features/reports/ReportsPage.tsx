@@ -7,7 +7,7 @@ import { downloadFile } from '../../services/download'
 import { Permissions } from '../../types/permissions'
 import { formatDateTime, todayIsoDate } from '../../utils/format'
 import { dayRangeToUtc } from '../productionTracking/trackingPresentation'
-import { formatReportCell, groupReports, isNumericColumn, reportFileName } from './reportPresentation'
+import { formatReportCell, isNumericColumn, reportFileName } from './reportPresentation'
 import { reportExportPath, useGetReportCatalogQuery, useLazyRunReportQuery } from './reportsApi'
 import type { ReportParams, ReportTable } from './reportsApi'
 
@@ -69,12 +69,12 @@ function ReportResult({ table }: { table: ReportTable }) {
 }
 
 /**
- * Raporlar: rapor seçilir, ölçütler verilir, sonuç görüntülenir ya da CSV olarak indirilir. Grup verilirse
- * (ör. "Depo") yalnızca o gruptaki raporlar listelenir.
+ * Bir rapor grubunun ekranı (ör. "Depo"): gruptaki rapor seçilir, ölçütler verilir, sonuç görüntülenir ya da CSV
+ * olarak indirilir.
  */
-export function ReportsPage({ group }: { group?: string }) {
+export function ReportsPage({ group }: { group: string }) {
   const { data: allReports, error: catalogError, isLoading } = useGetReportCatalogQuery()
-  const catalog = group ? allReports?.filter((report) => report.group === group) : allReports
+  const catalog = allReports?.filter((report) => report.group === group)
   const [run, result] = useLazyRunReportQuery()
   // Dışa aktarma (CSV) ayrı yetkidir; rapor ekranda yine görüntülenebilir.
   const canExport = usePermission(Permissions.ReportExport)
@@ -139,7 +139,7 @@ export function ReportsPage({ group }: { group?: string }) {
 
   return (
     <section className="page">
-      <h1 className="visually-hidden">{group ? `${group} raporları` : 'Raporlar'}</h1>
+      <h1 className="visually-hidden">{group} raporları</h1>
       {isLoading && <p role="status">Yükleniyor…</p>}
       <ErrorAlert error={catalogError} />
 
@@ -151,12 +151,8 @@ export function ReportsPage({ group }: { group?: string }) {
             <label>
               Rapor
               <select value={definition.key} onChange={(event) => setSelectedKey(event.target.value)}>
-                {groupReports(catalog, 'Üretim ve kalite').map((group) => (
-                  <optgroup key={group.title} label={group.title}>
-                    {group.reports.map((report) => (
-                      <option key={report.key} value={report.key}>{report.title}</option>
-                    ))}
-                  </optgroup>
+                {catalog.map((report) => (
+                  <option key={report.key} value={report.key}>{report.title}</option>
                 ))}
               </select>
             </label>

@@ -40,7 +40,7 @@ function shadeConflict(lots: SelectedLot[]): string | null {
 }
 
 /**
- * Kesim planı oluşturma / düzenleme. Pastal boyu ve beden oranı girilir; kat sayısı kalan adetlerden önerilir,
+ * Kesim föyü oluşturma / düzenleme. Pastal boyu ve beden oranı girilir; kat sayısı kalan adetlerden önerilir,
  * kumaş ihtiyacı ve beden bazında planlanan / kalan karşılaştırması anında hesaplanır.
  */
 export function CuttingPlanFormDialog({
@@ -139,7 +139,7 @@ export function CuttingPlanFormDialog({
   const fields = ['colorId', 'markerLength', 'endAllowance', 'plannedPlies', 'sizes', 'lotIds', 'notes', 'rowVersion']
 
   return (
-    <Modal title={plan ? `Kesim planı ${plan.planNo}` : 'Yeni kesim planı'} onClose={onClose} variant="drawer">
+    <Modal title={plan ? `Kesim föyü ${plan.planNo}` : 'Yeni kesim föyü'} onClose={onClose} variant="drawer">
       <form className="form" onSubmit={(event) => void handleSubmit(event)} noValidate>
         {(order.isLoading || summary.isLoading) && <p role="status">Yükleniyor…</p>}
         <ErrorAlert error={order.error ?? summary.error} />

@@ -16,7 +16,7 @@ const LOCKED_ROLE = 'ADMIN'
 /** Yetki gruplarının ekrandaki adları; listede olmayan grup kendi koduyla gösterilir. */
 const moduleLabels: Record<string, string> = {
   Dashboard: 'Canlı pano',
-  ProductionOrder: 'Üretim siparişleri',
+  ProductionOrder: 'İş emirleri',
   Bundle: 'Demetler',
   Production: 'Üretim takibi',
   WorkSession: 'Çalışma oturumları',

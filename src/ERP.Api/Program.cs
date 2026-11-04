@@ -74,6 +74,7 @@ app.Use(async (context, next) =>
 
 app.MapControllers();
 app.MapHub<ERP.Api.Realtime.ProductionHub>(ERP.Api.Realtime.ProductionHub.Path);
+app.MapHub<ERP.Api.Realtime.TabletHub>(ERP.Api.Realtime.TabletHub.Path);
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {

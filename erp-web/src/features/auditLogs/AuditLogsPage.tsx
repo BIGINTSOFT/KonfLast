@@ -15,7 +15,7 @@ import { ClearFiltersButton } from '../../components/grid/ClearFiltersButton'
 
 const PAGE_SIZE = 25
 
-const actionPresentation: Record<AuditAction, { label: string; tone: string }> = {
+export const actionPresentation: Record<AuditAction, { label: string; tone: string }> = {
   CREATED: { label: 'Oluşturma', tone: 'ok' },
   UPDATED: { label: 'Güncelleme', tone: 'neutral' },
   DELETED: { label: 'Silme', tone: 'danger' },
@@ -49,7 +49,7 @@ function formatValue(value: unknown): string {
   return typeof value === 'object' ? JSON.stringify(value) : String(value)
 }
 
-function ChangeDetails({ log }: { log: AuditLog }) {
+export function ChangeDetails({ log }: { log: AuditLog }) {
   const fields = [...new Set([...Object.keys(log.oldValues ?? {}), ...Object.keys(log.newValues ?? {})])]
 
   return (

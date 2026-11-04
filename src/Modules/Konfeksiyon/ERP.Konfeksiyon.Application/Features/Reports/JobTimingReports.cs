@@ -22,7 +22,7 @@ public sealed class JobDurationsReport(IKonfeksiyonDbContext db, IOptions<Produc
         "Tabletten bildirilen her işin hedef ve gerçekleşen süresi (mola, ara ve arıza düşülmüş). Verimi olağan dışı " +
         "yüksek işler 'Olağan dışı hızlı' olarak işaretlenir: süre erken kesilmiş olabilir. Resmi performans ölçüsü " +
         "vardiya verimidir (Performans raporları).",
-        SearchLabel: "Demet no veya sipariş no",
+        SearchLabel: "Demet no veya sipariş no", Group: ReportGroups.Personnel,
         Permission: ERP.Konfeksiyon.Domain.Authorization.KonfeksiyonPermissions.Report.Personnel);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
@@ -70,7 +70,7 @@ public sealed class JobDurationsReport(IKonfeksiyonDbContext db, IOptions<Produc
             [
                 new("occurredAt", "Bildirim zamanı", ReportColumnType.DateTime),
                 new("bundleNo", "Demet"),
-                new("orderNo", "Sipariş"),
+                new("orderNo", "İş emri"),
                 new("sequenceNo", "Sıra", Integer),
                 new("operation", "Operasyon"),
                 new("machine", "Makine"),
@@ -110,7 +110,7 @@ public sealed class HandoverWaitsReport(IKonfeksiyonDbContext db, IFactoryClock 
         "handover-waits", "Operasyonlar arası bekleme",
         "Önceki operasyonun tamamlanmasından sıradaki operasyonun başlamasına kadar geçen süre; henüz başlamamış " +
         "olanlar şu ana kadar sayılır. En uzun bekleyen üsttedir. Uzun beklemeler 'Geç devir' olarak işaretlenir.",
-        SearchLabel: "Demet no veya sipariş no");
+        SearchLabel: "Demet no veya sipariş no", Group: ReportGroups.Production);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
     {
@@ -193,7 +193,7 @@ public sealed class HandoverWaitsReport(IKonfeksiyonDbContext db, IFactoryClock 
         return new ReportData(
             [
                 new("bundleNo", "Demet"),
-                new("orderNo", "Sipariş"),
+                new("orderNo", "İş emri"),
                 new("previous", "Önceki operasyon"),
                 new("previousOperator", "Tamamlayan"),
                 new("readyAt", "Tamamlanma", ReportColumnType.DateTime),

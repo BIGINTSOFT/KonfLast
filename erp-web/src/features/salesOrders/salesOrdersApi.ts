@@ -51,7 +51,7 @@ export interface SalesOrderLine {
   vatRate: number
   /** Depoda bu kaleme ayrılmış hazır mamul. */
   reservedQuantity: number
-  /** Siparişten açılmış üretim siparişlerindeki adet. */
+  /** Siparişten açılmış iş emirlerindeki adet. */
   inProductionQuantity: number
   /** Ne stoktan ne üretimden karşılanmış; planlamayı bekleyen adet. */
   toPlanQuantity: number
@@ -76,6 +76,8 @@ export interface SalesOrderReservationLine {
   /** Başka siparişlere ayrılmamış stok (bu kalemin ayırması dahil). */
   available: number
   hasStockItem: boolean
+  /** Siparişin kendi üretiminden depoya alınıp ayrılmış (sevke hazır) adet; üretimdeki adedin parçasıdır. */
+  reservedFromProduction: number
 }
 
 export interface SalesOrderReservations {
@@ -102,7 +104,7 @@ export interface ProductionOrderDifference {
   }[]
 }
 
-/** Müşteri siparişinden açılmış bir üretim siparişi. */
+/** Müşteri siparişinden açılmış bir iş emri. */
 export interface SalesOrderProduction {
   id: number
   orderNo: string
@@ -129,7 +131,7 @@ export interface SalesOrder {
   totalQuantity: number
   totalAmount: number | null
   isEditable: boolean
-  /** Onaylı ve henüz üretim siparişi açılmamış ürünü var. */
+  /** Onaylı ve henüz iş emri açılmamış ürünü var. */
   canGenerateProduction: boolean
   /** Sunucunun izin verdiği durum geçişleri; ekrandaki işlemler buna göre gösterilir. */
   allowedTransitions: SalesOrderStatus[]
@@ -239,7 +241,7 @@ export interface SalesOrderCustomerDefaults {
   lastOrderNo: string | null
 }
 
-// Üretime aktarma üretim siparişi açar; onay ana sayfadaki bekleyen işleri değiştirir.
+// Üretime aktarma iş emri açar; onay ana sayfadaki bekleyen işleri değiştirir.
 export const salesOrdersApi = baseApi.injectEndpoints({
   endpoints: (build) => ({
     getSalesOrders: build.query<PagedResult<SalesOrderListItem>, SalesOrderListParams>({

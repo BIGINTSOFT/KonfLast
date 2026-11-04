@@ -22,7 +22,7 @@ const PAGE_SIZE = 25
 
 const columns: GridColumn[] = [
   { key: 'planNo', label: 'Plan no' },
-  { key: 'orderNo', label: 'Sipariş' },
+  { key: 'orderNo', label: 'İş emri' },
   { key: 'modelCode', label: 'Model' },
   { key: 'colorName', label: 'Renk' },
   { key: 'markerLength', label: 'Pastal (m)', numeric: true },
@@ -37,7 +37,7 @@ const columns: GridColumn[] = [
   { key: 'createdAt', label: 'Oluşturma', filter: false },
 ]
 
-/** Yeni plan için onaylı ya da üretimdeki bir üretim siparişi seçtirir. */
+/** Yeni plan için onaylı ya da üretimdeki bir iş emri seçtirir. */
 function OrderPickerDialog({ onPick, onClose }: { onPick: (orderId: number) => void; onClose: () => void }) {
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -51,7 +51,7 @@ function OrderPickerDialog({ onPick, onClose }: { onPick: (orderId: number) => v
   }
 
   return (
-    <Modal title="Kesim planı: sipariş seçin" onClose={onClose}>
+    <Modal title="Kesim föyü: sipariş seçin" onClose={onClose}>
       <div className="form">
         <form className="toolbar" onSubmit={handleSearch} role="search">
           <input
@@ -131,11 +131,11 @@ export function CuttingPlansPage() {
 
   return (
     <section className="page">
-      <h1 className="visually-hidden">Kesim Planları</h1>
+      <h1 className="visually-hidden">Kesim Föyleri</h1>
 
       {orderId && (
         <p className="alert alert--info">
-          Yalnızca seçili siparişin kesim planları gösteriliyor.{' '}
+          Yalnızca seçili siparişin kesim föyleri gösteriliyor.{' '}
           <button
             type="button"
             className="button"
@@ -153,7 +153,7 @@ export function CuttingPlansPage() {
         <input
           type="search"
           placeholder="Plan no, sipariş no veya ürün"
-          aria-label="Kesim planı ara"
+          aria-label="Kesim föyü ara"
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
         />
@@ -165,7 +165,7 @@ export function CuttingPlansPage() {
             className="button button--primary"
             onClick={() => (orderId ? setCreatingFor(orderId) : setPicking(true))}
           >
-            Yeni kesim planı
+            Yeni kesim föyü
           </button>
         )}
       </form>

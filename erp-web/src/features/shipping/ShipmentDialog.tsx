@@ -34,7 +34,7 @@ export function ShipmentDialog({ shipment, onClose, onSaved }: ShipmentDialogPro
   const [customerId, setCustomerId] = useState<number | null>(shipment?.customerId ?? null)
   const [selectedWarehouseId, setSelectedWarehouseId] = useState<number | null>(shipment?.warehouseId ?? null)
   const [orderId, setOrderId] = useState<number | null>(shipment?.productionOrderId ?? null)
-  // Üretim siparişine bağlı sevkiyatta müşteri siparişi ondan gelir; doğrudan seçilen sipariş birden fazla ürün taşıyabilir.
+  // İş emrine bağlı sevkiyatta müşteri siparişi ondan gelir; doğrudan seçilen sipariş birden fazla ürün taşıyabilir.
   const [salesOrderId, setSalesOrderId] = useState<number | null>(
     shipment && shipment.productionOrderId === null ? shipment.salesOrderId : null)
   const [shipDate, setShipDate] = useState(shipment?.shipDate ?? todayIsoDate())
@@ -105,7 +105,7 @@ export function ShipmentDialog({ shipment, onClose, onSaved }: ShipmentDialogPro
           />
           <LookupSelect
             resource="shipments/orders"
-            label="Üretim siparişi (isteğe bağlı)"
+            label="İş emri (isteğe bağlı)"
             value={orderId}
             onChange={setOrderId}
             errors={fieldErrors(error, 'productionOrderId')}

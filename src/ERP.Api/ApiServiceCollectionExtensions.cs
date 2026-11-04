@@ -176,7 +176,11 @@ public static class ApiServiceCollectionExtensions
             .AddPolicy(AuthorizationPolicies.OrmeTablet, policy => policy
                 .RequireAuthenticatedUser()
                 .RequireClaim(JwtTokenService.TabletIdClaimType)
-                .RequireClaim(JwtTokenService.TabletModuleClaimType, "Orme"));
+                .RequireClaim(JwtTokenService.TabletModuleClaimType, "Orme"))
+            .AddPolicy(AuthorizationPolicies.AnyTablet, policy => policy
+                .RequireAuthenticatedUser()
+                .RequireClaim(JwtTokenService.TabletIdClaimType)
+                .RequireClaim(JwtTokenService.TabletModuleClaimType));
 
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();

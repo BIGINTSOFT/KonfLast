@@ -213,7 +213,7 @@ export function BoyahaneOrderFormDialog({ order, onClose, onSaved }: { order?: B
               <div className="form__pair">
                 <label className="field">
                   <span>{line.processType === 'PRINTING' ? 'Desen' : 'Renk'}{line.processType === 'FINISHING' ? ' (isteğe bağlı)' : ''}</span>
-                  <input maxLength={100} value={line.colorName} onChange={(event) => update(line.key, { colorName: event.target.value })} />
+                  <input maxLength={100} required={line.processType !== 'FINISHING'} value={line.colorName} onChange={(event) => update(line.key, { colorName: event.target.value })} />
                 </label>
                 <label className="field">
                   <span>Müşteri renk / desen kodu</span>

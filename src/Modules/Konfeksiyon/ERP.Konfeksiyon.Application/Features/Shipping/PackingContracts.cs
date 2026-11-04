@@ -308,4 +308,17 @@ public sealed record ShipmentDocumentDto(
     DocumentLanguage DocumentLanguage,
     IReadOnlyList<ShipmentDocumentItemDto> Items,
     IReadOnlyList<ShipmentDocumentCartonDto> Cartons,
-    DateTime PrintedAt);
+    DateTime PrintedAt,
+    ShipmentDespatchInfoDto? Despatch = null);
+
+/// <summary>e-İrsaliye görünümü için ek bilgiler (taslak çıktı; GİB'e gönderim entegratör üzerinden yapılır).</summary>
+/// <param name="DespatchUuid">ETTN; irsaliye kesilince verilir.</param>
+/// <param name="ReceiverIsEDespatchUser">Alıcı e-İrsaliye mükellefi (posta kutusu etiketiyle).</param>
+public sealed record ShipmentDespatchInfoDto(
+    Guid? DespatchUuid,
+    string? VehiclePlate,
+    string? DriverName,
+    string? DriverIdentityNo,
+    bool ReceiverIsEDespatchUser,
+    string? ReceiverAlias,
+    string? CheckedBy);

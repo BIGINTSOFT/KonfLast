@@ -127,6 +127,8 @@ import { OrmeProformaPage } from './features/orme/OrmeProformaPage'
 import { DokumaProformaPage } from './features/dokuma/DokumaProformaPage'
 import { AssortmentTemplatesPage } from './features/shipping/AssortmentTemplatesPage'
 import { ShipmentCartonLabelsPage, ShipmentDespatchNotePage, ShipmentPackingListPage } from './features/shipping/ShipmentPrintPages'
+import { ShipmentEDespatchPage, ShipmentPickListPage } from './features/shipping/ShippingDocumentPages'
+import { DespatchCheckPage, DespatchQueuePage, PickingQueuePage, ReadyOrdersPage } from './features/shipping/ShippingFlowPages'
 import { CuttingPlanDetailPage } from './features/cutting/CuttingPlanDetailPage'
 import { CuttingPlansPage } from './features/cutting/CuttingPlansPage'
 import { CuttingSheetPage } from './features/cutting/CuttingSheetPage'
@@ -225,7 +227,12 @@ const screenRoutes = (
             />
             <Route path="performance" element={guarded(Permissions.ProductionView, <PerformancePage />)} />
             <Route path="quality" element={guarded(Permissions.QualityView, <QualityPage />)} />
-            <Route path="reports" element={guarded(Permissions.ReportView, <ReportsPage />)} />
+            <Route path="reports" element={<Navigate to="/production-reports" replace />} />
+            <Route path="production-reports" element={guarded(Permissions.ReportView, <ReportsPage group="Üretim" />)} />
+            <Route path="personnel-reports" element={guarded(Permissions.ReportView, <ReportsPage group="Personel" />)} />
+            <Route path="machine-reports" element={guarded(Permissions.ReportView, <ReportsPage group="Makine" />)} />
+            <Route path="quality-reports" element={guarded(Permissions.ReportView, <ReportsPage group="Kalite" />)} />
+            <Route path="subcontract-reports" element={guarded(Permissions.ReportView, <ReportsPage group="Fason" />)} />
             <Route path="warehouse-reports" element={guarded(Permissions.ReportWarehouse, <ReportsPage group="Depo" />)} />
             <Route path="planning" element={guarded(Permissions.ProductionLineView, <PlanningPage />)} />
             <Route path="line-balancing" element={guarded(Permissions.ProductionLineView, <LineBalancingPage />)} />
@@ -237,6 +244,12 @@ const screenRoutes = (
             <Route path="shipments/:id/packing-list" element={guarded(Permissions.ShipmentView, <ShipmentPackingListPage />)} />
             <Route path="shipments/:id/carton-labels" element={guarded(Permissions.ShipmentView, <ShipmentCartonLabelsPage />)} />
             <Route path="shipments/:id/despatch-note" element={guarded(Permissions.ShipmentView, <ShipmentDespatchNotePage />)} />
+            <Route path="shipments/:id/e-despatch" element={guarded(Permissions.ShipmentView, <ShipmentEDespatchPage />)} />
+            <Route path="shipments/:id/pick-list" element={guarded(Permissions.ShipmentView, <ShipmentPickListPage />)} />
+            <Route path="ready-orders" element={guarded(Permissions.ShipmentView, <ReadyOrdersPage />)} />
+            <Route path="picking" element={guarded(Permissions.ShipmentView, <PickingQueuePage />)} />
+            <Route path="despatch-queue" element={guarded(Permissions.ShipmentView, <DespatchQueuePage />)} />
+            <Route path="despatch-queue/:id" element={guarded(Permissions.ShipmentView, <DespatchCheckPage />)} />
             <Route path="assortment-templates" element={guarded(Permissions.ShipmentView, <AssortmentTemplatesPage />)} />
             <Route path="invoices" element={guarded(Permissions.InvoiceView, <SalesInvoicesPage />)} />
             <Route path="invoices/:id" element={guarded(Permissions.InvoiceView, <SalesInvoiceDetailPage />)} />

@@ -211,6 +211,12 @@ public class SalesOrderReservation
     /// <summary>Hâlâ ayrılmış duran adet; sıfıra inen ayırma silinir.</summary>
     public decimal Quantity { get; set; }
 
+    /// <summary>
+    /// Ayırma, siparişin kendi üretiminin depoya teslim alınmasıyla oluştu. Bu adet planlamada üretimden karşılanan
+    /// sayılır (stoktan karşılanan değil); sevk edildiğinde "ayırmadan sevk edilen"e yazılmaz.
+    /// </summary>
+    public bool FromProduction { get; set; }
+
     /// <summary>Sunucu saati.</summary>
     public DateTime UpdatedAt { get; set; }
     public string UpdatedBy { get; set; } = null!;

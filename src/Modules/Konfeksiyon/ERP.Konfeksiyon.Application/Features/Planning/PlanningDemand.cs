@@ -144,7 +144,7 @@ public sealed class PlanningDemandService(
         if (order.Status != SalesOrderStatus.Approved)
         {
             return new Error(
-                ErrorCodes.InvalidStatusTransition, "Yalnızca onaylı müşteri siparişinden üretim siparişi açılabilir.");
+                ErrorCodes.InvalidStatusTransition, "Yalnızca onaylı müşteri siparişinden iş emri açılabilir.");
         }
 
         // Üretim siparişi yalnızca müşteri siparişindeki renk / bedenler için açılır.

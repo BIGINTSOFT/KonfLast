@@ -65,17 +65,36 @@ public sealed record BundleOperationEventDto(
     int ProducedQuantity,
     int RejectedQuantity,
     DateTime OccurredAt,
-    string? EnteredBy = null);
+    string? EnteredBy = null,
+    bool CountsForPerformance = true);
 
 /// <summary>
 /// Ofisten elle üretim bildirimi (tablet ve kart olmadan): askıda kalan ya da arızalı tablette başlatılamayan işin
 /// adedi bildirilir. Kalan adet biterse operasyon tamamlanır; kalırsa bekletilir.
 /// </summary>
 /// <param name="RequestId">Bkz. <see cref="StartOperationRequest"/>; çift tıklama / ağ tekrarı ikinci kez işlenmez.</param>
-/// <param name="OperatorId">İşi yapan operatör. İşlemdeki operasyonda işi başlatan operatör esas alınır, boş geçilebilir.</param>
+/// <param name="OperatorId">
+/// İşi yapan operatör (operatörsüz bildirimde kullanılmaz). İşlemdeki operasyonda işi başlatan operatör esas alınır,
+/// boş geçilebilir.
+/// </param>
 /// <param name="MachineId">İşin yapıldığı makine. İşlemdeki operasyonda işin makinesi esas alınır, boş geçilebilir.</param>
+/// <param name="Attribution">Adet kimin adına yazılır ve operatörün performansına / primine sayılır mı.</param>
 public sealed record ManualReportRequest(
-    Guid RequestId, int ProducedQuantity, int RejectedQuantity, int? OperatorId = null, int? MachineId = null);
+    Guid RequestId, int ProducedQuantity, int RejectedQuantity, int? OperatorId = null, int? MachineId = null,
+    ManualReportAttribution Attribution = ManualReportAttribution.Operator);
+
+/// <summary>Elle bildirilen adedin kime yazılacağı.</summary>
+public enum ManualReportAttribution
+{
+    /// <summary>Operatör adına; performansına ve primine sayılır.</summary>
+    Operator,
+
+    /// <summary>Operatör adına (izlenebilirlik için) ama performansına ve primine sayılmaz.</summary>
+    OperatorNotCounted,
+
+    /// <summary>Operatörsüz (ofis kapatması): kimseye yazılmaz; yalnızca demet / sipariş ilerler.</summary>
+    NoOperator,
+}
 
 /// <summary>Elle bildirim penceresi için operasyonun durumu ve seçilebilecek makineler.</summary>
 /// <param name="InProgress">Operasyon bir makinede işlemde (askıda) mı; öyleyse makine ve operatör değiştirilemez.</param>

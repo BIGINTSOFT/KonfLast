@@ -246,7 +246,7 @@ public sealed class PlanningService(IKonfeksiyonDbContext db, IFactoryClock cloc
             .SingleOrDefaultAsync(cancellationToken);
         if (order is null)
         {
-            return new Error(ErrorCodes.NotFound, "Üretim siparişi bulunamadı.", ErrorType.NotFound);
+            return new Error(ErrorCodes.NotFound, "İş emri bulunamadı.", ErrorType.NotFound);
         }
 
         if (!OpenStatuses.Contains(order.Status))

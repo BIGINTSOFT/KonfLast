@@ -30,7 +30,7 @@ export interface StockBalance {
   quantity: number
   /** Top / parti takipli kart: çıkış, transfer ve sayım top seçilerek yapılır. */
   isLotTracked: boolean
-  /** Depodaki stoğun üretim siparişlerine ayrılmış kısmı (yalnızca depo bazındaki listede dolu). */
+  /** Depodaki stoğun iş emirlerine ayrılmış kısmı (yalnızca depo bazındaki listede dolu). */
   reserved?: number
 }
 
@@ -130,6 +130,55 @@ export interface StockMovement {
   /** İstek daha önce işlenmişti; stok ikinci kez değişmedi. */
   duplicate: boolean
   transactions: StockTransaction[]
+  /** Üretimden teslim almada mal bir müşteri siparişine ayrıldıysa o sipariş ve adet. */
+  reservedForOrderNo: string | null
+  reservedQuantity: number
+}
+
+export interface SalesReservation {
+  id: number
+  salesOrderId: number
+  orderNo: string
+  customerOrderNo: string | null
+  customerName: string
+  dueDate: string
+  quantity: number
+  /** Siparişin kendi üretiminden teslim alınarak ayrıldı. */
+  fromProduction: boolean
+  updatedAt: string
+  updatedBy: string
+}
+
+export interface ReservationCandidate {
+  salesOrderLineId: number
+  salesOrderId: number
+  orderNo: string
+  customerOrderNo: string | null
+  customerName: string
+  dueDate: string
+  ordered: number
+  shipped: number
+  reserved: number
+  /** Kalemin ayrılabilecek açık adedi. */
+  open: number
+}
+
+export interface StockReservations {
+  warehouseId: number
+  warehouseCode: string
+  stockItemId: number
+  itemCode: string
+  itemName: string
+  unit: StockUnit
+  onHand: number
+  reserved: number
+  /** Ayrılmamış stok. */
+  free: number
+  /** Kart hazır mamul; müşteri siparişine ayrılabilir. */
+  canReserve: boolean
+  salesReservations: SalesReservation[]
+  materialReservations: { productionOrderId: number; orderNo: string; quantity: number }[]
+  candidates: ReservationCandidate[]
 }
 
 export interface ReceivableBundle {
@@ -290,6 +339,21 @@ export const stockApi = baseApi.injectEndpoints({
       query: (body) => ({ url: '/stock/adjustments', method: 'POST', body }),
       invalidatesTags: ['Stock'],
     }),
+    getStockReservations: build.query<StockReservations, { warehouseId: number; stockItemId: number }>({
+      query: (params) => ({ url: '/stock/reservations', params }),
+      providesTags: ['Stock', 'SalesOrder'],
+    }),
+    createStockReservation: build.mutation<
+      StockReservations,
+      { warehouseId: number; stockItemId: number; salesOrderLineId: number; quantity: number }
+    >({
+      query: (body) => ({ url: '/stock/reservations', method: 'POST', body }),
+      invalidatesTags: ['Stock', 'SalesOrder', 'Shipment'],
+    }),
+    releaseStockReservation: build.mutation<StockReservations, number>({
+      query: (id) => ({ url: `/stock/reservations/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Stock', 'SalesOrder', 'Shipment'],
+    }),
     receiveFromProduction: build.mutation<StockMovement, { requestId: string; bundleId: number; warehouseId: number }>({
       query: (body) => ({ url: '/stock/production-receipts', method: 'POST', body }),
       // Yeni mamul kartı açılmış olabilir: stok kartı listeleri de tazelenir.
@@ -313,4 +377,7 @@ export const {
   useTransferStockMutation,
   useAdjustStockMutation,
   useReceiveFromProductionMutation,
+  useGetStockReservationsQuery,
+  useCreateStockReservationMutation,
+  useReleaseStockReservationMutation,
 } = stockApi

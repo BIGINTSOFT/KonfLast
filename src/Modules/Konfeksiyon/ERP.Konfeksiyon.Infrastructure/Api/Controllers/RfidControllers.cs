@@ -83,4 +83,9 @@ public sealed class RfidReadsController(IRfidReadService service) : ApiControlle
     public async Task<ActionResult<ApiResponse<BundleReadDto>>> ReadBundle(
         RfidReadRequest request, CancellationToken cancellationToken) =>
         FromResult(await service.ReadBundleAsync(request, cancellationToken));
+
+    /// <summary>Okutulmuş demetin güncel operasyonları (okutma kaydı bırakmaz); açık listeyi yenilemek için.</summary>
+    [HttpGet("bundle/{bundleId:int}")]
+    public async Task<ActionResult<ApiResponse<BundleReadDto>>> GetBundle(int bundleId, CancellationToken cancellationToken) =>
+        FromResult(await service.GetBundleAsync(bundleId, cancellationToken));
 }

@@ -189,7 +189,7 @@ public class Bundle : AuditableEntity
     /// </summary>
     /// <returns>Kısmi üretimin devamıysa true, ilk başlatmaysa false.</returns>
     public bool StartOperation(
-        BundleOperation operation, int machineId, int operatorId, DateTime utcNow, bool requireCard = true)
+        BundleOperation operation, int machineId, int? operatorId, DateTime utcNow, bool requireCard = true)
     {
         var block = CheckStart(operation, requireCard);
         if (block != OperationStartBlock.None)

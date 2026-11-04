@@ -1322,6 +1322,9 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
                     b.Property<long>("BundleOperationId")
                         .HasColumnType("bigint");
 
+                    b.Property<bool>("CountsForPerformance")
+                        .HasColumnType("bit");
+
                     b.Property<int?>("EfficiencyPercent")
                         .HasColumnType("int");
 
@@ -1340,7 +1343,7 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
                     b.Property<DateTime>("OccurredAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("OperatorId")
+                    b.Property<int?>("OperatorId")
                         .HasColumnType("int");
 
                     b.Property<int>("ProducedQuantity")
@@ -5111,6 +5114,9 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<bool>("FromProduction")
+                        .HasColumnType("bit");
+
                     b.Property<decimal>("Quantity")
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
@@ -5141,10 +5147,10 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("StockItemId");
 
-                    b.HasIndex("SalesOrderLineId", "WarehouseId")
-                        .IsUnique();
-
                     b.HasIndex("WarehouseId", "StockItemId");
+
+                    b.HasIndex("SalesOrderLineId", "WarehouseId", "FromProduction")
+                        .IsUnique();
 
                     b.ToTable("SalesOrderReservations", "Konfeksiyon", t =>
                         {
@@ -5244,9 +5250,20 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<Guid?>("DespatchUuid")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("DocumentNo")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("DriverIdentityNo")
+                        .HasMaxLength(11)
+                        .HasColumnType("nvarchar(11)");
+
+                    b.Property<string>("DriverName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<int?>("InvoiceId")
                         .HasColumnType("int");
@@ -5257,6 +5274,20 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("PickedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PickedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("PickingBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime?>("PickingStartedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<int?>("ProductionOrderId")
                         .HasColumnType("int");
@@ -5297,6 +5328,10 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<string>("VehiclePlate")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<int>("WarehouseId")
                         .HasColumnType("int");
 
@@ -5323,7 +5358,7 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("CK_Shipments_Shipped", "[Status] <> 'SHIPPED' OR ([ShippedAt] IS NOT NULL AND [ShippedBy] IS NOT NULL)");
 
-                            t.HasCheckConstraint("CK_Shipments_Status", "[Status] IN ('DRAFT', 'SHIPPED', 'CANCELLED')");
+                            t.HasCheckConstraint("CK_Shipments_Status", "[Status] IN ('DRAFT', 'PICKING', 'PICKED', 'SHIPPED', 'CANCELLED')");
                         });
                 });
 
@@ -5415,7 +5450,19 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal?>("CheckedQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("PickedQuantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
                     b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal?>("RequestedQuantity")
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
 
@@ -5435,6 +5482,55 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
                     b.ToTable("ShipmentItems", "Konfeksiyon", t =>
                         {
                             t.HasCheckConstraint("CK_ShipmentItems_Quantity", "[Quantity] > 0");
+                        });
+                });
+
+            modelBuilder.Entity("ERP.Konfeksiyon.Domain.Entities.ShipmentPick", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("LocationId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("PickedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PickedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("ShipmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ShipmentItemId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LocationId");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique();
+
+                    b.HasIndex("ShipmentId");
+
+                    b.HasIndex("ShipmentItemId");
+
+                    b.ToTable("ShipmentPicks", "Konfeksiyon", t =>
+                        {
+                            t.HasCheckConstraint("CK_ShipmentPicks_Quantity", "[Quantity] > 0");
                         });
                 });
 
@@ -7293,8 +7389,7 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
                     b.HasOne("ERP.Konfeksiyon.Domain.Entities.Operator", "Operator")
                         .WithMany()
                         .HasForeignKey("OperatorId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ERP.Konfeksiyon.Domain.Entities.WorkSession", "WorkSession")
                         .WithMany()
@@ -8314,6 +8409,33 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
                     b.Navigation("StockItem");
                 });
 
+            modelBuilder.Entity("ERP.Konfeksiyon.Domain.Entities.ShipmentPick", b =>
+                {
+                    b.HasOne("ERP.Konfeksiyon.Domain.Entities.WarehouseLocation", "Location")
+                        .WithMany()
+                        .HasForeignKey("LocationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERP.Konfeksiyon.Domain.Entities.Shipment", "Shipment")
+                        .WithMany("Picks")
+                        .HasForeignKey("ShipmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ERP.Konfeksiyon.Domain.Entities.ShipmentItem", "ShipmentItem")
+                        .WithMany()
+                        .HasForeignKey("ShipmentItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Location");
+
+                    b.Navigation("Shipment");
+
+                    b.Navigation("ShipmentItem");
+                });
+
             modelBuilder.Entity("ERP.Konfeksiyon.Domain.Entities.Stock", b =>
                 {
                     b.HasOne("ERP.Konfeksiyon.Domain.Entities.WarehouseLocation", "Location")
@@ -8908,6 +9030,8 @@ namespace ERP.Konfeksiyon.Infrastructure.Persistence.Migrations
                     b.Navigation("Cartons");
 
                     b.Navigation("Items");
+
+                    b.Navigation("Picks");
                 });
 
             modelBuilder.Entity("ERP.Konfeksiyon.Domain.Entities.ShipmentCarton", b =>

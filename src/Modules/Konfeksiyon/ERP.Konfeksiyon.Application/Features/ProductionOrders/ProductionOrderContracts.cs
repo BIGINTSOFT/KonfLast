@@ -17,7 +17,8 @@ public sealed record ProductionOrderListItemDto(
     DateOnly OrderDate,
     DateOnly DueDate,
     ProductionOrderStatus Status,
-    int TotalQuantity);
+    int TotalQuantity,
+    string? SalesOrderNo = null);
 
 public sealed record ProductionOrderItemDto(
     int Id,

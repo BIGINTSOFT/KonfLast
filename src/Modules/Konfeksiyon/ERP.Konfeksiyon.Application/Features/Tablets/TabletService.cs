@@ -123,6 +123,7 @@ public sealed class TabletDeviceService(
     IOptions<ProductionOptions> productionOptions,
     IOptions<TabletPairingOptions> pairingOptions,
     ICurrentUser currentUser,
+    IWorkSessionService workSessions,
     TimeProvider timeProvider) : ITabletDeviceService
 {
     private static readonly Error NotFound = new(ErrorCodes.NotFound, "Tablet bulunamadı.", ErrorType.NotFound);
@@ -172,6 +173,22 @@ public sealed class TabletDeviceService(
             })
             .ToListAsync(cancellationToken);
 
+        // Tabletin şu anki makinesindeki açık oturum: başka makine seçilirse kapatılacağı ayar ekranında gösterilir.
+        var currentMachineId = stations
+            .FirstOrDefault(s => s.Tablet?.DeviceKeyHash is not null && s.Tablet.DeviceIdentifier == deviceIdentifier)?.Id;
+        var session = currentMachineId is null
+            ? null
+            : await db.WorkSessions
+                .AsNoTracking()
+                .Where(w => w.MachineId == currentMachineId && w.LogoutAt == null)
+                .Select(w => new
+                {
+                    Operator = w.Operator.FirstName + " " + w.Operator.LastName,
+                    WorkInProgress = db.BundleOperations.Any(o =>
+                        o.MachineId == w.MachineId && o.OperatorId == w.OperatorId && o.Status == BundleOperationStatus.InProgress),
+                })
+                .SingleOrDefaultAsync(cancellationToken);
+
         return stations
             .Select(s => new TabletPairingStationDto(
                 s.Id,
@@ -181,7 +198,9 @@ public sealed class TabletDeviceService(
                 s.OperationName,
                 s.Tablet?.TabletCode,
                 s.Tablet?.DeviceKeyHash is not null,
-                s.Tablet?.DeviceKeyHash is not null && s.Tablet.DeviceIdentifier == deviceIdentifier))
+                s.Id == currentMachineId,
+                s.Id == currentMachineId ? session?.Operator : null,
+                s.Id == currentMachineId && session?.WorkInProgress == true))
             .ToList();
     }
 
@@ -214,6 +233,18 @@ public sealed class TabletDeviceService(
 
         // Cihaz başka bir makineden gelebilir. Bağlar önce kopar: cihaz kimliği iki kayıtta aynı anda duramaz (benzersiz index).
         var previous = await db.Tablets.Where(t => t.DeviceIdentifier == deviceIdentifier).ToListAsync(cancellationToken);
+
+        // Önceki makinede tablet kalmayacağı için orada açık kalan oturum kapatılır; yoksa operatör iki makinede
+        // çalışıyor görünür. Süren iş yalnızca açık onayla (ReleaseWork) bırakılır.
+        foreach (var machineId in previous.Select(t => t.MachineId).OfType<int>().Where(id => id != machine.Id).Distinct())
+        {
+            var closed = await workSessions.CloseForTabletMoveAsync(machineId, request.ReleaseWork, cancellationToken);
+            if (!closed.IsSuccess)
+            {
+                return closed.Error!;
+            }
+        }
+
         previous.ForEach(t => t.ResetDevice());
         tablet?.ResetDevice();
         await db.SaveChangesAsync(cancellationToken);

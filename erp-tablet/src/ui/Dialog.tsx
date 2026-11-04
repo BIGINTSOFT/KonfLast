@@ -1,14 +1,16 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { ReactNode } from 'react';
 import { Banner, BigButton } from './controls';
 import { colors, overlayShadow, radius } from './theme';
+import { useKeyboardHeight } from './useKeyboardHeight';
 
 interface DialogFrameProps {
   title: string;
   /** Başlığın altındaki kısa açıklama. */
   description?: string;
-  onClose: () => void;
+  /** Verilmezse pencere kapatılamaz (dönülecek ekran yoksa). */
+  onClose?: () => void;
   children: ReactNode;
   /** Alt çubuktaki düğmeler (sağa yaslanır). */
   footer: ReactNode;
@@ -22,9 +24,21 @@ interface DialogFrameProps {
  * karartılmış alana ya da kapatma düğmesine basınca pencere hiçbir işlem yapmadan kapanır.
  */
 export function DialogFrame({ title, description, onClose, children, footer, wide, testID }: DialogFrameProps) {
+  const keyboardHeight = useKeyboardHeight();
+
+  // Arkadaki ekrandan açık kalan klavye pencerenin altını kapatmasın; klavye gerekirse alana dokununca açılır.
+  useEffect(() => {
+    Keyboard.dismiss();
+  }, []);
+
   return (
-    <View style={styles.overlay} testID={testID} accessibilityViewIsModal>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Pencereyi kapat" />
+    // Klavye açıkken pencere klavyenin üstündeki alana yerleşir; içerik sığmazsa liste kısalır.
+    <View style={[styles.overlay, keyboardHeight > 0 && { paddingBottom: keyboardHeight + 12 }]} testID={testID} accessibilityViewIsModal>
+      {onClose ? (
+        <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Pencereyi kapat" />
+      ) : (
+        <View style={styles.backdrop} />
+      )}
 
       <View style={[styles.dialog, wide && styles.dialogWide]} accessibilityRole="alert">
         <View style={styles.header}>
@@ -34,13 +48,15 @@ export function DialogFrame({ title, description, onClose, children, footer, wid
             </Text>
             {description && <Text style={styles.description}>{description}</Text>}
           </View>
-          <Pressable
-            onPress={onClose}
-            accessibilityRole="button"
-            accessibilityLabel="Kapat"
-            style={({ pressed }) => [styles.close, pressed && styles.closePressed]}>
-            <Text style={styles.closeText}>✕</Text>
-          </Pressable>
+          {onClose && (
+            <Pressable
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Kapat"
+              style={({ pressed }) => [styles.close, pressed && styles.closePressed]}>
+              <Text style={styles.closeText}>✕</Text>
+            </Pressable>
+          )}
         </View>
 
         <View style={styles.body}>{children}</View>
@@ -132,128 +148,6 @@ export function ReasonDialog({
 export interface DialogDetail {
   label: string;
   value: string;
-}
-
-export interface OperationRow {
-  id: number;
-  sequenceNo: number;
-  name: string;
-  /** Adımın durumu (ör. "Tamamlandı", "Hazır", "Başka makinede"). */
-  status: string;
-  /** Üretilen / planlanan adet (ör. "12 / 20"). */
-  quantity: string;
-  /** Adımın hedef süresi (ör. "12 dk"). */
-  duration: string;
-  done: boolean;
-  /** Bu makinede şu an başlatılabilir mi. */
-  startable: boolean;
-}
-
-interface OperationDialogProps {
-  title: string;
-  description?: string;
-  rows: OperationRow[];
-  /** Demetin özeti (sipariş, model, renk / beden, adet): listenin üstünde hücreler hâlinde gösterilir. */
-  summary?: DialogDetail[];
-  /** Başlatılabilen adım yoksa nedenini söyleyen bilgi. */
-  notice?: string | null;
-  busy?: boolean;
-  onStart: (id: number) => void;
-  onCancel: () => void;
-}
-
-/**
- * Okutulan demetin operasyonları: rotanın tamamı sırasıyla listelenir. Bu makinede başlatılabilen ilk adım
- * seçili gelir; başlatılamayan adımlar yalnızca bilgi olarak görünür.
- */
-export function OperationDialog({
-  title,
-  description,
-  rows,
-  summary = [],
-  notice,
-  busy,
-  onStart,
-  onCancel,
-}: OperationDialogProps) {
-  const [selected, setSelected] = useState<number | null>(() => rows.find(row => row.startable)?.id ?? null);
-
-  return (
-    <DialogFrame
-      title={title}
-      description={description}
-      onClose={onCancel}
-      wide
-      testID="operation-choice-dialog"
-      footer={
-        <>
-          <BigButton label="Vazgeç" tone="neutral" size="compact" onPress={onCancel} testID="operation-choice-cancel" />
-          <BigButton
-            label="Başlat"
-            size="compact"
-            disabled={selected === null}
-            busy={busy}
-            onPress={() => selected !== null && onStart(selected)}
-            testID="operation-choice-confirm"
-          />
-        </>
-      }>
-      {summary.length > 0 && (
-        <View style={styles.summary}>
-          {summary.map((item, index) => (
-            <View key={item.label} style={[styles.summaryCell, index > 0 && styles.summaryDivider]}>
-              <Text style={styles.fieldLabel}>{item.label}</Text>
-              <Text style={styles.summaryValue} numberOfLines={1}>
-                {item.value}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View style={styles.operationHeader}>
-        <Text style={[styles.fieldLabel, styles.operationHeaderName]}>OPERASYON</Text>
-        <Text style={[styles.fieldLabel, styles.operationDuration]}>HEDEF SÜRE</Text>
-        <Text style={[styles.fieldLabel, styles.operationQuantity]}>ADET</Text>
-        <Text style={[styles.fieldLabel, styles.operationStatusHead]}>DURUM</Text>
-      </View>
-      <ScrollView style={styles.list} accessibilityRole="radiogroup">
-        {rows.map((row, index) => {
-          const isSelected = row.id === selected;
-          return (
-            <Pressable
-              key={row.id}
-              testID={`operation-choice-${row.sequenceNo}`}
-              disabled={!row.startable}
-              onPress={() => setSelected(row.id)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: isSelected, disabled: !row.startable }}
-              style={[styles.row, index > 0 && styles.rowDivider, isSelected && styles.operationSelected]}>
-              {row.done ? (
-                <Text style={styles.operationDone}>✓</Text>
-              ) : (
-                <View style={[styles.radio, isSelected && styles.radioSelected, !row.startable && styles.radioDisabled]}>
-                  {isSelected && <View style={[styles.radioDot, styles.radioDotSelected]} />}
-                </View>
-              )}
-              <Text
-                style={[styles.rowLabel, isSelected && styles.rowLabelSelected, !row.startable && styles.operationMuted]}
-                numberOfLines={1}>
-                {row.sequenceNo} · {row.name}
-              </Text>
-              <Text style={[styles.operationCell, styles.operationDuration]}>{row.duration}</Text>
-              <Text style={[styles.operationCell, styles.operationQuantity]}>{row.quantity}</Text>
-              <Text style={[styles.operationStatus, row.done && styles.operationStatusDone, isSelected && styles.operationStatusSelected]}>
-                {row.status}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-
-      {notice && <Banner kind="info" text={notice} testID="operation-choice-notice" />}
-    </DialogFrame>
-  );
 }
 
 interface AuthorizationDialogProps {
@@ -351,6 +245,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
+    // Klavye açıkken kalan alana sığmak için küçülür; içerikteki liste kısalır.
+    flexShrink: 1,
     ...overlayShadow,
   },
   header: {
@@ -369,7 +265,7 @@ const styles = StyleSheet.create({
   close: { width: 38, height: 38, borderRadius: radius.control, alignItems: 'center', justifyContent: 'center' },
   closePressed: { backgroundColor: colors.neutralSoft },
   closeText: { color: colors.muted, fontSize: 16, fontWeight: '600' },
-  body: { padding: 20, gap: 12 },
+  body: { flexShrink: 1, padding: 20, gap: 12 },
   footer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -406,30 +302,7 @@ const styles = StyleSheet.create({
   radioDot: { width: 10, height: 10, borderRadius: 5 },
   radioSelected: { borderColor: colors.primary },
   radioDotSelected: { backgroundColor: colors.primary },
-  radioDisabled: { borderColor: colors.border, backgroundColor: colors.surfaceMuted },
-  operationSelected: { backgroundColor: colors.primarySoft },
-  operationDone: { width: 20, textAlign: 'center', color: colors.success, fontSize: 16, fontWeight: '700' },
-  operationMuted: { color: colors.muted },
   dialogWide: { maxWidth: 700 },
-  summary: {
-    flexDirection: 'row',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.control,
-    backgroundColor: colors.surfaceMuted,
-  },
-  summaryCell: { flex: 1, gap: 3, paddingVertical: 10, paddingHorizontal: 14 },
-  summaryDivider: { borderLeftWidth: 1, borderLeftColor: colors.border },
-  summaryValue: { color: colors.text, fontSize: 15, fontWeight: '700' },
-  operationHeader: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, marginBottom: -4 },
-  operationHeaderName: { flex: 1, paddingLeft: 34 },
-  operationCell: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' },
-  operationDuration: { width: 90, textAlign: 'right' },
-  operationStatusHead: { width: 130, textAlign: 'right' },
-  operationQuantity: { width: 70, textAlign: 'right' },
-  operationStatus: { width: 130, textAlign: 'right', color: colors.muted, fontSize: 13, fontWeight: '600' },
-  operationStatusDone: { color: colors.success },
-  operationStatusSelected: { color: colors.primary },
   authorization: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   cardGlyph: {
     width: 72,

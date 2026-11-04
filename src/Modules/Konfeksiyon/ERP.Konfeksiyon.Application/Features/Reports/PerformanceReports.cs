@@ -67,6 +67,7 @@ public sealed class OperatorPerformanceReport(IPerformanceService performance) :
     public override ReportDefinition Definition { get; } = new(
         "operator-performance", "Operatör performansı",
         "Operatör bazında süre dökümü, üretim, hedef ve verim. Verimi en düşük olan üsttedir.",
+        Group: ReportGroups.Personnel,
         Permission: ERP.Konfeksiyon.Domain.Authorization.KonfeksiyonPermissions.Report.Personnel);
 
     protected override PerformanceGroupBy GroupBy => PerformanceGroupBy.Operator;
@@ -78,7 +79,8 @@ public sealed class MachinePerformanceReport(IPerformanceService performance) : 
 {
     public override ReportDefinition Definition { get; } = new(
         "machine-performance", "Makine performansı",
-        "Makine bazında süre dökümü, üretim, hedef ve verim. Verimi en düşük olan üsttedir.");
+        "Makine bazında süre dökümü, üretim, hedef ve verim. Verimi en düşük olan üsttedir.",
+        Group: ReportGroups.Machine);
 
     protected override PerformanceGroupBy GroupBy => PerformanceGroupBy.Machine;
     protected override string RowTitle => "Makine";
@@ -89,7 +91,8 @@ public sealed class LineProductionReport(IPerformanceService performance) : Perf
 {
     public override ReportDefinition Definition { get; } = new(
         "line-production", "Bant üretimi",
-        "Bant bazında üretim, hedef, saatlik hız, verim ve kayıp süreler (arıza, demet bekleme, mola).");
+        "Bant bazında üretim, hedef, saatlik hız, verim ve kayıp süreler (arıza, demet bekleme, mola).",
+        Group: ReportGroups.Production);
 
     protected override PerformanceGroupBy GroupBy => PerformanceGroupBy.Line;
     protected override string RowTitle => "Bant";
@@ -117,7 +120,7 @@ public sealed class SamPerformanceReport(IPerformanceService performance) : Perf
     public override ReportDefinition Definition { get; } = new(
         "sam-performance", "SAM performansı",
         "Operasyon bazında standart süre (SAM) ile gerçekleşen birim sürenin karşılaştırması. Gerçekleşen süre, " +
-        "operasyonun fiilen işlemde olduğu sürenin üretilen adede bölümüdür.");
+        "operasyonun fiilen işlemde olduğu sürenin üretilen adede bölümüdür.", Group: ReportGroups.Production);
 
     protected override PerformanceGroupBy GroupBy => PerformanceGroupBy.Operation;
     protected override string RowTitle => "Operasyon";
@@ -141,7 +144,8 @@ public sealed class BottleneckReport(IPerformanceService performance, IProductio
     public ReportDefinition Definition { get; } = new(
         "bottlenecks", "Bant darboğazları",
         "Operasyonların verimi ve saatlik hızı ile şu an önlerinde bekleyen iş. Verimi en düşük operasyon üsttedir; " +
-        "önünde iş biriken düşük verimli operasyon hattı yavaşlatan operasyondur.");
+        "önünde iş biriken düşük verimli operasyon hattı yavaşlatan operasyondur.",
+        Group: ReportGroups.Production);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
     {
@@ -198,7 +202,8 @@ public sealed class EfficiencyReport(IPerformanceService performance, IFactoryCl
 {
     public ReportDefinition Definition { get; } = new(
         "efficiency", "Verim (günlük)",
-        "Gün gün fabrikanın toplam verimi: kazanılan dakika (üretilen adet × SAM) ÷ kullanılabilir süre.");
+        "Gün gün fabrikanın toplam verimi: kazanılan dakika (üretilen adet × SAM) ÷ kullanılabilir süre.",
+        Group: ReportGroups.Production);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
     {

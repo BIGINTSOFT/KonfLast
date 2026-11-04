@@ -13,7 +13,7 @@ public sealed class QualityReport(IKonfeksiyonDbContext db) : IReport
     public ReportDefinition Definition { get; } = new(
         "quality", "Kalite raporu",
         "Operasyon bazında kontrol edilen, geçen, reddedilen ve tamire gönderilen adet. Hata oranı en yüksek operasyon üsttedir.",
-        MaxRangeDays: 366);
+        MaxRangeDays: 366, Group: ReportGroups.Quality);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
     {
@@ -77,7 +77,7 @@ public sealed class DefectReport(IQualityService quality) : IReport
 {
     public ReportDefinition Definition { get; } = new(
         "defects", "Hata raporu",
-        "Hata türlerine göre bulunan hata adedi ve payı. En sık görülen hata üsttedir.", MaxRangeDays: 366);
+        "Hata türlerine göre bulunan hata adedi ve payı. En sık görülen hata üsttedir.", MaxRangeDays: 366, Group: ReportGroups.Quality);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
     {
@@ -213,7 +213,7 @@ public sealed class ShipmentReport(IKonfeksiyonDbContext db) : IReport
                 new("shippedAt", "Sevk zamanı", ReportColumnType.DateTime),
                 new("shipmentNo", "Sevkiyat"),
                 new("customer", "Müşteri"),
-                new("orderNo", "Sipariş"),
+                new("orderNo", "İş emri"),
                 new("code", "Mamul kodu"),
                 new("name", "Ad"),
                 new("quantity", "Adet", ReportColumnType.Decimal),

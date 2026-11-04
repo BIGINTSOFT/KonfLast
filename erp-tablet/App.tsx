@@ -17,10 +17,11 @@ import { supportsPairing } from './src/device/pairing';
 import { loadProject } from './src/device/project';
 import type { ProjectSetting } from './src/device/project';
 import { ReportOutbox } from './src/production/outbox';
+import { useTabletLive } from './src/live/useTabletLive';
 import { KeyboardWedgeReader } from './src/rfid/KeyboardWedgeReader';
 import { normalizeUid } from './src/rfid/RfidReader';
 import { ModuleScreen } from './src/screens/ModuleScreen';
-import { SettingsPasswordScreen } from './src/screens/SettingsPasswordScreen';
+import { SettingsPasswordDialog } from './src/screens/SettingsPasswordDialog';
 import { SetupScreen } from './src/screens/SetupScreen';
 import { StationScreen } from './src/screens/StationScreen';
 import { StationController } from './src/station/StationController';
@@ -56,6 +57,8 @@ function App() {
   const [screen, setScreen] = useState<Screen>('booting');
   /** Sistem ayarlarına girişte doğrulanan parola; yalnızca bellekte durur. */
   const [settingsPassword, setSettingsPassword] = useState('');
+  /** Açık ekranın üzerindeki parola penceresi (istasyon arkada çalışmaya devam eder). */
+  const [passwordOpen, setPasswordOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -82,10 +85,14 @@ function App() {
       return null;
     }
 
-    const controller = new StationController(new TabletApi(device.credentials), new ReportOutbox(deviceStore));
+    const api = new TabletApi(device.credentials);
+    const controller = new StationController(api, new ReportOutbox(deviceStore));
     const reader = new KeyboardWedgeReader(() => controller.notifyInvalidRead());
-    return { controller, reader };
+    return { api, controller, reader };
   }, [device, project?.project]);
+
+  // Makinede web'den yapılan değişiklik (elle bildirim, arıza kapatma...) beklemeden ekrana yansır.
+  useTabletLive(station?.api ?? null, () => void station?.controller.tick());
 
   const boyahane = useMemo(() => {
     if (!device || project?.project !== 'Boyahane') {
@@ -125,10 +132,10 @@ function App() {
 
   // Ayarlardan çıkınca klavye açık kalmasın: istasyon ekranındaki gizli kart alanı klavye açmaz ama açık olanı kapatmaz.
   useEffect(() => {
-    if (screen !== 'password' && screen !== 'setup') {
+    if (screen !== 'password' && screen !== 'setup' && !passwordOpen) {
       Keyboard.dismiss();
     }
-  }, [screen]);
+  }, [screen, passwordOpen]);
 
   /** Ayarlardan vazgeçince dönülecek ekran; 'password' ise dönülecek ekran yoktur. */
   const returnScreen = screenOf(project, device !== null);
@@ -143,15 +150,7 @@ function App() {
           </View>
         )}
 
-        {screen === 'password' && (
-          <SettingsPasswordScreen
-            onUnlock={password => {
-              setSettingsPassword(password);
-              setScreen('setup');
-            }}
-            onCancel={returnScreen === 'password' ? undefined : () => setScreen(returnScreen)}
-          />
-        )}
+        {screen === 'password' && <View style={styles.blank} />}
 
         {screen === 'setup' && (
           <SetupScreen
@@ -177,7 +176,7 @@ function App() {
         )}
 
         {screen === 'module' && project && (
-          <ModuleScreen project={project.project} origin={project.origin} onOpenSetup={() => setScreen('password')} />
+          <ModuleScreen project={project.project} origin={project.origin} onOpenSetup={() => setPasswordOpen(true)} />
         )}
 
         {screen === 'boyahane' && device && boyahane && (
@@ -186,7 +185,7 @@ function App() {
             outbox={boyahane.outbox}
             reader={boyahane.reader}
             tabletCode={device.config.tabletCode}
-            onOpenSetup={() => setScreen('password')}
+            onOpenSetup={() => setPasswordOpen(true)}
           />
         )}
 
@@ -196,7 +195,7 @@ function App() {
             outbox={dokuma.outbox}
             reader={dokuma.reader}
             tabletCode={device.config.tabletCode}
-            onOpenSetup={() => setScreen('password')}
+            onOpenSetup={() => setPasswordOpen(true)}
           />
         )}
 
@@ -206,7 +205,7 @@ function App() {
             outbox={orme.outbox}
             reader={orme.reader}
             tabletCode={device.config.tabletCode}
-            onOpenSetup={() => setScreen('password')}
+            onOpenSetup={() => setPasswordOpen(true)}
           />
         )}
 
@@ -215,7 +214,17 @@ function App() {
             controller={station.controller}
             reader={station.reader}
             tabletCode={device.config.tabletCode}
-            onOpenSetup={() => setScreen('password')}
+            onOpenSetup={() => setPasswordOpen(true)}
+          />
+        )}
+        {(screen === 'password' || passwordOpen) && (
+          <SettingsPasswordDialog
+            onUnlock={password => {
+              setSettingsPassword(password);
+              setPasswordOpen(false);
+              setScreen('setup');
+            }}
+            onCancel={screen === 'password' ? undefined : () => setPasswordOpen(false)}
           />
         )}
       </SafeAreaView>
@@ -225,6 +234,7 @@ function App() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.header },
+  blank: { flex: 1, backgroundColor: colors.background },
   booting: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
 });
 

@@ -347,7 +347,7 @@ export function LineDetailPage() {
           <h2>Şu an üretilen</h2>
           {line.currentPlan ? (
             <dl className="status-list">
-              <div><dt>Sipariş</dt><dd>{line.currentPlan.orderNo}</dd></div>
+              <div><dt>İş emri</dt><dd>{line.currentPlan.orderNo}</dd></div>
               <div><dt>Model</dt><dd>{line.currentPlan.modelCode}</dd></div>
               <div><dt>Müşteri</dt><dd>{line.currentPlan.customerName}</dd></div>
               <div><dt>Plan</dt><dd>{formatQuantity(line.currentPlan.plannedQuantity)} adet</dd></div>

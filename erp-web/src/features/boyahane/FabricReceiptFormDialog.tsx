@@ -159,6 +159,11 @@ export function FabricReceiptFormDialog({ receipt, onClose }: { receipt?: Fabric
           onChange={setCustomerId}
           placeholder="Boş bırakılırsa işletme malı"
         />
+        {hasLockedRoll && (
+          <p className="muted form__note">
+            Ham kontrolü yapılmış ya da siparişe bağlanmış top olduğu için malın sahibi ve açılış stoğu değiştirilemez.
+          </p>
+        )}
         <label className="field">
           <span>Not</span>
           <textarea rows={2} value={notes} maxLength={1000} onChange={(event) => setNotes(event.target.value)} />

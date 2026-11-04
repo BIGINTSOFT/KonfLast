@@ -115,6 +115,8 @@ export interface BundleEvent {
   occurredAt: string
   /** Ofisten elle girildiyse kaydı giren kullanıcı; tabletten gelen olaylarda boş. */
   enteredBy: string | null
+  /** Adet operatörün performansına ve primine sayılır mı (elle bildirimde seçilir). */
+  countsForPerformance: boolean
 }
 
 /** Elle bildirim penceresi: operasyonun durumu ve operasyonu yapabilen makineler. */
@@ -140,7 +142,11 @@ export interface ManualReportRequest {
   rejectedQuantity: number
   operatorId: number | null
   machineId: number | null
+  attribution: ManualReportAttribution
 }
+
+/** Elle bildirilen adedin kime yazılacağı. */
+export type ManualReportAttribution = 'OPERATOR' | 'OPERATOR_NOT_COUNTED' | 'NO_OPERATOR'
 
 export interface BundleSummaryItem {
   colorId: number

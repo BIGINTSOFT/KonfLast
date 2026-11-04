@@ -14,6 +14,10 @@ export interface PairingStation {
   tabletCode: string | null;
   isPaired: boolean;
   isThisDevice: boolean;
+  /** Yalnızca bu tabletin istasyonunda: açık oturumun operatörü (başka istasyona geçilirse oturum kapatılır). */
+  sessionOperator?: string | null;
+  /** O oturumda adedi bildirilmemiş süren iş var mı. */
+  sessionWorkInProgress?: boolean;
 }
 
 export interface PairResponse {
@@ -53,9 +57,11 @@ export function pairStation(
   deviceIdentifier: string,
   station: PairingStation,
   takeOver: boolean,
+  /** Önceki istasyondaki oturumun süren işi bırakılarak kapatılsın (ayar ekranında uyarısı gösterildi). */
+  releaseWork = false,
 ): Promise<PairResponse> {
   return request<PairResponse>(origin, `${pairingPaths[project]}/pair`, {
     method: 'POST',
-    body: { password, deviceIdentifier, machineId: station.machineId, tabletId: station.tabletId, takeOver },
+    body: { password, deviceIdentifier, machineId: station.machineId, tabletId: station.tabletId, takeOver, releaseWork },
   });
 }

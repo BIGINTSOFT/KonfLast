@@ -20,7 +20,7 @@ public sealed class BoyahaneRfidCardRequestValidator : AbstractValidator<Boyahan
 {
     public BoyahaneRfidCardRequestValidator()
     {
-        RuleFor(x => x.Uid).Must(uid => RfidUid.Normalize(uid) is not null).WithMessage("Kart numarası 1-10 rakam olmalıdır.");
+        RuleFor(x => x.Uid).Must(uid => RfidUid.Normalize(uid) is not null).WithMessage("Kart numarası en fazla 10 harf ya da rakam olmalıdır.");
         RuleFor(x => x.CardType).IsInEnum().WithMessage("Kart türü geçersiz.");
         RuleFor(x => x.Label).OptionalText(50);
     }

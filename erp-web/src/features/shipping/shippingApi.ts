@@ -5,7 +5,8 @@ import type { DocumentLanguage } from '../../utils/documentText'
 import type { ProformaParty } from '../salesOrders/salesOrdersApi'
 import type { StockUnit } from '../stock/stockApi'
 
-export type ShipmentStatus = 'DRAFT' | 'SHIPPED' | 'CANCELLED'
+/** Taslak → toplamada → toplandı (irsaliye bekliyor) → sevk edildi; stok düşmeden iptal edilebilir. */
+export type ShipmentStatus = 'DRAFT' | 'PICKING' | 'PICKED' | 'SHIPPED' | 'CANCELLED'
 
 export interface ShipmentListItem {
   id: number
@@ -22,6 +23,9 @@ export interface ShipmentListItem {
   /** Bağlı müşteri siparişindeki müşterinin kendi sipariş numarası. */
   customerOrderNo: string | null
   cartonCount: number
+  pickedQuantity: number
+  /** Toplamayı üstlenmiş kullanıcı. */
+  pickingBy: string | null
 }
 
 export interface ShipmentItem {
@@ -33,6 +37,29 @@ export interface ShipmentItem {
   quantity: number
   /** Kartın sevkiyat deposundaki şu anki stoğu. */
   availableQuantity: number
+  /** Depodan toplanan adet. */
+  pickedQuantity: number
+  /** Toplama eksik bittiyse ilk istenen adet. */
+  requestedQuantity: number | null
+  /** İrsaliye öncesi kontrolde sayılan adet. */
+  checkedQuantity: number | null
+}
+
+/** Toplama ve irsaliye durumu; yapılabilecek işlemleri sunucu belirler. */
+export interface ShipmentWorkflow {
+  canSendToPicking: boolean
+  canReturnToDraft: boolean
+  canCompletePicking: boolean
+  canReopenPicking: boolean
+  pickingBy: string | null
+  pickingStartedAt: string | null
+  pickedAt: string | null
+  pickedBy: string | null
+  vehiclePlate: string | null
+  driverName: string | null
+  driverIdentityNo: string | null
+  /** ETTN; irsaliye kesilince verilir. */
+  despatchUuid: string | null
 }
 
 /** Koli ve yükleme özeti; koli yoksa cartonCount 0, matchesItems true. */
@@ -69,11 +96,12 @@ export interface Shipment {
   createdAt: string
   createdBy: string | null
   items: ShipmentItem[]
-  /** Sevkiyatın karşıladığı müşteri siparişi (üretim siparişine bağlı sevkiyatta ondan gelir). */
+  /** Sevkiyatın karşıladığı müşteri siparişi (iş emrine bağlı sevkiyatta ondan gelir). */
   salesOrderId: number | null
   salesOrderNo: string | null
   customerOrderNo: string | null
   cartons: ShipmentCartonSummary | null
+  workflow: ShipmentWorkflow | null
 }
 
 export interface ShipmentRequest {
@@ -214,6 +242,151 @@ export interface ShipmentDocument {
   items: ShipmentDocumentItem[]
   cartons: ShipmentDocumentCarton[]
   printedAt: string
+  despatch: {
+    despatchUuid: string | null
+    vehiclePlate: string | null
+    driverName: string | null
+    driverIdentityNo: string | null
+    receiverIsEDespatchUser: boolean
+    receiverAlias: string | null
+    checkedBy: string | null
+  } | null
+}
+
+// ───────── Toplama ─────────
+
+export interface PickingQueueItem {
+  id: number
+  shipmentNo: string
+  status: ShipmentStatus
+  customerName: string
+  warehouseCode: string
+  orderNo: string | null
+  customerOrderNo: string | null
+  shipDate: string
+  itemCount: number
+  quantity: number
+  pickedQuantity: number
+  pickingBy: string | null
+  pickingStartedAt: string | null
+}
+
+export interface PickingItem {
+  shipmentItemId: number
+  stockItemId: number
+  itemCode: string
+  itemName: string
+  productCode: string | null
+  colorName: string | null
+  sizeName: string | null
+  sizeOrder: number
+  unit: StockUnit
+  quantity: number
+  pickedQuantity: number
+  requestedQuantity: number | null
+  /** Depoda bulunamayan (adreslere dağıtılamayan) adet. */
+  shortage: number
+}
+
+/** Toplama listesinin satırı: adres sırasıyla numaralanır, toplayıcı bu sırayla yürür. */
+export interface PickingStep {
+  sequence: number
+  shipmentItemId: number
+  stockItemId: number
+  itemCode: string
+  itemName: string
+  colorName: string | null
+  sizeName: string | null
+  locationId: number
+  locationCode: string
+  /** Bu adresten alınacak toplam (alınmış + kalan). */
+  quantity: number
+  pickedQuantity: number
+  done: boolean
+}
+
+export interface PickRecord {
+  id: number
+  itemCode: string
+  locationCode: string
+  quantity: number
+  pickedAt: string
+  pickedBy: string
+}
+
+export interface ShipmentPicking {
+  id: number
+  shipmentNo: string
+  status: ShipmentStatus
+  customerName: string
+  warehouseId: number
+  warehouseCode: string
+  orderNo: string | null
+  customerOrderNo: string | null
+  shipDate: string
+  notes: string | null
+  pickingBy: string | null
+  pickingStartedAt: string | null
+  /** Toplamayı bu kullanıcı üstlenmiş. */
+  isMine: boolean
+  rowVersion: string
+  items: PickingItem[]
+  steps: PickingStep[]
+  picks: PickRecord[]
+}
+
+// ───────── Sevke hazır siparişler ─────────
+
+export interface ReadyOrder {
+  salesOrderId: number
+  orderNo: string
+  customerOrderNo: string | null
+  customerId: number
+  customerName: string
+  dueDate: string
+  ordered: number
+  shipped: number
+  /** Depoda siparişe ayrılmış (stoktan ve üretimden). */
+  reserved: number
+  /** Açık sevkiyatlarda bulunan. */
+  inShipments: number
+  /** Sevkiyata aktarılabilecek: ayrılan − açık sevkiyattaki. */
+  transferable: number
+  openShipmentCount: number
+  warehouseCodes: string[]
+}
+
+export interface ReadyOrderLine {
+  warehouseId: number
+  warehouseCode: string
+  stockItemId: number
+  itemCode: string
+  productCode: string | null
+  productName: string | null
+  colorName: string | null
+  sizeName: string | null
+  sizeOrder: number
+  ordered: number
+  shipped: number
+  reserved: number
+  inShipments: number
+  transferable: number
+}
+
+export interface ReadyOrderDetail {
+  order: ReadyOrder
+  lines: ReadyOrderLine[]
+  shipments: { id: number; shipmentNo: string; status: ShipmentStatus; warehouseCode: string; quantity: number; pickedQuantity: number }[]
+}
+
+export interface ShipmentDispatchRequest {
+  rowVersion: string
+  checks: { shipmentItemId: number; quantity: number }[]
+  documentNo: string | null
+  carrier: string | null
+  vehiclePlate: string | null
+  driverName: string | null
+  driverIdentityNo: string | null
 }
 
 // ───────── Yükleme (el terminali) ─────────
@@ -279,9 +452,56 @@ export const shippingApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Shipment'],
     }),
-    shipShipment: build.mutation<Shipment, { id: number; rowVersion: string }>({
-      query: ({ id, rowVersion }) => ({ url: `/shipments/${id}/ship`, method: 'POST', body: { rowVersion } }),
-      invalidatesTags: ['Shipment', 'Stock', 'ProductionTracking'],
+    // İrsaliye kesme stoğu düşürür ve siparişin sevk edilen adedini değiştirir.
+    dispatchShipment: build.mutation<Shipment, { id: number; body: ShipmentDispatchRequest }>({
+      query: ({ id, body }) => ({ url: `/shipments/${id}/dispatch`, method: 'POST', body }),
+      invalidatesTags: ['Shipment', 'Stock', 'ProductionTracking', 'SalesOrder'],
+    }),
+    getPickingQueue: build.query<PickingQueueItem[], { search?: string; status?: ShipmentStatus }>({
+      query: (params) => ({ url: '/shipments/picking-queue', params }),
+      providesTags: ['Shipment'],
+    }),
+    getShipmentPicking: build.query<ShipmentPicking, number>({
+      query: (id) => `/shipments/${id}/picking`,
+      providesTags: ['Shipment', 'Stock'],
+    }),
+    shipmentTransition: build.mutation<ShipmentPicking, { id: number; action: 'send-to-picking' | 'return-to-draft' | 'reopen-picking'; rowVersion: string }>({
+      query: ({ id, action, rowVersion }) => ({ url: `/shipments/${id}/${action}`, method: 'POST', body: { rowVersion } }),
+      invalidatesTags: ['Shipment'],
+    }),
+    startPicking: build.mutation<ShipmentPicking, { id: number; takeOver?: boolean }>({
+      query: ({ id, takeOver }) => ({ url: `/shipments/${id}/picking/start`, method: 'POST', body: { takeOver: takeOver ?? false } }),
+      invalidatesTags: ['Shipment'],
+    }),
+    pickShipmentItem: build.mutation<
+      ShipmentPicking,
+      { id: number; requestId: string; shipmentItemId: number; locationId: number; quantity: number }
+    >({
+      query: ({ id, ...body }) => ({ url: `/shipments/${id}/picks`, method: 'POST', body }),
+      invalidatesTags: ['Shipment'],
+    }),
+    undoShipmentPick: build.mutation<ShipmentPicking, { id: number; pickId: number }>({
+      query: ({ id, pickId }) => ({ url: `/shipments/${id}/picks/${pickId}`, method: 'DELETE' }),
+      invalidatesTags: ['Shipment'],
+    }),
+    completePicking: build.mutation<ShipmentPicking, number>({
+      query: (id) => ({ url: `/shipments/${id}/picking/complete`, method: 'POST' }),
+      invalidatesTags: ['Shipment'],
+    }),
+    getReadyOrders: build.query<ReadyOrder[], { search?: string }>({
+      query: (params) => ({ url: '/shipping/ready-orders', params }),
+      providesTags: ['Shipment', 'Stock', 'SalesOrder'],
+    }),
+    getReadyOrder: build.query<ReadyOrderDetail, number>({
+      query: (id) => `/shipping/ready-orders/${id}`,
+      providesTags: ['Shipment', 'Stock', 'SalesOrder'],
+    }),
+    transferReadyOrder: build.mutation<
+      number,
+      { salesOrderId: number; warehouseId: number; shipDate: string; lines: { stockItemId: number; quantity: number }[]; carrier: string | null; notes: string | null }
+    >({
+      query: ({ salesOrderId, ...body }) => ({ url: `/shipping/ready-orders/${salesOrderId}/transfer`, method: 'POST', body }),
+      invalidatesTags: ['Shipment'],
     }),
     cancelShipment: build.mutation<Shipment, { id: number; rowVersion: string }>({
       query: ({ id, rowVersion }) => ({ url: `/shipments/${id}/cancel`, method: 'POST', body: { rowVersion } }),
@@ -350,7 +570,18 @@ export const {
   useGetShipmentsQuery,
   useGetShipmentQuery,
   useSaveShipmentMutation,
-  useShipShipmentMutation,
+  useDispatchShipmentMutation,
+  useGetPickingQueueQuery,
+  useGetShipmentPickingQuery,
+  useLazyGetShipmentPickingQuery,
+  useShipmentTransitionMutation,
+  useStartPickingMutation,
+  usePickShipmentItemMutation,
+  useUndoShipmentPickMutation,
+  useCompletePickingMutation,
+  useGetReadyOrdersQuery,
+  useGetReadyOrderQuery,
+  useTransferReadyOrderMutation,
   useCancelShipmentMutation,
   useDeleteShipmentMutation,
   useGetShipmentPackingQuery,

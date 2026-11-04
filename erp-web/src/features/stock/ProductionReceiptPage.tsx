@@ -49,7 +49,7 @@ export function ProductionReceiptPage() {
 
   const columns: GridColumn[] = [
     { key: 'bundleNo', label: 'Demet' },
-    { key: 'orderNo', label: 'Sipariş' },
+    { key: 'orderNo', label: 'İş emri' },
     { key: 'productCode', label: 'Ürün' },
     { key: 'colorName', label: 'Renk / beden' },
     { key: 'quantity', label: 'Demet adedi', numeric: true },
@@ -86,7 +86,10 @@ export function ProductionReceiptPage() {
     const result = await receive({ requestId, bundleId: bundle.bundleId, warehouseId })
     setReceivingId(null)
     if (!('error' in result)) {
-      setLastReceived(`${bundle.bundleNo} numaralı demet teslim alındı: ${formatQuantity(bundle.finishedQuantity)} adet.`)
+      const reserved = result.data.reservedForOrderNo
+        ? ` ${formatQuantity(result.data.reservedQuantity)} adedi ${result.data.reservedForOrderNo} siparişine ayrıldı; sevkiyata aktarılmayı bekliyor.`
+        : ''
+      setLastReceived(`${bundle.bundleNo} numaralı demet teslim alındı: ${formatQuantity(bundle.finishedQuantity)} adet.${reserved}`)
     }
   }
 

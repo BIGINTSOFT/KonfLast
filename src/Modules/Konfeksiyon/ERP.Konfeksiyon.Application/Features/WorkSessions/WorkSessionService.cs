@@ -44,6 +44,13 @@ public interface IWorkSessionService
     Task<Result<WorkSessionDto>> CloseAsync(long id, bool releaseWork, CancellationToken cancellationToken);
 
     /// <summary>
+    /// Tablet makineden ayrılırken (başka makineye eşleştirme) makinede açık kalan oturumu kapatır; makinede tablet
+    /// kalmadığı için oturum orada sürdürülemez. Süren iş varsa yalnızca <paramref name="releaseWork"/> ile bırakılarak
+    /// kapatılır, aksi halde WORK_IN_PROGRESS döner. Açık oturum yoksa bir şey yapmaz.
+    /// </summary>
+    Task<Result> CloseForTabletMoveAsync(int machineId, bool releaseWork, CancellationToken cancellationToken);
+
+    /// <summary>
     /// Vardiyası biten (ya da hiçbir vardiyaya denk gelmeyip çok uzun açık kalan) ve süren işi olmayan
     /// oturumları kapatır. Kapatılan oturum sayısını döner.
     /// </summary>
@@ -66,6 +73,9 @@ public sealed class WorkSessionService(
     IOptions<ProductionOptions> options) : IWorkSessionService
 {
     private const string SystemActor = "system";
+
+    /// <summary>Tablet başka makineye eşleştirilince kapatılan oturumun kapatanı.</summary>
+    private const string TabletMoveActor = "Tablet eşleştirme";
     private const int AutoCloseBatch = 500;
     private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(10);
 
@@ -465,6 +475,53 @@ public sealed class WorkSessionService(
 
     public async Task<Result<WorkSessionDto>> CloseAsync(long id, bool releaseWork, CancellationToken cancellationToken)
     {
+        var closed = await CloseByIdAsync(id, releaseWork, currentUser.UserName, cancellationToken);
+        if (!closed.IsSuccess)
+        {
+            return closed.Error!;
+        }
+
+        var row = await ProjectRows(db.WorkSessions.AsNoTracking().IgnoreQueryFilters().Where(s => s.Id == id))
+            .SingleAsync(cancellationToken);
+        return ToDto(row, UtcNow);
+    }
+
+    public async Task<Result> CloseForTabletMoveAsync(int machineId, bool releaseWork, CancellationToken cancellationToken)
+    {
+        // Makine pasif / silinmiş olsa da oturumu kapanır.
+        var open = await db.WorkSessions
+            .IgnoreQueryFilters()
+            .Where(s => s.MachineId == machineId && s.LogoutAt == null)
+            .Select(s => new
+            {
+                s.Id,
+                s.Machine.MachineCode,
+                Operator = s.Operator.FirstName + " " + s.Operator.LastName,
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+        if (open is null)
+        {
+            return Result.Success();
+        }
+
+        var closed = await CloseByIdAsync(open.Id, releaseWork, TabletMoveActor, cancellationToken);
+        if (closed.IsSuccess || closed.Error!.Code == ErrorCodes.SessionNotActive)
+        {
+            return Result.Success();
+        }
+
+        return closed.Error.Code == ErrorCodes.WorkInProgress
+            ? new Error(
+                ErrorCodes.WorkInProgress,
+                $"{open.MachineCode} makinesinde {open.Operator} adlı operatörün süren işi var (adet bildirilmedi). "
+                    + "Eşleştirme işi bırakarak yapılabilir; kalan adet sonra sürdürülür.",
+                ErrorType.Conflict)
+            : closed;
+    }
+
+    /// <summary>Oturumu yetkili işlemi olarak kapatır; <paramref name="releaseWork"/> ile süren iş önce bırakılır.</summary>
+    private async Task<Result> CloseByIdAsync(long id, bool releaseWork, string? actor, CancellationToken cancellationToken)
+    {
         if (releaseWork)
         {
             // Süren iş kendi işleminde bırakılır (demet ve makine kilitleri orada alınır); sonra oturum kapatılır.
@@ -506,13 +563,10 @@ public sealed class WorkSessionService(
             return WorkInProgress;
         }
 
-        await CloseAsync(session, WorkSessionEndReason.ClosedBySupervisor, UtcNow, currentUser.UserName, cancellationToken);
+        await CloseAsync(session, WorkSessionEndReason.ClosedBySupervisor, UtcNow, actor, cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
-
-        var row = await ProjectRows(db.WorkSessions.AsNoTracking().IgnoreQueryFilters().Where(s => s.Id == id))
-            .SingleAsync(cancellationToken);
-        return ToDto(row, UtcNow);
+        return Result.Success();
     }
 
     public async Task<int> CloseExpiredAsync(CancellationToken cancellationToken)

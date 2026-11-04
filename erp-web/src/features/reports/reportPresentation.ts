@@ -19,10 +19,11 @@ export function formatReportCell(value: ReportCell, type: ReportColumnType): str
   }
 
   if (typeof value === 'string') {
-    if (type === 'DATE_TIME') {
+    // Toplam satırının etiketi ("Toplam") tarih sütununa düşebilir; tarih olmayan metin olduğu gibi gösterilir.
+    if (type === 'DATE_TIME' && !Number.isNaN(Date.parse(value))) {
       return formatDateTime(value)
     }
-    return type === 'DATE' ? formatDate(value) : value
+    return type === 'DATE' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? formatDate(value) : value
   }
 
   switch (type) {
@@ -41,21 +42,4 @@ export function formatReportCell(value: ReportCell, type: ReportColumnType): str
 export function reportFileName(key: string, fromDate: string | null, toDate: string | null, extension = 'csv'): string {
   const range = fromDate && toDate ? `_${fromDate}_${toDate}` : ''
   return `${key}${range}.${extension}`
-}
-
-/** Rapor seçim listesindeki gruplar: önce grupsuz (genel) raporlar, sonra adlarıyla gruplar; sıra katalogdaki gibidir. */
-export function groupReports<T extends { group: string | null }>(catalog: readonly T[], generalTitle: string): { title: string; reports: T[] }[] {
-  const groups: { title: string; reports: T[] }[] = []
-  for (const report of catalog) {
-    const title = report.group ?? generalTitle
-    const existing = groups.find((group) => group.title === title)
-    if (existing) {
-      existing.reports.push(report)
-    } else if (report.group === null) {
-      groups.unshift({ title, reports: [report] })
-    } else {
-      groups.push({ title, reports: [report] })
-    }
-  }
-  return groups
 }

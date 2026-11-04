@@ -1,9 +1,9 @@
-import { normalizeUid } from './RfidReader';
+import { NO_CARD, normalizeUid } from './RfidReader';
 import type { RfidReader } from './RfidReader';
 
 /**
  * Klavye gibi davranan okuyucular (USB / Bluetooth HID): kart okununca kart numarasını yazar ve Enter gönderir.
- * Yazılan satır ekrandaki gizli giriş alanından (WedgeInput) `feed` ile buraya aktarılır.
+ * Satırı Android tarafı toplar; WedgeInput `feed` ile buraya aktarır.
  */
 export class KeyboardWedgeReader implements RfidReader {
   readonly name = 'Klavye emülasyonlu okuyucu (USB / Bluetooth HID)';
@@ -27,7 +27,8 @@ export class KeyboardWedgeReader implements RfidReader {
 
   /** Okuyucunun yazdığı bir satırı işler. */
   feed(raw: string): void {
-    if (!this.onRead || raw.trim().length === 0) {
+    // Okuyucu kart çekilince "NOCARD" yazar; okuma değildir, hata da gösterilmez.
+    if (!this.onRead || raw.trim().length === 0 || raw.trim().toUpperCase() === NO_CARD) {
       return;
     }
 

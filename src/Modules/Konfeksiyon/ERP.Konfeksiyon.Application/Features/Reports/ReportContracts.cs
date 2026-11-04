@@ -69,6 +69,15 @@ public sealed record ReportDefinition(
     string? DaysLabel = null,
     int? DefaultDays = null);
 
+/// <summary>Raporlar ekranındaki grup adları (depo ve fason gruplarının adı kendi özelliklerindedir).</summary>
+public static class ReportGroups
+{
+    public const string Production = "Üretim";
+    public const string Personnel = "Personel";
+    public const string Machine = "Makine";
+    public const string Quality = "Kalite";
+}
+
 public sealed class ReportQuery
 {
     /// <summary>Aralığın başı (UTC, dahil).</summary>

@@ -15,7 +15,7 @@ import type { ItemRow } from './purchasingPresentation'
 interface PurchaseOrderDialogProps {
   /** Düzenlenen taslak; yoksa yeni sipariş. */
   order?: PurchaseOrder
-  /** Yeni siparişte önceden doldurulacak kalemler ve not (ör. bir üretim siparişinin eksik malzemeleri). */
+  /** Yeni siparişte önceden doldurulacak kalemler ve not (ör. bir iş emrinin eksik malzemeleri). */
   initialItems?: { stockItemId: number; quantity: number; productionOrderId?: number; productionOrderNo?: string }[]
   initialNotes?: string
   onClose: () => void
@@ -178,7 +178,7 @@ export function PurchaseOrderDialog({ order, initialItems, initialNotes, onClose
                         />
                         {row.productionOrderId && (
                           <div className="purchase-items__link">
-                            {row.productionOrderNo ?? 'Üretim siparişi'} eksik malzemesi
+                            {row.productionOrderNo ?? 'İş emri'} eksik malzemesi
                             <button type="button" className="link-button" onClick={() => updateRow(row.key, { productionOrderId: null, productionOrderNo: null })}>
                               bağı kaldır
                             </button>

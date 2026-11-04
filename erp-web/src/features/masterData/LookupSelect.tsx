@@ -63,6 +63,7 @@ export function LookupSelect({
   const [selected, setSelected] = useState<LookupItem | null>(null)
   const listId = useId()
   const anchorRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const [position, setPosition] = useState<CSSProperties | undefined>(undefined)
   const debouncedSearch = useDebounced((query ?? '').trim())
   const { data: items, isFetching } = useGetLookupQuery({
@@ -140,6 +141,12 @@ export function LookupSelect({
     }
   }, [open])
 
+  // Zorunlu alan seçilmeden gönderilemez: tarayıcı formu durdurur, alanı odaklar ve iletiyi gösterir. Kutudaki
+  // yazı değil seçili kayıt denetlenir (aranıp seçilmeden bırakılan metin geçerli sayılmaz).
+  useLayoutEffect(() => {
+    inputRef.current?.setCustomValidity(required && value === null ? 'Listeden bir kayıt seçin.' : '')
+  }, [required, value])
+
   const optionId = (index: number) => `${listId}-${index}`
   const invalid = Boolean(errors?.length)
 
@@ -148,8 +155,10 @@ export function LookupSelect({
       <label htmlFor={inputId} className={hideLabel ? 'visually-hidden' : undefined}>{label}</label>
       <div className="combobox" ref={anchorRef}>
         <input
+          ref={inputRef}
           id={inputId}
           type="text"
+          required={required}
           role="combobox"
           aria-expanded={open}
           aria-controls={listId}
@@ -161,10 +170,10 @@ export function LookupSelect({
           placeholder={placeholder ?? (required ? 'Seçin…' : '— Yok —')}
           value={query ?? (selected ? itemLabel(selected) : '')}
           disabled={disabled}
-          onFocus={(event) => {
-            event.target.select()
-            openList()
-          }}
+          // Odaklanınca liste açılmaz: pencere açılırken ilk alan odaklandığında liste henüz yerleşmemiş
+          // pencereye göre konumlanıp görünmüyordu ve tıklama da açık sanılan listeyi yeniden açmıyordu.
+          // Liste tıklayınca, yazınca ya da ok tuşuyla açılır.
+          onFocus={(event) => event.target.select()}
           onClick={() => !open && openList()}
           onBlur={close}
           onChange={(event) => {

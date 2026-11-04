@@ -178,3 +178,50 @@ export interface MachineStatusInfo {
   status: MachineStatus;
   statusReason?: string | null;
 }
+
+/** Performans sayfasının dönemi (fabrika saatiyle): bugün ya da bu haftanın pazartesisinden beri. */
+export type PerformancePeriod = 'TODAY' | 'WEEK';
+
+/** Aynı hesap kıyas döneminde (ör. dün, son 7 gün, geçen hafta). */
+export interface PerformanceComparison {
+  label: string;
+  efficiencyPercent: number | null;
+  qualityPercent: number | null;
+}
+
+/** Dönemin bir dilimi (bugün için saat, hafta için gün) ve o dilimde bildirilen adet. */
+export interface PerformanceBucket {
+  label: string;
+  produced: number;
+  rejected: number;
+  /** Şu an içinde bulunulan dilim. */
+  current: boolean;
+}
+
+/** Oturumu açık operatörün performansı (sunucunun performans hesabı; web'deki raporla aynı). */
+export interface TabletPerformance {
+  operatorId: number;
+  fullName: string;
+  period: PerformancePeriod;
+  from: string;
+  to: string;
+  /** Kazanılan dakika ÷ (net çalışma − demet bekleme); %100'ü aşabilir. */
+  efficiencyPercent: number | null;
+  /** Sağlam adet ÷ (sağlam + hatalı). */
+  qualityPercent: number | null;
+  produced: number;
+  rejected: number;
+  /** %100 verimde aynı sürede üretilmesi gereken adet. */
+  targetQuantity: number | null;
+  producedPerHour: number | null;
+  /** %100 verimde saatte üretilmesi gereken adet (grafikteki hedef çizgisi). */
+  targetPerHour: number | null;
+  netWorkingMinutes: number;
+  waitingMinutes: number;
+  /** Üretilen adet × birim süre. */
+  earnedMinutes: number;
+  /** Net çalışma − demet bekleme (verimin paydası). */
+  availableMinutes: number;
+  comparisons: PerformanceComparison[];
+  buckets: PerformanceBucket[];
+}

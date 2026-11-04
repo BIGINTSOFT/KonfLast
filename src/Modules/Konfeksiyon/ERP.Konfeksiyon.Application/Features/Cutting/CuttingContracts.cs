@@ -217,7 +217,7 @@ public sealed class CuttingPlanRequestValidator : AbstractValidator<CuttingPlanR
 {
     public CuttingPlanRequestValidator()
     {
-        RuleFor(x => x.ProductionOrderId).GreaterThan(0).WithMessage("Üretim siparişi seçilmelidir.");
+        RuleFor(x => x.ProductionOrderId).GreaterThan(0).WithMessage("İş emri seçilmelidir.");
         RuleFor(x => x.ColorId).GreaterThan(0).WithMessage("Renk seçilmelidir.");
         RuleFor(x => x.MarkerLength).GreaterThan(0).WithMessage("Pastal boyu 0 ile 100 m arasında olmalıdır.").LessThanOrEqualTo(100).WithMessage("Pastal boyu 0 ile 100 m arasında olmalıdır.");
         RuleFor(x => x.EndAllowance)

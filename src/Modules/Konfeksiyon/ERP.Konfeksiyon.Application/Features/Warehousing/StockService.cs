@@ -117,7 +117,7 @@ public interface IStockLedger
     /// <summary>
     /// Sevk edilen kalemleri deponun adreslerinden sırayla (önce genel adres) düşer ve hareketleri ekler; stok
     /// yetmezse hata döner ve hiçbir şey yazılmamış sayılır (çağıran transaction'ı geri alır). Çağıranın açık
-    /// transaction'ı içinde çalışır.
+    /// transaction'ı içinde çalışır. <paramref name="picked"/> verilirse kart, önce toplandığı adreslerden düşülür.
     /// </summary>
     Task<Error?> PostShipmentAsync(
         int warehouseId,
@@ -126,7 +126,8 @@ public interface IStockLedger
         int? salesOrderId,
         IReadOnlyList<(int StockItemId, string ItemCode, decimal Quantity)> lines,
         string? documentNo,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<int, IReadOnlyList<(int LocationId, decimal Quantity)>>? picked = null);
 
     /// <summary>
     /// Müşteri siparişine hazır mamul ayırır: her kalemin ayırması istenen adede, stok yetmiyorsa kullanılabilir stok
@@ -138,6 +139,16 @@ public interface IStockLedger
 
     /// <summary>Müşteri siparişinin bütün ayırmalarını bırakır (kaydetmez).</summary>
     Task ReleaseSalesOrderReservationsAsync(int salesOrderId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Bir sipariş kalemine, verilen depodaki serbest stoktan ayırma ekler (kalemin o depodaki ayırması artar).
+    /// <paramref name="partial"/> ise serbest stok kadarı ayrılır, değilse stok yetmezse hata döner. Ayrılan miktarı
+    /// döndürür. Sipariş ve kalem kurallarını (onaylı, açık adet) çağıran denetler. Açık transaction içinde çalışır,
+    /// kaydetmez.
+    /// </summary>
+    Task<Result<decimal>> ReserveForSalesLineAsync(
+        int salesOrderLineId, int warehouseId, int stockItemId, decimal quantity, bool fromProduction, bool partial,
+        CancellationToken cancellationToken);
 
     /// <summary>
     /// Siparişe depoda malzeme ayırır: her kartın rezervasyonu istenen miktara, stok yetmiyorsa kullanılabilir
@@ -542,7 +553,7 @@ public sealed class StockService(
         if (request.ProductionOrderId is { } orderId
             && !await db.ProductionOrders.AnyAsync(o => o.Id == orderId, cancellationToken))
         {
-            return ReferenceValidation.InvalidReference("productionOrderId", "Üretim siparişi bulunamadı.");
+            return ReferenceValidation.InvalidReference("productionOrderId", "İş emri bulunamadı.");
         }
 
         if (request.ProductionOrderId is { } productionOrderId && await RecipeIssuePendingAsync(productionOrderId, request.StockItemId, cancellationToken))
@@ -689,6 +700,8 @@ public sealed class StockService(
         }
 
         var locationBalance = stock.Apply(quantity);
+        var reservedFor = await ReserveReceiptForSalesOrderAsync(
+            bundle.ProductionOrderId, request.WarehouseId, item, isNew, quantity, stocks.Sum(s => s.Quantity), cancellationToken);
         db.StockTransactions.Add(new StockTransaction
         {
             RequestId = request.RequestId,
@@ -712,7 +725,64 @@ public sealed class StockService(
         }
 
         await transaction.CommitAsync(cancellationToken);
-        return await LoadMovementAsync(request.RequestId, duplicate: false, cancellationToken);
+        var movement = await LoadMovementAsync(request.RequestId, duplicate: false, cancellationToken);
+        return reservedFor is { } reserved
+            ? movement with { ReservedForOrderNo = reserved.OrderNo, ReservedQuantity = reserved.Quantity }
+            : movement;
+    }
+
+    /// <summary>
+    /// Üretimden teslim alınan mamulü, iş emrinin bağlı olduğu müşteri siparişine ayırır: siparişin bu ürün / renk /
+    /// bedendeki açık adedi (sipariş − sevk edilen − zaten ayrılan) ve depodaki serbest stok kadar. Sipariş onaylı
+    /// değilse ya da kalemi yoksa mal serbest stokta kalır. (Depo, kart) kilidi altında çağrılır; kaydetmez.
+    /// </summary>
+    private async Task<(string OrderNo, decimal Quantity)?> ReserveReceiptForSalesOrderAsync(
+        int productionOrderId, int warehouseId, StockItem item, bool isNewItem, decimal received, decimal onHand,
+        CancellationToken cancellationToken)
+    {
+        if (item.ProductId is not { } productId || item.ColorId is not { } colorId || item.SizeId is not { } sizeId)
+        {
+            return null;
+        }
+
+        var line = await db.SalesOrderLines
+            .Where(l => l.SalesOrder.Status == SalesOrderStatus.Approved
+                && db.ProductionOrders.Any(o => o.Id == productionOrderId && o.SalesOrderId == l.SalesOrderId)
+                && l.ProductId == productId && l.ColorId == colorId && l.SizeId == sizeId)
+            .Select(l => new { l.Id, l.SalesOrderId, l.SalesOrder.OrderNo, l.Quantity })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (line is null)
+        {
+            return null;
+        }
+
+        var shipped = await db.ShipmentItems
+            .Where(i => i.Shipment.SalesOrderId == line.SalesOrderId && i.Shipment.Status == ShipmentStatus.Shipped
+                && i.StockItem.ProductId == productId && i.StockItem.ColorId == colorId && i.StockItem.SizeId == sizeId)
+            .SumAsync(i => (decimal?)i.Quantity, cancellationToken) ?? 0;
+        var lineReservations = await db.SalesOrderReservations.Where(r => r.SalesOrderLineId == line.Id).ToListAsync(cancellationToken);
+        var open = line.Quantity - shipped - lineReservations.Sum(r => r.Quantity);
+        var free = isNewItem ? onHand : onHand - await ReservedByOthersAsync(warehouseId, item.Id, null, cancellationToken);
+        var quantity = Math.Min(received, Math.Min(open, free));
+        if (quantity <= 0)
+        {
+            return null;
+        }
+
+        var reservation = lineReservations.FirstOrDefault(r => r.WarehouseId == warehouseId && r.FromProduction);
+        if (reservation is null)
+        {
+            reservation = new SalesOrderReservation
+            {
+                SalesOrderId = line.SalesOrderId, SalesOrderLineId = line.Id, WarehouseId = warehouseId, StockItem = item, FromProduction = true,
+            };
+            db.SalesOrderReservations.Add(reservation);
+        }
+
+        reservation.Quantity += quantity;
+        reservation.UpdatedAt = UtcNow;
+        reservation.UpdatedBy = Actor;
+        return (line.OrderNo, quantity);
     }
 
     public async Task<Error?> PostPurchaseReceiptAsync(
@@ -826,7 +896,8 @@ public sealed class StockService(
         int? salesOrderId,
         IReadOnlyList<(int StockItemId, string ItemCode, decimal Quantity)> lines,
         string? documentNo,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyDictionary<int, IReadOnlyList<(int LocationId, decimal Quantity)>>? picked = null)
     {
         if (db.Database.CurrentTransaction is null)
         {
@@ -855,7 +926,10 @@ public sealed class StockService(
                     new Dictionary<string, string[]> { ["items"] = [message] });
             }
 
-            var allocations = Allocate(stocks, quantity);
+            // Toplanan mal, alındığı adreslerden düşer; adres o arada değiştiyse kalanı sıradaki adreslerden.
+            var allocations = picked?.GetValueOrDefault(stockItemId) is { Count: > 0 } preferred
+                ? AllocatePreferring(stocks, quantity, preferred)
+                : Allocate(stocks, quantity);
             if (await CountLockAsync(warehouseId, allocations.Select(a => a.Stock.LocationId), cancellationToken) is { } countLock)
             {
                 return countLock;
@@ -1149,7 +1223,7 @@ public sealed class StockService(
         {
             return new Error(
                 ErrorCodes.InsufficientStock,
-                $"Kesim planının toplarında yeterli kumaş yok. {string.Join("; ", shortages)}.");
+                $"Kesim föyünün toplarında yeterli kumaş yok. {string.Join("; ", shortages)}.");
         }
 
         foreach (var warehouseRows in plan.GroupBy(p => p.WarehouseId))
@@ -1424,8 +1498,13 @@ public sealed class StockService(
     /// Kartın bu depoda başka siparişlere ayrılmış miktarı; <paramref name="productionOrderId"/> boşsa tüm
     /// rezervasyonlar. (Depo, kart) kilidi altında çağrılır.
     /// </summary>
+    /// <param name="salesLineId">
+    /// Verilirse yalnızca bu kalemin stoktan ayırması "kendi" sayılır (siparişin üretimden gelen ayırması ve öteki
+    /// kalemleri başkasınındır); verilmezse <paramref name="salesOrderId"/> siparişinin bütün ayırmaları kendisinindir.
+    /// </param>
     private async Task<decimal> ReservedByOthersAsync(
-        int warehouseId, int stockItemId, int? productionOrderId, CancellationToken cancellationToken, int? salesOrderId = null) =>
+        int warehouseId, int stockItemId, int? productionOrderId, CancellationToken cancellationToken, int? salesOrderId = null,
+        int? salesLineId = null) =>
         (await db.StockReservations
             .Where(r => r.WarehouseId == warehouseId && r.StockItemId == stockItemId
                 && (productionOrderId == null || r.ProductionOrderId != productionOrderId))
@@ -1433,37 +1512,106 @@ public sealed class StockService(
         // Müşteri siparişlerine ayrılmış hazır mamul de başkasına ayrılmış sayılır.
         + (await db.SalesOrderReservations
             .Where(r => r.WarehouseId == warehouseId && r.StockItemId == stockItemId
-                && (salesOrderId == null || r.SalesOrderId != salesOrderId))
+                && (salesLineId != null
+                    ? r.SalesOrderLineId != salesLineId || r.FromProduction
+                    : salesOrderId == null || r.SalesOrderId != salesOrderId))
             .SumAsync(r => (decimal?)r.Quantity, cancellationToken) ?? 0);
 
     /// <summary>
-    /// Siparişin sevkiyatı, siparişe ayrılmış stoğu tüketir: ayırma sevk edilen kadar azalır (biten silinir), ayırmadan
-    /// karşılanan adet kaleme "ayırmadan sevk edilen" olarak yazılır.
+    /// Siparişin sevkiyatı, siparişe ayrılmış stoğu tüketir: ayırma sevk edilen kadar azalır (biten silinir). Önce
+    /// stoktan ayrılan kullanılır ve kaleme "ayırmadan sevk edilen" olarak yazılır; sonra üretimden gelen ayırma
+    /// (planlamada zaten üretimden karşılanan sayıldığı için kaleme yazılmaz).
     /// </summary>
     private async Task ConsumeSalesReservationAsync(
         int salesOrderId, int warehouseId, int stockItemId, decimal shipped, CancellationToken cancellationToken)
     {
-        var reservation = await db.SalesOrderReservations
+        var reservations = await db.SalesOrderReservations
             .Include(r => r.SalesOrderLine)
-            .SingleOrDefaultAsync(r => r.SalesOrderId == salesOrderId && r.WarehouseId == warehouseId && r.StockItemId == stockItemId,
-                cancellationToken);
-        if (reservation is null)
+            .Where(r => r.SalesOrderId == salesOrderId && r.WarehouseId == warehouseId && r.StockItemId == stockItemId)
+            .OrderBy(r => r.FromProduction).ThenBy(r => r.Id)
+            .ToListAsync(cancellationToken);
+
+        var remaining = shipped;
+        foreach (var reservation in reservations)
         {
-            return;
+            var consumed = Math.Min(reservation.Quantity, remaining);
+            if (consumed <= 0)
+            {
+                break;
+            }
+
+            if (!reservation.FromProduction)
+            {
+                reservation.SalesOrderLine.ShippedFromReservation += consumed;
+            }
+
+            remaining -= consumed;
+            reservation.Quantity -= consumed;
+            if (reservation.Quantity <= 0)
+            {
+                db.SalesOrderReservations.Remove(reservation);
+            }
+            else
+            {
+                reservation.UpdatedAt = UtcNow;
+                reservation.UpdatedBy = Actor;
+            }
+        }
+    }
+
+    public async Task<Result<decimal>> ReserveForSalesLineAsync(
+        int salesOrderLineId, int warehouseId, int stockItemId, decimal quantity, bool fromProduction, bool partial,
+        CancellationToken cancellationToken)
+    {
+        if (db.Database.CurrentTransaction is null)
+        {
+            throw new InvalidOperationException("Sipariş ayırması, kart kilitleriyle aynı transaction içinde yazılmalıdır.");
         }
 
-        var consumed = Math.Min(reservation.Quantity, shipped);
-        reservation.SalesOrderLine.ShippedFromReservation += consumed;
-        reservation.Quantity -= consumed;
-        if (reservation.Quantity <= 0)
+        if (!await appLock.TryAcquireAsync(StockLock(warehouseId, stockItemId), LockTimeout, cancellationToken))
         {
-            db.SalesOrderReservations.Remove(reservation);
+            return Busy;
         }
-        else
+
+        var line = await db.SalesOrderLines.Where(l => l.Id == salesOrderLineId)
+            .Select(l => new { l.Id, l.SalesOrderId }).SingleAsync(cancellationToken);
+        var onHand = await db.Stocks.Where(s => s.WarehouseId == warehouseId && s.StockItemId == stockItemId)
+            .SumAsync(s => (decimal?)s.Quantity, cancellationToken) ?? 0;
+        var reserved = await db.StockReservations.Where(r => r.WarehouseId == warehouseId && r.StockItemId == stockItemId)
+                .SumAsync(r => (decimal?)r.Quantity, cancellationToken) ?? 0;
+        reserved += await db.SalesOrderReservations.Where(r => r.WarehouseId == warehouseId && r.StockItemId == stockItemId)
+            .SumAsync(r => (decimal?)r.Quantity, cancellationToken) ?? 0;
+        var free = Math.Max(onHand - reserved, 0);
+        if (free < quantity && !partial)
         {
-            reservation.UpdatedAt = UtcNow;
-            reservation.UpdatedBy = Actor;
+            var message = $"Depoda ayrılabilecek serbest stok {Format(free)} (mevcut {Format(onHand)}{ReservedNote(reserved)}).";
+            return new Error(ErrorCodes.InsufficientStock, message, ErrorType.BusinessRule,
+                new Dictionary<string, string[]> { ["quantity"] = [message] });
         }
+
+        var amount = Math.Min(free, quantity);
+        if (amount <= 0)
+        {
+            return 0m;
+        }
+
+        var reservation = await db.SalesOrderReservations.SingleOrDefaultAsync(
+            r => r.SalesOrderLineId == salesOrderLineId && r.WarehouseId == warehouseId && r.FromProduction == fromProduction,
+            cancellationToken);
+        if (reservation is null)
+        {
+            reservation = new SalesOrderReservation
+            {
+                SalesOrderId = line.SalesOrderId, SalesOrderLineId = line.Id, WarehouseId = warehouseId, StockItemId = stockItemId,
+                FromProduction = fromProduction,
+            };
+            db.SalesOrderReservations.Add(reservation);
+        }
+
+        reservation.Quantity += amount;
+        reservation.UpdatedAt = UtcNow;
+        reservation.UpdatedBy = Actor;
+        return amount;
     }
 
     public async Task<Error?> ReserveForSalesOrderAsync(
@@ -1475,8 +1623,9 @@ public sealed class StockService(
         }
 
         var lineIds = targets.Select(t => t.LineId).ToList();
+        // Yalnızca stoktan yapılan ayırma yönetilir; üretimden gelen ayırma teslim almada oluşur ve olduğu gibi kalır.
         var existing = await db.SalesOrderReservations
-            .Where(r => r.SalesOrderId == salesOrderId && lineIds.Contains(r.SalesOrderLineId))
+            .Where(r => r.SalesOrderId == salesOrderId && lineIds.Contains(r.SalesOrderLineId) && !r.FromProduction)
             .ToListAsync(cancellationToken);
         var itemIds = targets.Select(t => t.StockItemId).Distinct().ToList();
         // Kartın stoğu olan depolar; ayırma depo kimliği sırasıyla doldurulur.
@@ -1497,7 +1646,8 @@ public sealed class StockService(
                     return Busy;
                 }
 
-                var reservedByOthers = await ReservedByOthersAsync(place.WarehouseId, stockItemId, null, cancellationToken, salesOrderId);
+                var reservedByOthers = await ReservedByOthersAsync(
+                    place.WarehouseId, stockItemId, null, cancellationToken, salesOrderId, salesLineId: lineId);
                 var quantity = Math.Min(remaining, Math.Max(place.OnHand - reservedByOthers, 0));
                 var reservation = current.FirstOrDefault(r => r.WarehouseId == place.WarehouseId);
                 if (quantity <= 0)
@@ -1638,6 +1788,47 @@ public sealed class StockService(
 
         return remaining == 0
             ? allocations
+            : throw new InvalidOperationException("Çıkış miktarı adres bakiyelerinin toplamını aşıyor.");
+    }
+
+    /// <summary>
+    /// Çıkışı önce verilen adreslere (verilen miktara kadar), kalanını liste sırasıyla öteki adreslere dağıtır. Toplam
+    /// bakiyenin yettiğini çağıran önceden denetler.
+    /// </summary>
+    private static List<(Stock Stock, decimal Quantity)> AllocatePreferring(
+        IReadOnlyList<Stock> stocks, decimal quantity, IReadOnlyList<(int LocationId, decimal Quantity)> preferred)
+    {
+        var taken = new Dictionary<Stock, decimal>(ReferenceEqualityComparer.Instance);
+        var remaining = quantity;
+
+        void Take(Stock stock, decimal wanted)
+        {
+            var take = Math.Min(stock.Quantity - taken.GetValueOrDefault(stock), Math.Min(wanted, remaining));
+            if (take > 0)
+            {
+                taken[stock] = taken.GetValueOrDefault(stock) + take;
+                remaining -= take;
+            }
+        }
+
+        foreach (var (locationId, wanted) in preferred)
+        {
+            var left = wanted;
+            foreach (var stock in stocks.Where(s => s.LocationId == locationId))
+            {
+                var before = remaining;
+                Take(stock, left);
+                left -= before - remaining;
+            }
+        }
+
+        foreach (var stock in stocks)
+        {
+            Take(stock, remaining);
+        }
+
+        return remaining == 0
+            ? stocks.Where(taken.ContainsKey).Select(s => (s, taken[s])).ToList()
             : throw new InvalidOperationException("Çıkış miktarı adres bakiyelerinin toplamını aşıyor.");
     }
 
@@ -1826,7 +2017,7 @@ public sealed class StockService(
                 if (WarehouseBalance() - reserved < -movement.Delta)
                 {
                     var message =
-                        $"Depodaki stoğun {Format(reserved)} kadarı üretim siparişlerine ayrılmış: kullanılabilir " +
+                        $"Depodaki stoğun {Format(reserved)} kadarı iş emirlerine ayrılmış: kullanılabilir " +
                         $"{Format(Math.Max(WarehouseBalance() - reserved, 0))}, istenen {Format(-movement.Delta)}.";
                     return new Error(
                         ErrorCodes.InsufficientStock, message, ErrorType.BusinessRule,

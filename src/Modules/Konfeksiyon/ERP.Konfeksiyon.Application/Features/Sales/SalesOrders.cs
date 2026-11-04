@@ -813,7 +813,7 @@ public sealed class SalesOrderService(
         {
             return new Error(
                 ErrorCodes.SalesOrderHasProduction,
-                $"Bu siparişten açılmış üretim siparişleri var ({string.Join(", ", active)}). Revizyon için önce onlar "
+                $"Bu siparişten açılmış iş emirleri var ({string.Join(", ", active)}). Revizyon için önce onlar "
                 + "silinmeli ya da iptal edilmelidir.");
         }
 
@@ -862,7 +862,7 @@ public sealed class SalesOrderService(
         {
             return new Error(
                 ErrorCodes.SalesOrderHasProduction,
-                $"Bu siparişten açılmış üretim siparişleri var ({string.Join(", ", active)}). Önce onlar iptal edilmelidir.");
+                $"Bu siparişten açılmış iş emirleri var ({string.Join(", ", active)}). Önce onlar iptal edilmelidir.");
         }
 
         await LoadRoundStepsAsync(id, cancellationToken);
@@ -894,7 +894,7 @@ public sealed class SalesOrderService(
         {
             return new Error(
                 ErrorCodes.SalesOrderHasProduction,
-                $"Üretimi süren siparişler var ({string.Join(", ", open)}). Sipariş, üretim siparişleri tamamlanınca kapatılabilir.");
+                $"Üretimi süren siparişler var ({string.Join(", ", open)}). Sipariş, iş emirleri tamamlanınca kapatılabilir.");
         }
 
         // Kapatma "teslim edildi" demektir: hiç üretimi tamamlanmamış ve hiç sevk edilmemiş sipariş iptal edilir.

@@ -97,7 +97,14 @@ public enum SalesOrderStatus
 
 public enum ShipmentStatus
 {
+    /// <summary>Hazırlanıyor; kalemler düzenlenebilir.</summary>
     Draft,
+
+    /// <summary>Depoya toplamaya verildi; kalemler kilitli, toplama sürüyor.</summary>
+    Picking,
+
+    /// <summary>Toplandı; son adet kontrolü ve irsaliye bekliyor.</summary>
+    Picked,
 
     /// <summary>Sevk edildi; stok düştü.</summary>
     Shipped,

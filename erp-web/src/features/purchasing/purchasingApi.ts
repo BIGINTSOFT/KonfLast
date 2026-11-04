@@ -31,7 +31,7 @@ export interface PurchaseOrderItem {
   lineAmount: number | null
   /** Top / parti takipli kart: mal kabulde toplara bölünebilir. */
   isLotTracked: boolean
-  /** Kalem bir üretim siparişinin eksik malzemesi için açıldıysa o sipariş. */
+  /** Kalem bir iş emrinin eksik malzemesi için açıldıysa o sipariş. */
   productionOrderId: number | null
   productionOrderNo: string | null
 }

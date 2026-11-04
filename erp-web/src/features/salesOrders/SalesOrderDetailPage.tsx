@@ -44,7 +44,7 @@ const dialogs: Record<'submit' | 'approve' | 'reject' | 'revise' | 'cancel' | 'c
   },
   revise: {
     action: 'revise', title: 'Siparişi revizyona al', confirmLabel: 'Revizyona al', withNote: true,
-    message: 'Onaylı sipariş taslağa dönecek; düzeltip yeniden onaya gönderirsiniz. Üretim siparişi ya da sevkiyatı olan sipariş revize edilemez.',
+    message: 'Onaylı sipariş taslağa dönecek; düzeltip yeniden onaya gönderirsiniz. İş emri ya da sevkiyatı olan sipariş revize edilemez.',
   },
   cancel: {
     action: 'cancel', title: 'Siparişi iptal et', confirmLabel: 'İptal et', danger: true,
@@ -81,7 +81,7 @@ function ProductTable({ product, currency }: { product: ProductSection; currency
   )
 }
 
-/** Müşteri siparişi: başlık, onay bilgisi, ürünler, açılmış üretim siparişleri ve durum işlemleri. */
+/** Müşteri siparişi: başlık, onay bilgisi, ürünler, açılmış iş emirleri ve durum işlemleri. */
 export function SalesOrderDetailPage() {
   const id = Number(useParams().id)
   const navigate = useNavigate()
@@ -254,11 +254,11 @@ export function SalesOrderDetailPage() {
         <CoverageSection salesOrderId={order.id} canManage={canReserve} />
       )}
 
-      <h2 className="section-title">Üretim siparişleri</h2>
+      <h2 className="section-title">İş emirleri</h2>
       {order.productionOrders.length === 0 ? (
         <p className="muted">
           {order.status === 'APPROVED'
-            ? 'Henüz üretim siparişi açılmadı. Stoktan karşılanmayan adet Üretim Planı ekranında planlamaya düştü; üretim siparişini planlama açar.'
+            ? 'Henüz iş emri açılmadı. Stoktan karşılanmayan adet Üretim Planı ekranında planlamaya düştü; iş emrini planlama açar.'
             : 'Sipariş onaylanınca stoktan karşılanmayan adet Üretim Planı ekranında planlamaya düşer.'}
         </p>
       ) : (
@@ -266,7 +266,7 @@ export function SalesOrderDetailPage() {
           <table className="table table--compact">
             <thead>
               <tr>
-                <th>Üretim siparişi</th>
+                <th>İş emri</th>
                 <th>Ürün</th>
                 <th className="table__number">Sipariş adedi</th>
                 <th className="table__number">Üretim adedi</th>

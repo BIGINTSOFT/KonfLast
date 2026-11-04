@@ -18,6 +18,8 @@ export interface ProductionOrderListItem {
   dueDate: string
   status: ProductionOrderStatus
   totalQuantity: number
+  /** Bağlı müşteri siparişi; iş emri doğrudan (siparişsiz) açıldıysa boş. */
+  salesOrderNo: string | null
 }
 
 export interface ProductionOrderItem {

@@ -1,7 +1,11 @@
-import { ChevronDown, Search } from 'lucide-react'
+import {
+  ArrowDownToLine, ArrowLeftRight, ArrowUpFromLine, BookmarkCheck, ChevronDown, ClipboardCheck, History, Layers, ListOrdered, MapPin, Search,
+} from 'lucide-react'
 import { Fragment, useState } from 'react'
 import type { FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { ContextMenu } from '../../components/ContextMenu'
+import type { ContextMenuItem } from '../../components/ContextMenu'
 import { ErrorAlert } from '../../components/FormControls'
 import { GridHead } from '../../components/grid/GridHead'
 import type { GridColumn } from '../../components/grid/GridHead'
@@ -12,6 +16,7 @@ import { Permissions } from '../../types/permissions'
 import { FinishedGoodCardDialog } from './FinishedGoodCardDialog'
 import { MovementDialog } from './MovementDialog'
 import type { MovementKind } from './MovementDialog'
+import { StockReservationDialog } from './StockReservationDialog'
 import { StockRowPanel } from './StockRowPanel'
 import { useGetStockBalancesQuery, useGetStockLocationBalancesQuery } from './stockApi'
 import type { StockBalance, StockLocationBalance } from './stockApi'
@@ -34,6 +39,7 @@ const rowKey = (balance: BalanceRow) => `${balance.warehouseId}-${locationOf(bal
 export function StockPage() {
   const canManage = usePermission(Permissions.StockManage)
   const canAdjust = usePermission(Permissions.StockAdjust)
+  const canReserve = usePermission(Permissions.StockReserve)
 
   const grid = useGrid()
   const { page, setPage } = grid
@@ -46,8 +52,13 @@ export function StockPage() {
   const [byLocation, setByLocation] = useState(false)
   const [dialog, setDialog] = useState<{ kind: MovementKind; balance?: BalanceRow } | null>(null)
   const [openingCard, setOpeningCard] = useState(false)
-  // İşlem paneli açık olan satır (aynı anda tek satır).
+  // Ayırmaları açık olan depo + kart (depo görünümündeki satırdan).
+  const [reserving, setReserving] = useState<BalanceRow | null>(null)
+  // Son hareketleri açık olan satır (aynı anda tek satır).
   const [expanded, setExpanded] = useState<string | null>(null)
+  // Satırın işlem menüsü: sağ tıkla ya da satır sonundaki düğmeyle açılır.
+  const [menu, setMenu] = useState<{ x: number; y: number; balance: BalanceRow } | null>(null)
+  const navigate = useNavigate()
 
   const params = {
     page,
@@ -79,6 +90,58 @@ export function StockPage() {
     { label: '', ariaLabel: 'İşlemler' },
   ]
 
+  const menuItems = (balance: BalanceRow): ContextMenuItem[] => {
+    const key = rowKey(balance)
+    const empty = balance.quantity <= 0
+    const act = (kind: MovementKind) => () => setDialog({ kind, balance })
+    const movements: ContextMenuItem[] = balance.isLotTracked
+      ? [
+          // Takipli kartta çıkış, transfer ve sayım top seçilerek yapılır.
+          ...(canManage || canAdjust
+            ? [{
+                key: 'lots', label: 'Toplar (çıkış, transfer, sayım)', icon: Layers,
+                onSelect: () => navigate(`/stock-lots?stockItemId=${balance.stockItemId}&warehouseId=${balance.warehouseId}`),
+              }]
+            : []),
+        ]
+      : [
+          ...(canManage
+            ? [
+                { key: 'issue', label: 'Çıkış', icon: ArrowUpFromLine, disabled: empty, onSelect: act('issue') },
+                { key: 'transfer', label: 'Transfer', icon: ArrowLeftRight, disabled: empty, onSelect: act('transfer') },
+                { key: 'relocation', label: 'Adres değiştir', icon: MapPin, disabled: empty, onSelect: act('relocation') },
+              ]
+            : []),
+          ...(canAdjust ? [{ key: 'adjustment', label: 'Sayım', icon: ClipboardCheck, onSelect: act('adjustment') }] : []),
+        ]
+    const actions = [
+      ...(canManage ? [{ key: 'receipt', label: 'Giriş', icon: ArrowDownToLine, onSelect: act('receipt') }] : []),
+      ...movements,
+    ]
+
+    // Ayırma depo düzeyindedir: adres görünümündeki satır da kendi deposunun ayırmalarını açar.
+    const reservations: ContextMenuItem[] = [{
+      key: 'reservations',
+      label: balance.itemType === 'FINISHED_GOOD' && canReserve ? 'Ayırmalar / siparişe ayır' : 'Ayırmalar',
+      icon: BookmarkCheck,
+      separated: actions.length > 0,
+      onSelect: () => setReserving(balance),
+    }]
+
+    return [
+      ...actions,
+      ...reservations,
+      {
+        key: 'recent', label: expanded === key ? 'Son hareketleri gizle' : 'Son hareketler', icon: History,
+        separated: actions.length > 0, onSelect: () => setExpanded(expanded === key ? null : key),
+      },
+      {
+        key: 'all', label: 'Tüm hareketler', icon: ListOrdered,
+        onSelect: () => navigate(`/stock-transactions?warehouseId=${balance.warehouseId}&search=${encodeURIComponent(balance.itemCode)}`),
+      },
+    ]
+  }
+
   const handleSearch = (event: FormEvent) => {
     event.preventDefault()
     setPage(1)
@@ -89,7 +152,7 @@ export function StockPage() {
     <section className="page">
       <h1 className="visually-hidden">Stok</h1>
 
-      <form className="toolbar" onSubmit={handleSearch} role="search">
+      <form className="toolbar toolbar--compact" onSubmit={handleSearch} role="search">
         <input
           type="search"
           placeholder={byLocation ? 'Kart kodu, adı veya adres' : 'Kart kodu veya adı'}
@@ -103,7 +166,30 @@ export function StockPage() {
           }} />
         <button type="submit" className="button"><Search aria-hidden="true" />Ara</button>
         <ClearFiltersButton grid={grid} />
-        <label className="checkbox">
+        <div className="segmented" role="group" aria-label="Görünüm">
+          {([[false, 'Depo', 'Depo bazında bakiye'], [true, 'Adres', 'Adres bazında bakiye']] as const).map(
+            ([value, label, title]) => (
+              <button
+                key={label}
+                type="button"
+                title={title}
+                className={byLocation === value ? 'segmented__item segmented__item--active' : 'segmented__item'}
+                aria-pressed={byLocation === value}
+                onClick={() => {
+                  if (byLocation !== value) {
+                    // Sütunlar değişir: adres sütununa ait filtre / sıralama depo görünümünde geçersizdir.
+                    grid.clearFilters()
+                    setPage(1)
+                    setByLocation(value)
+                  }
+                }}
+              >
+                {label}
+              </button>
+            ),
+          )}
+        </div>
+        <label className="checkbox" title="Bakiyesi sıfır olan kartları da listele">
           <input
             type="checkbox"
             checked={includeZero}
@@ -112,20 +198,7 @@ export function StockPage() {
               setIncludeZero(event.target.checked)
             }}
           />
-          Bakiyesi sıfır olanları da göster
-        </label>
-        <label className="checkbox">
-          <input
-            type="checkbox"
-            checked={byLocation}
-            onChange={(event) => {
-              // Sütunlar değişir: adres sütununa ait filtre / sıralama depo görünümünde geçersizdir.
-              grid.clearFilters()
-              setPage(1)
-              setByLocation(event.target.checked)
-            }}
-          />
-          Adres bazında göster
+          Sıfır bakiyeler
         </label>
         <div className="toolbar__actions">
           {canManage && (
@@ -154,7 +227,15 @@ export function StockPage() {
                   const open = expanded === key
                   return (
                     <Fragment key={key}>
-                      <tr className={open ? 'table__row--expanded' : undefined}>
+                      <tr
+                        className={open ? 'stock-row table__row--expanded' : 'stock-row'}
+                        title="Son hareketler için tıklayın; işlemler için sağ tıklayın"
+                        onClick={() => setExpanded(open ? null : key)}
+                        onContextMenu={(event) => {
+                          event.preventDefault()
+                          setMenu({ x: event.clientX, y: event.clientY, balance })
+                        }}
+                      >
                         <td><code>{balance.itemCode}</code> {balance.itemName}</td>
                         <td>{stockItemTypeLabels[balance.itemType]}</td>
                         <td>{balance.warehouseCode} — {balance.warehouseName}</td>
@@ -177,9 +258,15 @@ export function StockPage() {
                         <td className="table__actions">
                           <button
                             type="button"
-                            className="button stock-row__toggle"
-                            aria-expanded={open}
-                            onClick={() => setExpanded(open ? null : key)}
+                            className="button row-menu-button"
+                            aria-label={`${balance.itemCode} işlemleri`}
+                            aria-haspopup="menu"
+                            aria-expanded={menu?.balance === balance}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              const bounds = event.currentTarget.getBoundingClientRect()
+                              setMenu({ x: bounds.left, y: bounds.bottom + 2, balance })
+                            }}
                           >
                             İşlem
                             <ChevronDown aria-hidden="true" />
@@ -189,12 +276,7 @@ export function StockPage() {
                       {open && (
                         <tr className="table__detail-row">
                           <td colSpan={columns.length}>
-                            <StockRowPanel
-                              balance={balance}
-                              canManage={canManage}
-                              canAdjust={canAdjust}
-                              onAction={(kind) => setDialog({ kind, balance })}
-                            />
+                            <StockRowPanel balance={balance} />
                           </td>
                         </tr>
                       )}
@@ -211,6 +293,24 @@ export function StockPage() {
           </div>
           <Pagination page={data.page} totalPages={data.totalPages} totalCount={data.totalCount} onPageChange={setPage} />
         </>
+      )}
+
+      {menu && (
+        <ContextMenu
+          x={menu.x}
+          y={menu.y}
+          label={`${menu.balance.itemCode} işlemleri`}
+          items={menuItems(menu.balance)}
+          onClose={() => setMenu(null)}
+        />
+      )}
+
+      {reserving && (
+        <StockReservationDialog
+          warehouseId={reserving.warehouseId}
+          stockItemId={reserving.stockItemId}
+          onClose={() => setReserving(null)}
+        />
       )}
 
       {dialog && (

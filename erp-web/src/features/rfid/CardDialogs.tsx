@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { fieldErrors } from '../../api/envelope'
 import { ErrorAlert, TextField } from '../../components/FormControls'
 import { Modal } from '../../components/Modal'
+import { cardScanHandlers } from './cardScan'
 import { useAssignCardMutation, useReleaseCardMutation } from './rfidApi'
 import type { CardOwner } from './rfidApi'
 
@@ -16,7 +17,7 @@ interface CardDialogProps {
 
 /**
  * Kart atama. Masaüstü USB okuyucular klavye gibi davranır: imleç alandayken kart okutulunca kart numarası
- * yazılır ve Enter gönderilir; numara elle de girilebilir.
+ * alana yazılır; okuyucunun Enter'ı formu göndermez, atama "Kartı ata" düğmesiyle yapılır. Numara elle de girilebilir.
  */
 export function AssignCardDialog({ owner, id, subject, onClose }: CardDialogProps) {
   const [assign, { isLoading, error }] = useAssignCardMutation()
@@ -37,9 +38,9 @@ export function AssignCardDialog({ owner, id, subject, onClose }: CardDialogProp
           label="Kart numarası"
           value={uid}
           maxLength={10}
-          onChange={(event) => setUid(event.target.value)}
+          {...cardScanHandlers(setUid)}
           errors={fieldErrors(error, 'uid')}
-          hint="Kartı okuyucuya okutun ya da kart numarasını yazın (örn. 0012629368)."
+          hint="Kartı okuyucuya okutun ya da kart numarasını yazın (örn. 0012629368), ardından Kartı ata'ya basın."
           autoFocus
           autoComplete="off"
         />

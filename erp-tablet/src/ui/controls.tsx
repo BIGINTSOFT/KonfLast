@@ -6,10 +6,11 @@ import { colors, radius, TOUCH_HEIGHT, TOUCH_HEIGHT_COMPACT } from './theme';
  * Düğme tonları:
  * - `primary` / `success` / `danger`: dolu, ekrandaki asıl işlem.
  * - `neutral`: çerçeveli ikincil işlem.
- * - `dangerOutline`: çerçeveli, olumsuz ama asıl olmayan işlem (ör. üst çubuktaki "Arıza bildir").
+ * - `dangerOutline`: açık kırmızı dolgulu, kırmızı çerçeveli olumsuz işlem (ör. üst çubuktaki "Arıza bildir").
+ * - `primaryOutline`: açık turkuaz dolgulu, turkuaz çerçeveli saha işlemi (ör. "Ara ver", "Demet bekliyorum").
  * - `ghost`: koyu panel üzerinde çerçeveli düğme.
  */
-type ButtonTone = 'primary' | 'neutral' | 'danger' | 'dangerOutline' | 'success' | 'ghost';
+type ButtonTone = 'primary' | 'neutral' | 'danger' | 'dangerOutline' | 'primaryOutline' | 'success' | 'ghost';
 
 interface BigButtonProps {
   label: string;
@@ -28,7 +29,8 @@ const tones: Record<ButtonTone, { background: string; border: string; text: stri
   success: { background: colors.success, border: colors.success, text: '#ffffff' },
   danger: { background: colors.danger, border: colors.danger, text: '#ffffff' },
   neutral: { background: colors.surface, border: colors.borderStrong, text: colors.text },
-  dangerOutline: { background: colors.surface, border: colors.danger, text: colors.danger },
+  dangerOutline: { background: colors.dangerSoft, border: colors.danger, text: colors.danger },
+  primaryOutline: { background: colors.primarySoft, border: colors.primary, text: colors.primary },
   ghost: { background: 'transparent', border: colors.headerBorder, text: colors.headerText },
 };
 
@@ -53,7 +55,16 @@ export function BigButton({ label, onPress, tone = 'primary', size = 'large', di
       {busy ? (
         <ActivityIndicator color={text} />
       ) : (
-        <Text style={[styles.buttonText, size === 'compact' && styles.buttonTextCompact, { color: text }]}>{label}</Text>
+        <Text
+          style={[
+            styles.buttonText,
+            size === 'compact' && styles.buttonTextCompact,
+            // Dolgulu saha düğmelerinde yazı kalın: açık zeminde belirgin okunur.
+            (tone === 'primaryOutline' || tone === 'dangerOutline') && styles.buttonTextStrong,
+            { color: text },
+          ]}>
+          {label}
+        </Text>
       )}
     </Pressable>
   );
@@ -61,7 +72,7 @@ export function BigButton({ label, onPress, tone = 'primary', size = 'large', di
 
 const messageStyle = {
   error: { icon: '!', color: colors.danger, soft: colors.dangerSoft },
-  info: { icon: 'i', color: colors.info, soft: colors.primarySoft },
+  info: { icon: 'i', color: colors.info, soft: colors.infoSoft },
   success: { icon: '✓', color: colors.success, soft: colors.successSoft },
 };
 
@@ -120,11 +131,13 @@ interface StepperProps {
   value: number;
   max: number;
   onChange: (value: number) => void;
+  /** Uzun adım (ör. operasyon miktarı); 1 ya da daha azsa uzun adım düğmeleri gösterilmez. */
+  bigStep?: number;
   testID?: string;
 }
 
-/** Klavyesiz adet girişi: büyük − / + düğmeleri (uzun adımlar için ±10). */
-export function QuantityStepper({ label, value, max, onChange, testID }: StepperProps) {
+/** Klavyesiz adet girişi: büyük − / + düğmeleri ve uzun adımlar için ±`bigStep`. */
+export function QuantityStepper({ label, value, max, onChange, bigStep = 10, testID }: StepperProps) {
   const set = (next: number) => onChange(Math.max(0, Math.min(max, next)));
   const step = (delta: number, text: string) => (
     <Pressable
@@ -142,13 +155,13 @@ export function QuantityStepper({ label, value, max, onChange, testID }: Stepper
     <View style={styles.stepper}>
       <Text style={styles.stepperLabel}>{label}</Text>
       <View style={styles.stepperRow}>
-        {step(-10, '−10')}
+        {bigStep > 1 && step(-bigStep, `−${bigStep}`)}
         {step(-1, '−')}
         <Text style={styles.stepperValue} testID={testID} accessibilityLabel={`${label}: ${value}`}>
           {value}
         </Text>
         {step(1, '+')}
-        {step(10, '+10')}
+        {bigStep > 1 && step(bigStep, `+${bigStep}`)}
       </View>
     </View>
   );
@@ -168,6 +181,7 @@ const styles = StyleSheet.create({
   buttonPressed: { opacity: 0.8 },
   buttonDisabled: { opacity: 0.45 },
   buttonText: { fontSize: 16, fontWeight: '600', letterSpacing: 0.2 },
+  buttonTextStrong: { fontWeight: '700' },
   buttonTextCompact: { fontSize: 14 },
   banner: {
     flexDirection: 'row',
@@ -196,7 +210,8 @@ const styles = StyleSheet.create({
   pillOnLight: { backgroundColor: colors.neutralSoft },
   pillOnDark: { backgroundColor: colors.headerSurface, borderWidth: 1, borderColor: colors.headerBorder },
   pillDot: { width: 7, height: 7, borderRadius: 4 },
-  pillText: { color: colors.text, fontSize: 13, fontWeight: '600' },
+  // Android yazı tipinin üst iç boşluğu kapatılır: yazı ve nokta kutuda dikeyde ortalı durur.
+  pillText: { color: colors.text, fontSize: 13, fontWeight: '600', lineHeight: 16, includeFontPadding: false, textAlignVertical: 'center' },
   pillTextOnDark: { color: colors.headerText },
   stepper: { alignItems: 'center', gap: 6 },
   stepperLabel: { color: colors.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1.1 },

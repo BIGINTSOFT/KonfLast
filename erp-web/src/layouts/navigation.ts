@@ -72,8 +72,10 @@ export const navGroups: NavGroup[] = [
       { path: '/setup', label: 'Kurulum Rehberi', permission: Permissions.MasterDataView },
     ],
   },
+  // Konfeksiyon: her ana menü işlem gruplarıyla başlar, tanımları kullanıldıkları ana menünün sonundadır.
   {
-    title: 'Satış',
+    title: 'Teklif ve Sipariş',
+    module: 'Satış',
     project: 'Konfeksiyon',
     items: [
       { path: '/quotations', label: 'Teklifler', permission: Permissions.QuotationView },
@@ -81,36 +83,96 @@ export const navGroups: NavGroup[] = [
     ],
   },
   {
-    title: 'Üretim',
+    title: 'Fiyatlandırma',
+    module: 'Satış',
     project: 'Konfeksiyon',
     items: [
-      { path: '/production-orders', label: 'Üretim Siparişleri', permission: Permissions.ProductionOrderView },
-      { path: '/cutting-plans', label: 'Kesim Planları', permission: Permissions.CuttingPlanView },
-      { path: '/subcontract/sends', label: 'Fason Gönderimler', permission: Permissions.SubcontractView },
-      { path: '/subcontract/returns', label: 'Fason Dönüşler', permission: Permissions.SubcontractView },
+      { path: '/price-lists', label: 'Fiyat Listeleri', permission: Permissions.PricingView },
+      { path: '/customer-discounts', label: 'Müşteri İskontoları', permission: Permissions.PricingView },
+    ],
+  },
+  {
+    title: 'Müşteri',
+    module: 'Satış',
+    project: 'Konfeksiyon',
+    items: resourceItems(['customers']),
+  },
+  {
+    title: 'Model ve Ürün',
+    module: 'Ürün',
+    project: 'Konfeksiyon',
+    items: resourceItems(['models', 'products', 'product-groups']),
+  },
+  {
+    title: 'Renk ve Beden',
+    module: 'Ürün',
+    project: 'Konfeksiyon',
+    items: resourceItems(['colors', 'sizes']),
+  },
+  {
+    title: 'Mühendislik',
+    module: 'Ürün',
+    project: 'Konfeksiyon',
+    items: [
+      ...resourceItems(['operations']),
+      { path: '/production-routes', label: 'Operasyon Rotaları', permission: Permissions.ProductionRouteView },
+    ],
+  },
+  // Menü fabrikanın bölümlerine göredir: her iş, o işi yapan bölümün menüsündedir
+  // (planlama → kesimhane → dikim / saha → kalite → depo → finans).
+  {
+    title: 'İş Emirleri',
+    module: 'Planlama',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/production-orders', label: 'İş Emirleri', permission: Permissions.ProductionOrderView },
+    ],
+  },
+  {
+    title: 'Üretim Planı',
+    module: 'Planlama',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/planning', label: 'Üretim Planı', permission: Permissions.ProductionLineView },
+      { path: '/line-balancing', label: 'Bant Dengeleme', permission: Permissions.ProductionLineView },
+    ],
+  },
+  {
+    title: 'Kesim',
+    module: 'Kesimhane',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/cutting-plans', label: 'Kesim Föyleri', permission: Permissions.CuttingPlanView },
+    ],
+  },
+  {
+    title: 'Saha Takibi',
+    module: 'Üretim',
+    project: 'Konfeksiyon',
+    items: [
+      // Demet kesimhanede oluşur; sonrasında sahadaki yolculuğu (operasyonlar, elle bildirim, kart boşaltma) üretimindir.
       { path: '/bundles', label: 'Demetler', permission: Permissions.BundleView },
       { path: '/production-tracking', label: 'Üretim Takibi', permission: Permissions.ProductionView },
-      { path: '/quality', label: 'Kalite Kontrol', permission: Permissions.QualityView },
       { path: '/work-sessions', label: 'Çalışma Oturumları', permission: Permissions.OperatorView },
       { path: '/bundles/card-release', label: 'Kart Boşaltma', permission: Permissions.BundleReleaseCard },
     ],
   },
   {
-    title: 'Planlama',
+    title: 'Fason',
+    module: 'Üretim',
     project: 'Konfeksiyon',
     items: [
-      { path: '/planning', label: 'Üretim Planı', permission: Permissions.ProductionLineView },
-      { path: '/line-balancing', label: 'Bant Dengeleme', permission: Permissions.ProductionLineView },
-      { path: '/production-routes', label: 'Operasyon Rotaları', permission: Permissions.ProductionRouteView },
+      { path: '/subcontract/sends', label: 'Fason Gönderimler', permission: Permissions.SubcontractView },
+      { path: '/subcontract/returns', label: 'Fason Dönüşler', permission: Permissions.SubcontractView },
+      { path: '/subcontract/prices', label: 'Fason Fiyatları', permission: Permissions.SubcontractView },
     ],
   },
   {
-    title: 'Raporlama',
+    title: 'Kalite',
     project: 'Konfeksiyon',
     items: [
-      { path: '/performance', label: 'Performans', permission: Permissions.ProductionView },
-      { path: '/payroll', label: 'Ücret ve Prim', permission: Permissions.PayrollView },
-      { path: '/reports', label: 'Raporlar', permission: Permissions.ReportView },
+      { path: '/quality', label: 'Kalite Kontrol', permission: Permissions.QualityView },
+      ...resourceItems(['defect-types']),
     ],
   },
   {
@@ -119,26 +181,142 @@ export const navGroups: NavGroup[] = [
     items: [
       { path: '/purchase-orders', label: 'Satın Alma Siparişleri', permission: Permissions.PurchaseView },
       { path: '/supply-suggestions', label: 'Tedarik Önerileri', permission: Permissions.PurchaseView },
-      ...resourceItems(['suppliers']),
     ],
   },
   {
-    title: 'Depo',
+    title: 'Tedarikçi',
+    module: 'Satın Alma',
+    project: 'Konfeksiyon',
+    items: resourceItems(['suppliers']),
+  },
+  {
+    title: 'Stok',
+    module: 'Depo',
     project: 'Konfeksiyon',
     items: [
       { path: '/stock', label: 'Stok', permission: Permissions.StockView },
       { path: '/stock-lots', label: 'Toplar ve Partiler', permission: Permissions.StockView },
       { path: '/stock-transactions', label: 'Stok Hareketleri', permission: Permissions.StockView },
       { path: '/stock-counts', label: 'Sayımlar', permission: Permissions.StockView },
-      { path: '/terminal', label: 'El Terminali', permission: Permissions.StockView },
-      { path: '/warehouse-reports', label: 'Depo Raporları', permission: Permissions.ReportWarehouse },
-      { path: '/production-receipts', label: 'Üretimden Teslim Alma', permission: Permissions.StockView },
-      { path: '/shipments', label: 'Sevkiyatlar', permission: Permissions.ShipmentView },
-      { path: '/assortment-templates', label: 'Asorti Şablonları', permission: Permissions.ShipmentView },
-      ...resourceItems(['warehouses', 'warehouse-locations']),
-      { path: '/location-labels', label: 'Adres Etiketleri', permission: Permissions.StockView },
-      ...resourceItems(['stock-items']),
     ],
+  },
+  {
+    title: 'Depo İşlemleri',
+    module: 'Depo',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/production-receipts', label: 'Üretimden Teslim Alma', permission: Permissions.StockView },
+      { path: '/picking', label: 'Toplama İşleri', permission: Permissions.ShipmentView },
+      { path: '/terminal', label: 'El Terminali', permission: Permissions.StockView },
+      { path: '/location-labels', label: 'Adres Etiketleri', permission: Permissions.StockView },
+    ],
+  },
+  {
+    title: 'Depo Tanımları',
+    module: 'Depo',
+    project: 'Konfeksiyon',
+    items: resourceItems(['stock-items', 'warehouses', 'warehouse-locations']),
+  },
+  // Sevkiyat ayrı ana menüdür: sipariş → sevkiyata aktarma → (depoda toplama) → son kontrol ve irsaliye.
+  {
+    title: 'Sevkiyat Hazırlığı',
+    module: 'Sevkiyat',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/ready-orders', label: 'Sevk Bekleyen Siparişler', permission: Permissions.ShipmentView },
+      { path: '/shipments', label: 'Sevkiyatlar', permission: Permissions.ShipmentView },
+    ],
+  },
+  {
+    title: 'İrsaliye',
+    module: 'Sevkiyat',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/despatch-queue', label: 'İrsaliye Bekleyenler', permission: Permissions.ShipmentView },
+    ],
+  },
+  {
+    title: 'Sevkiyat Tanımları',
+    module: 'Sevkiyat',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/assortment-templates', label: 'Asorti Şablonları', permission: Permissions.ShipmentView },
+    ],
+  },
+  {
+    title: 'Faturalama',
+    module: 'Finans',
+    project: 'Konfeksiyon',
+    items: [{ path: '/invoices', label: 'Faturalar', permission: Permissions.InvoiceView }],
+  },
+  {
+    title: 'Cari Hesaplar',
+    module: 'Finans',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/payments', label: 'Tahsilatlar', permission: Permissions.AccountView },
+      { path: '/accounts', label: 'Cari Hesaplar', permission: Permissions.AccountView },
+      { path: '/open-invoices', label: 'Açık Faturalar', permission: Permissions.AccountView },
+      { path: '/opening-balances', label: 'Açılış Bakiyeleri', permission: Permissions.AccountView },
+    ],
+  },
+  {
+    title: 'Maliyet',
+    module: 'Finans',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/cost-settings', label: 'Ön Maliyet Parametreleri', permission: Permissions.QuotationView },
+    ],
+  },
+  {
+    title: 'Personel',
+    project: 'Konfeksiyon',
+    items: resourceItems(['operators']),
+  },
+  {
+    title: 'Vardiya ve Mola',
+    module: 'Personel',
+    project: 'Konfeksiyon',
+    items: resourceItems(['shifts', 'break-groups', 'break-schedules']),
+  },
+  {
+    title: 'Performans ve Ücret',
+    module: 'Personel',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/performance', label: 'Performans', permission: Permissions.ProductionView },
+      { path: '/payroll', label: 'Ücret ve Prim', permission: Permissions.PayrollView },
+    ],
+  },
+  {
+    title: 'Raporlama',
+    project: 'Konfeksiyon',
+    items: [
+      { path: '/production-reports', label: 'Üretim Raporları', permission: Permissions.ReportView },
+      { path: '/personnel-reports', label: 'Personel Raporları', permission: Permissions.ReportView },
+      { path: '/machine-reports', label: 'Makine Raporları', permission: Permissions.ReportView },
+      { path: '/quality-reports', label: 'Kalite Raporları', permission: Permissions.ReportView },
+      { path: '/subcontract-reports', label: 'Fason Raporları', permission: Permissions.ReportView },
+      { path: '/warehouse-reports', label: 'Depo Raporları', permission: Permissions.ReportWarehouse },
+    ],
+  },
+  {
+    title: 'Yerleşim',
+    module: 'Tesis',
+    project: 'Konfeksiyon',
+    items: resourceItems(['factories', 'production-areas', 'production-lines']),
+  },
+  {
+    title: 'Makineler',
+    module: 'Tesis',
+    project: 'Konfeksiyon',
+    items: resourceItems(['machine-types', 'machines', 'stop-reasons']),
+  },
+  {
+    title: 'Saha Cihazları',
+    module: 'Tesis',
+    project: 'Konfeksiyon',
+    items: resourceItems(['tablets', 'rfid-cards']),
   },
   {
     module: 'Genel',
@@ -494,88 +672,36 @@ export const navGroups: NavGroup[] = [
     project: 'Dokuma',
     items: [{ path: '/dokuma/cost-settings', label: 'Maliyet Parametreleri', permission: Permissions.DokumaQuotationView }],
   },
+  // Projesiz gruplar dizinin sonundadır: her projede kendi Finans / Yönetim gruplarının ardından gelirler.
   {
-    title: 'Finans',
+    title: 'Döviz',
+    module: 'Finans',
     items: [
       { path: '/exchange-rates', label: 'Döviz Kurları', permission: Permissions.PricingView },
       ...resourceItems(['currencies']),
     ],
   },
   {
-    title: 'Fatura',
-    module: 'Finans',
-    project: 'Konfeksiyon',
-    items: [{ path: '/invoices', label: 'Faturalar', permission: Permissions.InvoiceView }],
-  },
-  {
-    title: 'Cari',
-    module: 'Finans',
-    project: 'Konfeksiyon',
-    items: [
-      { path: '/payments', label: 'Tahsilatlar', permission: Permissions.AccountView },
-      { path: '/accounts', label: 'Cari Hesaplar', permission: Permissions.AccountView },
-      { path: '/open-invoices', label: 'Açık Faturalar', permission: Permissions.AccountView },
-      { path: '/opening-balances', label: 'Açılış Bakiyeleri', permission: Permissions.AccountView },
-    ],
-  },
-  {
-    title: 'Fiyatlandırma',
-    module: 'Finans',
-    project: 'Konfeksiyon',
-    items: [
-      { path: '/price-lists', label: 'Fiyat Listeleri', permission: Permissions.PricingView },
-      { path: '/customer-discounts', label: 'Müşteri İskontoları', permission: Permissions.PricingView },
-    ],
-  },
-  {
-    title: 'Müşteri ve Ürün',
-    module: 'Tanımlar',
-    project: 'Konfeksiyon',
-    items: resourceItems(['customers', 'models', 'products', 'product-groups', 'colors', 'sizes']),
-  },
-  {
-    title: 'Operasyon ve Kalite',
-    module: 'Tanımlar',
-    project: 'Konfeksiyon',
-    items: resourceItems(['operations', 'defect-types']),
-  },
-  {
-    title: 'Fason ve Maliyet',
-    module: 'Tanımlar',
-    project: 'Konfeksiyon',
-    items: [
-      { path: '/subcontract/prices', label: 'Fason Fiyatları', permission: Permissions.SubcontractView },
-      { path: '/cost-settings', label: 'Ön Maliyet Parametreleri', permission: Permissions.QuotationView },
-    ],
-  },
-  {
-    title: 'Tesis ve Makineler',
-    module: 'Tanımlar',
-    project: 'Konfeksiyon',
-    items: resourceItems([
-      'factories', 'production-areas', 'production-lines', 'machine-types', 'machines', 'tablets', 'rfid-cards',
-    ]),
-  },
-  {
-    title: 'Personel ve Vardiya',
-    module: 'Tanımlar',
-    project: 'Konfeksiyon',
-    items: resourceItems(['operators', 'shifts', 'break-groups', 'break-schedules', 'stop-reasons']),
-  },
-  {
-    title: 'Yönetim',
+    title: 'Kullanıcı ve Yetki',
+    module: 'Yönetim',
     items: [
       { path: '/users', label: 'Kullanıcılar', permission: Permissions.UserView },
       { path: '/roles', label: 'Roller ve Yetkiler', permission: Permissions.RoleView },
-      { path: '/audit-logs', label: 'İşlem Kayıtları', permission: Permissions.AuditLogView },
-      { path: '/integrations', label: 'Entegrasyonlar', permission: Permissions.IntegrationView },
     ],
   },
   {
-    title: 'Sipariş Onayı',
+    title: 'İş Akışı',
     module: 'Yönetim',
     project: 'Konfeksiyon',
     items: [{ path: '/approval-flows', label: 'Onay Akışları', permission: Permissions.RoleView }],
+  },
+  {
+    title: 'Sistem',
+    module: 'Yönetim',
+    items: [
+      { path: '/integrations', label: 'Entegrasyonlar', permission: Permissions.IntegrationView },
+      { path: '/audit-logs', label: 'İşlem Kayıtları', permission: Permissions.AuditLogView },
+    ],
   },
 ]
 

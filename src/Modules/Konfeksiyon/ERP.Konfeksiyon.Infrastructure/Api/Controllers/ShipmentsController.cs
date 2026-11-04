@@ -60,16 +60,17 @@ public sealed class ShipmentsController(IShipmentService service) : ApiControlle
         FromResult(await service.UpdateAsync(id, request, cancellationToken));
 
     /// <summary>
-    /// Taslağı sevk eder: kalemler depodan düşer, stok hareketleri yazılır ve sevkiyat kesinleşir. Stok
-    /// yetmezse (INSUFFICIENT_STOCK) hiçbir şey değişmez. Sevk edilmiş sevkiyat geri alınamaz.
+    /// İrsaliye keser: toplanmış sevkiyatın her kalemi için son kontrolde sayılan adet gönderilir; toplananla birebir
+    /// tutmazsa (DESPATCH_CHECK_MISMATCH) hiçbir şey değişmez. Tutarsa irsaliye numarası (boşsa sistem verir) ve ETTN
+    /// atanır, kalemler toplandıkları adreslerden düşer ve sevkiyat kesinleşir; geri alınamaz.
     /// </summary>
-    [HttpPost("{id:int}/ship")]
+    [HttpPost("{id:int}/dispatch")]
     [HasPermission(KonfeksiyonPermissions.Shipment.Ship)]
-    public async Task<ActionResult<ApiResponse<ShipmentDto>>> Ship(
-        int id, ShipmentTransitionRequest request, CancellationToken cancellationToken) =>
-        FromResult(await service.ShipAsync(id, request.RowVersion, cancellationToken));
+    public async Task<ActionResult<ApiResponse<ShipmentDto>>> Dispatch(
+        int id, ShipmentDispatchRequest request, CancellationToken cancellationToken) =>
+        FromResult(await service.DispatchAsync(id, request, cancellationToken));
 
-    /// <summary>Taslak sevkiyatı iptal eder.</summary>
+    /// <summary>Stok düşmemiş (taslak, toplamada, toplanmış) sevkiyatı iptal eder.</summary>
     [HttpPost("{id:int}/cancel")]
     [HasPermission(KonfeksiyonPermissions.Shipment.Manage)]
     public async Task<ActionResult<ApiResponse<ShipmentDto>>> Cancel(

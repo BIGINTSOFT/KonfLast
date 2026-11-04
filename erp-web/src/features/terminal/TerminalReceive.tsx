@@ -191,7 +191,7 @@ export function TerminalReceive() {
       {order.data && (
         <>
           <dl className="terminal-facts">
-            <dt>Sipariş</dt>
+            <dt>İş emri</dt>
             <dd><code>{order.data.orderNo}</code> · {order.data.supplierName}</dd>
           </dl>
           <label className="field">

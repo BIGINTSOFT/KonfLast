@@ -492,12 +492,14 @@ public sealed class ProductionService(
         var enteredBy = currentUser.UserName ?? SystemUser;
         var now = UtcNow;
         var wasInProgress = operation.Status == BundleOperationStatus.InProgress;
+        var withoutOperator = request.Attribution == ManualReportAttribution.NoOperator;
+        var countsForPerformance = request.Attribution == ManualReportAttribution.Operator;
         int machineId;
         long? sessionId = null;
 
         if (wasInProgress)
         {
-            // Askıda kalan iş: işi başlatan makine ve operatör adına bildirilir.
+            // Askıda kalan iş: işi başlatan makine ve operatör adına bildirilir; operatörsüz seçildiyse kimseye yazılmaz.
             machineId = operation.MachineId!.Value;
             if (!await appLock.TryAcquireAsync(WorkSessionService.MachineLock(machineId), LockTimeout, cancellationToken))
             {
@@ -516,9 +518,10 @@ public sealed class ProductionService(
                 return ReferenceValidation.InvalidReference("machineId", "İşin yapıldığı makineyi seçin.");
             }
 
-            if (request.OperatorId is not { } chosenOperator)
+            var chosenOperator = withoutOperator ? null : request.OperatorId;
+            if (!withoutOperator && chosenOperator is null)
             {
-                return ReferenceValidation.InvalidReference("operatorId", "İşi yapan operatörü seçin.");
+                return ReferenceValidation.InvalidReference("operatorId", "İşi yapan operatörü seçin ya da operatörsüz bildirin.");
             }
 
             var block = bundle.CheckStart(operation, requireCard: false);
@@ -533,18 +536,21 @@ public sealed class ProductionService(
                     "machineId", "Seçilen makine bu operasyonu yapamıyor ya da pasif.");
             }
 
-            var operatorActive = await db.Operators
-                .Where(o => o.Id == chosenOperator)
-                .Select(o => (bool?)o.IsActive)
-                .SingleOrDefaultAsync(cancellationToken);
-            if (operatorActive is null)
+            if (chosenOperator is not null)
             {
-                return ReferenceValidation.InvalidReference("operatorId", "Operatör bulunamadı.");
-            }
+                var operatorActive = await db.Operators
+                    .Where(o => o.Id == chosenOperator)
+                    .Select(o => (bool?)o.IsActive)
+                    .SingleOrDefaultAsync(cancellationToken);
+                if (operatorActive is null)
+                {
+                    return ReferenceValidation.InvalidReference("operatorId", "Operatör bulunamadı.");
+                }
 
-            if (operatorActive == false)
-            {
-                return new Error(ErrorCodes.OperatorInactive, "Operatör pasif durumda.");
+                if (operatorActive == false)
+                {
+                    return new Error(ErrorCodes.OperatorInactive, "Operatör pasif durumda.");
+                }
             }
 
             if (await EnsureOrderInProductionAsync(bundle.ProductionOrderId, cancellationToken) is { } orderError)
@@ -557,7 +563,13 @@ public sealed class ProductionService(
             AddEvent(
                 request.RequestId,
                 resumed ? BundleOperationEventType.OperationResumed : BundleOperationEventType.OperationStarted,
-                operation, machineId, null, now, null, enteredBy: enteredBy);
+                operation, machineId, null, now, null, enteredBy: enteredBy, countsForPerformance: countsForPerformance);
+        }
+
+        if (withoutOperator)
+        {
+            // Operatörsüz kapatmada adet kimsenin oturumuna da yazılmaz.
+            sessionId = null;
         }
 
         if (request.ProducedQuantity + request.RejectedQuantity > operation.RemainingQuantity)
@@ -570,7 +582,8 @@ public sealed class ProductionService(
                 new Dictionary<string, string[]> { ["producedQuantity"] = [message] });
         }
 
-        // Elle bildirimde gerçek çalışma süresi bilinmez: süre ve verim yazılmaz, performans hesabını bozmaz.
+        // Elle bildirimde gerçek çalışma süresi bilinmez: süre ve verim yazılmaz. Adet seçime göre operatörün performansına
+        // ve primine sayılır ya da sayılmaz; operatörsüz bildirimde kimseye yazılmaz.
         var flow = await LoadFlowAsync(bundle, cancellationToken);
         bundle.ReportOperation(operation, request.ProducedQuantity, request.RejectedQuantity, flow, now);
 
@@ -578,14 +591,16 @@ public sealed class ProductionService(
         {
             AddEvent(
                 request.RequestId, BundleOperationEventType.QuantityReported, operation, machineId, null, now, sessionId,
-                produced: request.ProducedQuantity, enteredBy: enteredBy);
+                produced: request.ProducedQuantity, enteredBy: enteredBy, withoutOperator: withoutOperator,
+                countsForPerformance: countsForPerformance);
         }
 
         if (request.RejectedQuantity > 0)
         {
             AddEvent(
                 request.RequestId, BundleOperationEventType.RejectionReported, operation, machineId, null, now, sessionId,
-                rejected: request.RejectedQuantity, enteredBy: enteredBy);
+                rejected: request.RejectedQuantity, enteredBy: enteredBy, withoutOperator: withoutOperator,
+                countsForPerformance: countsForPerformance);
         }
 
         AddEvent(
@@ -593,7 +608,14 @@ public sealed class ProductionService(
             operation.Status == BundleOperationStatus.Completed
                 ? BundleOperationEventType.OperationCompleted
                 : BundleOperationEventType.OperationPaused,
-            operation, machineId, null, now, sessionId, enteredBy: enteredBy);
+            operation, machineId, null, now, sessionId, enteredBy: enteredBy, withoutOperator: withoutOperator,
+            countsForPerformance: countsForPerformance);
+
+        if (withoutOperator)
+        {
+            // Askıdaki iş operatörsüz kapatıldıysa operasyon da işi başlatan operatörde görünmez.
+            operation.OperatorId = null;
+        }
 
         if (operation.ReworkQuantity == 0)
         {
@@ -674,15 +696,19 @@ public sealed class ProductionService(
                 e.BundleOperation.SequenceNo,
                 e.BundleOperation.Operation.Name,
                 e.Machine.MachineCode,
-                e.Operator.FirstName + " " + e.Operator.LastName,
+                e.Operator == null ? NoOperatorName : e.Operator.FirstName + " " + e.Operator.LastName,
                 e.ProducedQuantity,
                 e.RejectedQuantity,
                 e.OccurredAt,
-                e.EnteredBy))
+                e.EnteredBy,
+                e.CountsForPerformance))
             .ToListAsync(cancellationToken);
 
         return Result<IReadOnlyList<BundleOperationEventDto>>.Success(events);
     }
+
+    /// <summary>Operatörsüz elle kapatılan işin olaylarında operatör yerine görünen ad.</summary>
+    public const string NoOperatorName = "Ofis kapatması";
 
     private static string BundleLock(int bundleId) => $"bundle:{bundleId}";
 
@@ -872,16 +898,17 @@ public sealed class ProductionService(
     private void AddEvent(
         Guid requestId, BundleOperationEventType type, BundleOperation operation, int machineId, int? tabletId, DateTime now,
         long? workSessionId, int produced = 0, int rejected = 0, int? runSeconds = null, int? efficiencyPercent = null,
-        string? enteredBy = null) =>
+        string? enteredBy = null, bool withoutOperator = false, bool countsForPerformance = true) =>
         db.BundleOperationEvents.Add(new BundleOperationEvent
         {
             EnteredBy = enteredBy,
+            CountsForPerformance = countsForPerformance && !withoutOperator,
             RequestId = requestId,
             EventType = type,
             BundleId = operation.BundleId,
             BundleOperationId = operation.Id,
             MachineId = machineId,
-            OperatorId = operation.OperatorId!.Value,
+            OperatorId = withoutOperator ? null : operation.OperatorId,
             WorkSessionId = workSessionId,
             TabletId = tabletId,
             ProducedQuantity = produced,

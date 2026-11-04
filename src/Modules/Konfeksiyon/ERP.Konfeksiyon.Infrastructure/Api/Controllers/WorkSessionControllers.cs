@@ -2,6 +2,7 @@ using ERP.Konfeksiyon.Domain.Authorization;
 using ERP.Core.Infrastructure.Web.Authorization;
 using ERP.Core.Infrastructure.Web;
 using ERP.Core.Application.Common;
+using ERP.Konfeksiyon.Application.Features.ProductionTracking;
 using ERP.Konfeksiyon.Application.Features.Rfid;
 using ERP.Konfeksiyon.Application.Features.WorkSessions;
 using Microsoft.AspNetCore.Authorization;
@@ -12,8 +13,18 @@ namespace ERP.Konfeksiyon.Infrastructure.Api.Controllers;
 /// <summary>Tabletteki operatör oturumu (tablet token'ı gerekir). Makine, tabletin bağlı olduğu makinedir.</summary>
 [Route("api/v1/production/session")]
 [Authorize(Policy = AuthorizationPolicies.TabletDevice)]
-public sealed class TabletSessionController(IWorkSessionService service, IOperatorPhotoService photos) : ApiControllerBase
+public sealed class TabletSessionController(
+    IWorkSessionService service, IOperatorPhotoService photos, ITabletPerformanceService performance) : ApiControllerBase
 {
+    /// <summary>
+    /// Oturumu açık operatörün seçilen dönemdeki (bugün / bu hafta) verimi, kalitesi, kıyasları ve saatlik ya da
+    /// günlük adet dökümü; oturum yoksa <c>data: null</c>.
+    /// </summary>
+    [HttpGet("performance")]
+    public async Task<ActionResult<ApiResponse<TabletPerformanceDto?>>> GetPerformance(
+        [FromQuery] TabletPerformancePeriod period, CancellationToken cancellationToken) =>
+        FromResult(await performance.GetForStationAsync(period, cancellationToken));
+
     /// <summary>Makinede oturumu açık olan operatörün fotoğrafı; oturum ya da fotoğraf yoksa <c>data: null</c>.</summary>
     [HttpGet("photo")]
     public async Task<ActionResult<ApiResponse<OperatorPhotoDto?>>> GetPhoto(CancellationToken cancellationToken) =>

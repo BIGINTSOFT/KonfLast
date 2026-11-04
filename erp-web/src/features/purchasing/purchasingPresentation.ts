@@ -36,7 +36,7 @@ export interface ItemRow {
   stockItemId: number | null
   quantity: string
   unitPrice: string
-  /** Kalemin açıldığı üretim siparişi (eksik malzeme için); kayıtta korunur. */
+  /** Kalemin açıldığı iş emri (eksik malzeme için); kayıtta korunur. */
   productionOrderId?: number | null
   productionOrderNo?: string | null
 }

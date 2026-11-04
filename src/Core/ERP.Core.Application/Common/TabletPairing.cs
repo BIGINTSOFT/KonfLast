@@ -15,13 +15,22 @@ public sealed record TabletPairingListRequest(string Password, string DeviceIden
 /// <param name="MachineId">Eşleştirilecek makine.</param>
 /// <param name="TabletId">Makinesiz tablet kaydı (kontrol noktası); makine seçilmediyse.</param>
 /// <param name="TakeOver">İstasyon başka bir cihaza bağlıysa bağı devral.</param>
+/// <param name="ReleaseWork">
+/// Cihazın önceki istasyonunda açık kalan oturumun süren işi varsa iş adet bildirilmeden bırakılır (kalan adet sonra
+/// sürdürülür); verilmezse eşleştirme WORK_IN_PROGRESS ile reddedilir.
+/// </param>
 public sealed record PairTabletRequest(
-    string Password, string DeviceIdentifier, int? MachineId = null, int? TabletId = null, bool TakeOver = false);
+    string Password, string DeviceIdentifier, int? MachineId = null, int? TabletId = null, bool TakeOver = false,
+    bool ReleaseWork = false);
 
 /// <summary>Tabletin eşleştirilebileceği istasyon: bir makine ya da makinesiz tablet kaydı.</summary>
 /// <param name="TabletCode">İstasyonun tablet kaydı; makineye henüz tablet tanımlanmadıysa boş.</param>
 /// <param name="IsPaired">Bir cihaz bağlı mı.</param>
 /// <param name="IsThisDevice">Bağlı cihaz soran tablet mi.</param>
+/// <param name="SessionOperator">
+/// Yalnızca soran tabletin istasyonunda: açık oturumun operatörü. Tablet başka istasyona eşleştirilirse bu oturum kapatılır.
+/// </param>
+/// <param name="SessionWorkInProgress">O oturumda adedi bildirilmemiş süren iş var mı.</param>
 public sealed record TabletPairingStationDto(
     int? MachineId,
     int? TabletId,
@@ -30,7 +39,9 @@ public sealed record TabletPairingStationDto(
     string? Detail,
     string? TabletCode,
     bool IsPaired,
-    bool IsThisDevice);
+    bool IsThisDevice,
+    string? SessionOperator = null,
+    bool SessionWorkInProgress = false);
 
 /// <param name="DeviceKey">Cihazın saklayacağı anahtar; yalnızca bu yanıtta görünür.</param>
 public sealed record PairTabletResponse(int TabletId, string TabletCode, string DeviceKey, string StationCode, string StationName);

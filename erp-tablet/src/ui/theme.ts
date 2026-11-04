@@ -31,6 +31,10 @@ export const colors = {
   neutral: '#364152',
   neutralSoft: '#eef1f5',
   info: '#0d5c6e',
+  infoSoft: '#e2f0f2',
+  // Kurumsal altın (marka vurgusu) üzerinde okunur koyu ton ve açık zemin.
+  brandAccentText: '#7a5a17',
+  brandAccentSoft: '#f7f0de',
 };
 
 /** Ana işlemlerin dokunma yüksekliği. */

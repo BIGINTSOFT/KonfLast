@@ -16,6 +16,7 @@ namespace ERP.Konfeksiyon.Application.Features.Sales;
 /// <param name="ToPlan">Henüz ne stoktan ne üretimden karşılanan adet (planlamaya düşer).</param>
 /// <param name="Available">Kalemin hazır mamul kartında başka siparişlere ayrılmamış stok (bu kalemin ayırması dahil).</param>
 /// <param name="HasStockItem">Kalem için hazır mamul stok kartı var (yoksa ayırma yapılamaz).</param>
+/// <param name="ReservedFromProduction">Siparişin kendi üretiminden depoya alınıp bu kaleme ayrılmış (sevke hazır) adet.</param>
 public sealed record SalesOrderReservationLineDto(
     int LineId,
     int ProductId,
@@ -33,7 +34,8 @@ public sealed record SalesOrderReservationLineDto(
     int InProduction,
     int ToPlan,
     decimal Available,
-    bool HasStockItem);
+    bool HasStockItem,
+    decimal ReservedFromProduction = 0);
 
 /// <param name="CanEdit">Ayırma yalnızca onaylı siparişte değiştirilebilir.</param>
 public sealed record SalesOrderReservationsDto(int SalesOrderId, string OrderNo, bool CanEdit, IReadOnlyList<SalesOrderReservationLineDto> Lines);
@@ -105,7 +107,7 @@ public sealed class SalesOrderReservationService(IKonfeksiyonDbContext db, IStoc
                 .Where(r => itemIds.Contains(r.StockItemId))
                 .Select(r => new { r.StockItemId, r.Quantity })
                 .Concat(db.SalesOrderReservations.AsNoTracking()
-                    .Where(r => itemIds.Contains(r.StockItemId) && r.SalesOrderId != salesOrderId)
+                    .Where(r => itemIds.Contains(r.StockItemId) && (r.SalesOrderId != salesOrderId || r.FromProduction))
                     .Select(r => new { r.StockItemId, r.Quantity }))
                 .ToListAsync(cancellationToken))
             .GroupBy(r => r.StockItemId)
@@ -123,7 +125,8 @@ public sealed class SalesOrderReservationService(IKonfeksiyonDbContext db, IStoc
                     l.Quantity, line.Shipped, line.Reserved, l.ShippedFromReservation, line.InProduction,
                     SalesOrderCoverage.ToPlan(l.Quantity, line.Reserved, l.ShippedFromReservation, line.InProduction),
                     hasItem ? Math.Max(onHand.GetValueOrDefault(itemId) - reservedByOthers.GetValueOrDefault(itemId), 0) : 0,
-                    hasItem);
+                    hasItem,
+                    line.ReservedFromProduction);
             })
             .ToList();
 
@@ -155,8 +158,9 @@ public sealed class SalesOrderReservationService(IKonfeksiyonDbContext db, IStoc
         var targets = request.Lines.Select(r =>
         {
             var line = order.Lines.Single(l => l.Id == r.LineId);
-            // Ayrılabilecek en fazla adet: henüz sevk edilmemiş kısım.
-            var open = Math.Max(line.Quantity - shipped.GetValueOrDefault((salesOrderId, line.ProductId, line.ColorId, line.SizeId)).Shipped, 0);
+            // Ayrılabilecek en fazla adet: henüz sevk edilmemiş ve üretimden gelip ayrılmamış kısım.
+            var coverage = shipped.GetValueOrDefault((salesOrderId, line.ProductId, line.ColorId, line.SizeId));
+            var open = Math.Max(line.Quantity - coverage.Shipped - coverage.ReservedFromProduction, 0);
             return (Line: line, Target: Math.Min(r.Quantity, open));
         }).ToList();
 
@@ -167,10 +171,17 @@ public sealed class SalesOrderReservationService(IKonfeksiyonDbContext db, IStoc
     public async Task ReserveRemainingAsync(int salesOrderId, CancellationToken cancellationToken)
     {
         var lines = await db.SalesOrderLines.AsNoTracking().Where(l => l.SalesOrderId == salesOrderId).ToListAsync(cancellationToken);
+
+        // Revizyonda bırakılan, siparişin kendi üretiminden gelmiş mal önce yeniden üretim ayırması olarak bağlanır.
+        await RestoreProductionReservationsAsync(salesOrderId, lines, cancellationToken);
+
         var coverage = await SalesOrderCoverage.LoadAsync(db, [salesOrderId], cancellationToken);
         var targets = lines
-            .Select(l => (Line: l, Target: (decimal)Math.Max(
-                l.Quantity - coverage.GetValueOrDefault((salesOrderId, l.ProductId, l.ColorId, l.SizeId)).Shipped, 0)))
+            .Select(l =>
+            {
+                var line = coverage.GetValueOrDefault((salesOrderId, l.ProductId, l.ColorId, l.SizeId));
+                return (Line: l, Target: Math.Max(l.Quantity - line.Shipped - line.ReservedFromProduction, 0));
+            })
             .ToList();
 
         // Stok yoksa ya da kilit alınamazsa sipariş ayırmasız kalır; ayırma sipariş ekranından sonra yapılabilir.
@@ -207,6 +218,60 @@ public sealed class SalesOrderReservationService(IKonfeksiyonDbContext db, IStoc
         return null;
     }
 
+    /// <summary>
+    /// Siparişin üretiminden depoya alınmış ama henüz sevk edilmemiş mamulü (teslim almalar − üretimden sevk edilenler)
+    /// depodaki serbest stok yettiğince üretim ayırması olarak kurar. Ayırma zaten varsa eksik kalanı tamamlar.
+    /// </summary>
+    private async Task RestoreProductionReservationsAsync(
+        int salesOrderId, IReadOnlyList<SalesOrderLine> lines, CancellationToken cancellationToken)
+    {
+        var received = await db.StockTransactions.AsNoTracking()
+            .Where(t => t.Type == StockTransactionType.ProductionReceipt && t.ProductionOrder != null
+                && t.ProductionOrder.SalesOrderId == salesOrderId
+                && t.StockItem.ProductId != null && t.StockItem.ColorId != null && t.StockItem.SizeId != null)
+            .GroupBy(t => new { t.WarehouseId, t.StockItemId, ProductId = t.StockItem.ProductId!.Value, ColorId = t.StockItem.ColorId!.Value, SizeId = t.StockItem.SizeId!.Value })
+            .Select(g => new { g.Key.WarehouseId, g.Key.StockItemId, g.Key.ProductId, g.Key.ColorId, g.Key.SizeId, Quantity = g.Sum(t => t.Quantity) })
+            .ToListAsync(cancellationToken);
+        if (received.Count == 0)
+        {
+            return;
+        }
+
+        var coverage = await SalesOrderCoverage.LoadAsync(db, [salesOrderId], cancellationToken);
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        foreach (var line in lines)
+        {
+            var current = coverage.GetValueOrDefault((salesOrderId, line.ProductId, line.ColorId, line.SizeId));
+            // Üretimden sevk edilen: toplam sevk − stoktan ayrılmış maldan sevk edilen.
+            var shippedFromProduction = Math.Max(current.Shipped - line.ShippedFromReservation, 0);
+            var places = received.Where(r => r.ProductId == line.ProductId && r.ColorId == line.ColorId && r.SizeId == line.SizeId).ToList();
+            var missing = Math.Min(
+                places.Sum(r => r.Quantity) - shippedFromProduction - current.ReservedFromProduction,
+                line.Quantity - current.Shipped - current.ReservedFromProduction);
+            foreach (var place in places.OrderBy(r => r.WarehouseId))
+            {
+                if (missing <= 0)
+                {
+                    break;
+                }
+
+                var reserved = await stockLedger.ReserveForSalesLineAsync(
+                    line.Id, place.WarehouseId, place.StockItemId, Math.Min(missing, place.Quantity), fromProduction: true, partial: true,
+                    cancellationToken);
+                if (!reserved.IsSuccess)
+                {
+                    // Kilit alınamadıysa bu kısım ayırmasız kalır; ayırma sipariş ya da stok ekranından yapılabilir.
+                    return;
+                }
+
+                missing -= reserved.Value;
+            }
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
     /// <summary>Kalemlerin hazır mamul stok kartları (ürün + renk + beden); kartı olmayan kalem listede yer almaz.</summary>
     private async Task<Dictionary<(int ProductId, int ColorId, int SizeId), int>> FinishedItemsAsync(
         IEnumerable<(int ProductId, int ColorId, int SizeId)> keys, CancellationToken cancellationToken)
@@ -225,7 +290,9 @@ public sealed class SalesOrderReservationService(IKonfeksiyonDbContext db, IStoc
 /// <summary>Sipariş kalemlerinin sevk, ayırma ve üretim karşılığı (sipariş, ürün, renk, beden başına).</summary>
 public static class SalesOrderCoverage
 {
-    public readonly record struct LineCoverage(int Shipped, decimal Reserved, int InProduction);
+    /// <param name="Reserved">Stoktan ayrılan adet (planlamada stoktan karşılanan).</param>
+    /// <param name="ReservedFromProduction">Siparişin kendi üretiminden gelip ayrılan adet (üretimden karşılananın parçası).</param>
+    public readonly record struct LineCoverage(int Shipped, decimal Reserved, int InProduction, decimal ReservedFromProduction = 0);
 
     /// <summary>Henüz karşılanmamış (planlamaya düşen) adet: sipariş − stoktan karşılanan − üretimdeki.</summary>
     public static int ToPlan(int ordered, decimal reserved, decimal shippedFromReservation, int inProduction) =>
@@ -243,8 +310,8 @@ public static class SalesOrderCoverage
             .ToListAsync(cancellationToken);
         var reserved = await db.SalesOrderReservations.AsNoTracking()
             .Where(r => salesOrderIds.Contains(r.SalesOrderId))
-            .GroupBy(r => new { r.SalesOrderId, r.SalesOrderLine.ProductId, r.SalesOrderLine.ColorId, r.SalesOrderLine.SizeId })
-            .Select(g => new { g.Key.SalesOrderId, g.Key.ProductId, g.Key.ColorId, g.Key.SizeId, Quantity = g.Sum(r => r.Quantity) })
+            .GroupBy(r => new { r.SalesOrderId, r.SalesOrderLine.ProductId, r.SalesOrderLine.ColorId, r.SalesOrderLine.SizeId, r.FromProduction })
+            .Select(g => new { g.Key.SalesOrderId, g.Key.ProductId, g.Key.ColorId, g.Key.SizeId, g.Key.FromProduction, Quantity = g.Sum(r => r.Quantity) })
             .ToListAsync(cancellationToken);
         var production = await db.ProductionOrders.AsNoTracking()
             .Where(p => p.SalesOrderId != null && salesOrderIds.Contains(p.SalesOrderId.Value) && p.Status != ProductionOrderStatus.Cancelled)
@@ -273,7 +340,9 @@ public static class SalesOrderCoverage
         foreach (var r in reserved)
         {
             var key = (r.SalesOrderId, r.ProductId, r.ColorId, r.SizeId);
-            result[key] = result.GetValueOrDefault(key) with { Reserved = r.Quantity };
+            result[key] = r.FromProduction
+                ? result.GetValueOrDefault(key) with { ReservedFromProduction = r.Quantity }
+                : result.GetValueOrDefault(key) with { Reserved = r.Quantity };
         }
 
         // Üretimin karşılığı: fireye ayrılan düşülür, tamamlanan siparişte demetlenmemiş adet de karşılık sayılmaz.

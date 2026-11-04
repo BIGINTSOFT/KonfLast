@@ -42,7 +42,7 @@ export function ShipmentsPage() {
   const columns: GridColumn[] = [
     { key: 'shipmentNo', label: 'Sevkiyat no' },
     { key: 'customerName', label: 'Müşteri' },
-    { key: 'orderNo', label: 'Sipariş' },
+    { key: 'orderNo', label: 'İş emri' },
     { key: 'customerOrderNo', label: 'Müşteri sipariş no' },
     { key: 'warehouseCode', label: 'Depo' },
     { key: 'shipDate', label: 'Sevk tarihi', filter: 'date' },
@@ -76,11 +76,13 @@ export function ShipmentsPage() {
           onChange={(event) => setSearchInput(event.target.value)}
         />
         <button type="submit" className="button"><Search aria-hidden="true" />Ara</button>
-        <label>
-          Sevk tarihi
+        {/* Sevk tarihi aralığı: etiket ve iki tarih tek çerçevede; seçilince liste hemen süzülür. */}
+        <div className="toolbar-range" role="group" aria-label="Sevk tarihi aralığı">
+          <span className="toolbar-range__label">Sevk tarihi</span>
           <input
             type="date"
             aria-label="Sevk tarihi başlangıç"
+            title="Başlangıç"
             value={from}
             max={to || undefined}
             onChange={(event) => {
@@ -88,12 +90,11 @@ export function ShipmentsPage() {
               setFrom(event.target.value)
             }}
           />
-        </label>
-        <label>
-          –
+          <span className="toolbar-range__separator" aria-hidden="true">–</span>
           <input
             type="date"
             aria-label="Sevk tarihi bitiş"
+            title="Bitiş"
             value={to}
             min={from || undefined}
             onChange={(event) => {
@@ -101,7 +102,7 @@ export function ShipmentsPage() {
               setTo(event.target.value)
             }}
           />
-        </label>
+        </div>
         <ClearFiltersButton grid={grid} />
         <div className="toolbar__actions">
           {canManage && (

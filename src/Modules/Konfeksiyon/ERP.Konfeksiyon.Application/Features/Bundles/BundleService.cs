@@ -50,7 +50,7 @@ public sealed class BundleService(
     private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(15);
 
     private static readonly Error NotFound = new(ErrorCodes.NotFound, "Demet bulunamadı.", ErrorType.NotFound);
-    private static readonly Error OrderNotFound = new(ErrorCodes.NotFound, "Üretim siparişi bulunamadı.", ErrorType.NotFound);
+    private static readonly Error OrderNotFound = new(ErrorCodes.NotFound, "İş emri bulunamadı.", ErrorType.NotFound);
 
     private static readonly Error ConcurrencyConflict = new(
         ErrorCodes.ConcurrencyConflict,

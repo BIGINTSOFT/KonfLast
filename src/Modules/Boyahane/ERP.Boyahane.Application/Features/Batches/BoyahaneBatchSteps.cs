@@ -86,8 +86,8 @@ public sealed partial class BoyahaneBatchService
             uid = RfidUid.Normalize(request.Uid);
             if (uid is null)
             {
-                return new Error(ErrorCodes.ValidationError, "Kart numarası 1-10 rakam olmalıdır.", ErrorType.Validation,
-                    new Dictionary<string, string[]> { ["uid"] = ["Kart numarası 1-10 rakam olmalıdır."] });
+                return new Error(ErrorCodes.ValidationError, "Kart numarası en fazla 10 harf ya da rakam olmalıdır.", ErrorType.Validation,
+                    new Dictionary<string, string[]> { ["uid"] = ["Kart numarası en fazla 10 harf ya da rakam olmalıdır."] });
             }
 
             if (await BoyahaneCards.CheckAsync(db, uid, BoyahaneCardType.Batch, cancellationToken) is { } cardError)

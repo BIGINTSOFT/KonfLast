@@ -140,6 +140,12 @@ public static class ErrorCodes
     public const string ShipmentItemNotFinishedGood = "SHIPMENT_ITEM_NOT_FINISHED_GOOD";
     public const string ShipmentOrderMismatch = "SHIPMENT_ORDER_MISMATCH";
     public const string ShipmentExceedsOrder = "SHIPMENT_EXCEEDS_ORDER";
+    public const string DespatchCheckMismatch = "DESPATCH_CHECK_MISMATCH";
+    public const string DespatchNoInUse = "DESPATCH_NO_IN_USE";
+    public const string PickingClaimed = "PICKING_CLAIMED";
+    public const string PickExceedsItem = "PICK_EXCEEDS_ITEM";
+    public const string PickLocationShort = "PICK_LOCATION_SHORT";
+    public const string TransferExceedsReserved = "TRANSFER_EXCEEDS_RESERVED";
     public const string OrderLinkedToSalesOrder = "ORDER_LINKED_TO_SALES_ORDER";
     public const string SalesOrderHasShipments = "SALES_ORDER_HAS_SHIPMENTS";
     public const string SalesOrderNothingDelivered = "SALES_ORDER_NOTHING_DELIVERED";

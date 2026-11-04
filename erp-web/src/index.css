@@ -126,6 +126,25 @@ body {
   min-height: 100vh;
 }
 
+/*
+ * Kaydırma çubuğu belirince içerik daralıp tablo / düğme kaymasın. Sayfanın çubuğu hep görünür (kısa sayfada
+ * pasif); boş beyaz şerit kalmaz. Pencere gövdesi .modal__body'de ayrıca ayarlanır.
+ */
+html {
+  overflow-y: scroll;
+}
+
+/* Kendi içinde kayan alanlar çubuğun yerini baştan ayırır. Yeni kayan alan eklenirse buraya da eklenir. */
+.table-wrap--scroll,
+.check-list__items,
+.combobox__list,
+.global-search__panel,
+.notifications__panel,
+.window__body,
+.shortcut-editor__column {
+  scrollbar-gutter: stable;
+}
+
 h1,
 h2,
 h3 {
@@ -345,11 +364,19 @@ a.button {
   font-weight: 500;
 }
 
+/* Zorunlu alan: etiketin yanında kırmızı yıldız (alan `required` taşıdığında kendiliğinden). */
+.field:has(:required) > :is(label, span):first-child::after {
+  content: ' *';
+  font-weight: 600;
+  color: var(--danger);
+}
+
 .field input,
 .field select,
 .field textarea,
 .toolbar input,
 .toolbar select,
+.check-list__search input,
 .matrix-input {
   min-height: var(--control-height);
   padding: 5px 10px;
@@ -387,6 +414,7 @@ select:not([multiple]) {
 .field textarea:hover,
 .toolbar input:hover,
 .toolbar select:hover,
+.check-list__search input:hover,
 .matrix-input:hover {
   border-color: var(--muted);
 }
@@ -396,6 +424,7 @@ select:not([multiple]) {
 .field textarea:focus-visible,
 .toolbar input:focus-visible,
 .toolbar select:focus-visible,
+.check-list__search input:focus-visible,
 .matrix-input:focus-visible {
   border-color: var(--primary);
   outline: 0;
@@ -451,6 +480,58 @@ progress {
   height: 17px;
   min-height: 0;
   padding: 0;
+}
+
+/* Elle bildirimde adedin kime yazılacağı: açıklamalı radyo listesi. */
+.attribution-options {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.attribution-options legend {
+  padding: 0 4px;
+  margin-left: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.attribution-option {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.attribution-option + .attribution-option {
+  border-top: 1px solid var(--border);
+}
+
+.attribution-option--active {
+  background: var(--primary-soft);
+}
+
+.attribution-option input {
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  margin-top: 2px;
+}
+
+.attribution-option span {
+  display: grid;
+  gap: 2px;
+}
+
+.attribution-option small {
+  color: var(--muted);
 }
 
 /* Aç / kapa anahtarı (ör. kaydın Aktif durumu). */
@@ -527,6 +608,88 @@ progress {
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-2);
+}
+
+/* Aranabilir uzun seçim listesi (operatör yetkinlikleri): liste kendi içinde kayar. */
+.check-list {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.check-list__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+}
+
+.check-list__search {
+  position: relative;
+  display: flex;
+  flex: 1 1 140px;
+  align-items: center;
+}
+
+.check-list__search svg {
+  position: absolute;
+  left: 9px;
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.check-list__search input {
+  width: 100%;
+  padding-left: 30px;
+}
+
+.check-list__toolbar .checkbox {
+  white-space: nowrap;
+}
+
+.check-list__bulk {
+  margin-left: auto;
+}
+
+.check-list__items {
+  display: grid;
+  /* Kayıtlar alt alta; liste sabit yükseklikte bir pencerede kayar. Arama sonucu azalsa da pencere küçülmez,
+     altındaki düğmeler oynamaz. Drawer'daki başlık, kişi kartı, sekmeler ve düğmeler sığacak kadardır. */
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  height: max(180px, calc(100dvh - 454px));
+  padding: 8px 10px;
+  overflow-y: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.check-list__item {
+  min-width: 0;
+  padding: 5px 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.check-list__item:last-of-type {
+  border-bottom: 0;
+}
+
+.check-list__item code {
+  flex: none;
+}
+
+.check-list__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.check-list__empty {
+  grid-column: 1 / -1;
+  margin: 6px 0;
 }
 
 /* Aranabilir seçim kutusu (ana veri seçimi). */
@@ -1249,6 +1412,33 @@ progress {
   box-shadow: inset 0 0 0 1.5px var(--module);
 }
 
+/* Kısa ekranda (dizüstü 768 px) bütün modüller kaydırmadan görünsün: öğeler sıkılaşır. */
+@media (max-height: 860px) {
+  .navrail {
+    gap: 1px;
+    padding: 6px;
+  }
+
+  .navrail__item {
+    gap: 2px;
+    padding: 4px 2px 3px;
+  }
+
+  .navrail__icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .navrail__icon svg.lucide {
+    width: 15px;
+    height: 15px;
+  }
+
+  .navrail__label {
+    font-size: 0.62rem;
+  }
+}
+
 .navrail__collapse {
   display: grid;
   height: 30px;
@@ -1571,12 +1761,106 @@ progress {
   font-size: 0.95rem;
 }
 
+/* Hücrede uzun metin: tek satır, sonu "…"; tıklanınca pencerede tamamı. */
+.clipped-text {
+  display: block;
+  max-width: 320px;
+  padding: 0;
+  overflow: hidden;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.clipped-text:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.clipped-text__full {
+  margin: 0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.table__nowrap {
+  white-space: nowrap;
+}
+
+/* Bölüm başlığı ve sağında işlem düğmesi (ör. demet sayfasındaki Kalite). */
+.section-bar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin-top: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: inset 3px 0 0 var(--module, var(--primary));
+}
+
+.section-bar > .section-title {
+  margin: 0;
+}
+
+/* Lab denemesi: başlık ve işlemler (Sil, Düzenle, Karar gir) aynı çubukta, sağda. */
+.trial-bar__actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Uyarı ve işlemi: metin solda, düğme sağda (metnin içine sıkışmaz). */
+.alert--action {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alert--action > .button {
+  flex: none;
+}
+
+/* Düğme kutuyu yükseltir: simge metinle birlikte dikeyde ortada kalır. */
+.alert.alert--action::before {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: flex-end;
   margin-top: 14px;
+}
+
+/* Araç çubuğunda etiketli tarih aralığı: düz yazı etiket ve iki tarih kutusu, diğer kontrollerle aynı hizada. */
+.toolbar-range {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  height: var(--control-height);
+}
+
+.toolbar-range__label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-secondary, var(--muted));
+  white-space: nowrap;
+}
+
+.toolbar-range__separator {
+  color: var(--muted);
 }
 
 .toolbar input[type='search'] {
@@ -1671,6 +1955,18 @@ progress {
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
+}
+
+/* Uzayan kayıt listesi (ör. üretim hareketleri): sabit yükseklikte kayar, başlık satırı üstte sabit kalır. */
+.table-wrap--scroll {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.table-wrap--scroll thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .table-wrap[aria-busy='true'] {
@@ -1861,7 +2157,8 @@ progress {
 .modal {
   width: min(760px, calc(100vw - 32px));
   max-height: calc(100vh - 48px);
-  padding: 0 20px 20px;
+  padding: 0;
+  overflow: hidden;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border);
@@ -1874,16 +2171,20 @@ progress {
   backdrop-filter: blur(2px);
 }
 
-.modal__header {
-  position: sticky;
-  top: 0;
-  z-index: 1;
+/* Başlık sabit, gövde kayar: başlık şeridi her zaman tam genişliktedir. */
+.modal[open] {
   display: flex;
+  flex-direction: column;
+}
+
+.modal__header {
+  display: flex;
+  flex: none;
   gap: 12px;
   align-items: center;
   justify-content: space-between;
   padding: 12px 20px;
-  margin: 0 -20px 16px;
+  margin: 0;
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
 }
@@ -1891,6 +2192,16 @@ progress {
 .modal__header h2 {
   margin: 0;
   font-size: 1rem;
+}
+
+/* Kaydırma çubuğunun yeri baştan ayrılır (ince çubuk; sağ boşluk ona göre): içerik kayınca da düğmeler oynamaz. */
+.modal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 16px 10px 20px 20px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
 }
 
 .modal h3.section-title {
@@ -1904,19 +2215,21 @@ progress {
   width: min(560px, 100vw);
   height: 100dvh;
   max-height: 100dvh;
-  padding-bottom: 0;
   margin: 0;
-  overflow-y: auto;
   border-width: 0 0 0 1px;
   border-radius: 0;
   animation: drawer-in 180ms ease-out;
 }
 
 /* Sütun düzeni: kısa içerikte satırlar boşluğu paylaşıp büyümez, düğmeler alta yaslanır. */
+.modal--drawer .modal__body {
+  padding-bottom: 0;
+}
+
 .modal--drawer .form {
   display: flex;
   flex-direction: column;
-  min-height: calc(100dvh - 90px);
+  min-height: 100%;
 }
 
 /* Kaydet / Vazgeç uzun formda da görünür kalır. */
@@ -1926,6 +2239,11 @@ progress {
   padding-bottom: 16px;
   margin-top: auto;
   background: var(--surface);
+}
+
+/* Hata kutusu görünüme kaydırılınca sabit Kaydet / Vazgeç çubuğunun arkasında kalmasın. */
+.modal--drawer .alert {
+  scroll-margin-bottom: 80px;
 }
 
 .modal--drawer h3.section-title {
@@ -1951,21 +2269,124 @@ progress {
 }
 
 /* ───────── Rota akışı, tablet kodu ───────── */
+/* Kayıt özeti şeridi (ör. demet): etiket üstte, değer altta; az yer kaplar. */
+.bundle-summary {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 14px 0 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.bundle-summary > div {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-width: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.bundle-summary > div:not(:nth-child(6n + 1)) {
+  border-left: 1px solid var(--border);
+}
+
+.bundle-summary__wide {
+  grid-column: span 3;
+}
+
+.bundle-summary > .bundle-summary__wide {
+  border-bottom: 0;
+}
+
+.bundle-summary > .bundle-summary__wide + .bundle-summary__wide {
+  border-left: 1px solid var(--border);
+}
+
+.bundle-summary dt {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.bundle-summary dd {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bundle-summary__card {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Rota adımları: sırayla tek akışta küçük etiketler; paralel aşama çerçeveli grup. */
+.route-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 0;
+  margin: 10px 0 0;
+  list-style: none;
+}
+
+.route-steps__stage {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.route-steps__stage + .route-steps__stage::before {
+  margin-right: 2px;
+  color: var(--muted);
+  content: '›';
+}
+
+.route-steps__stage--parallel {
+  padding: 2px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.route-steps__step {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 3px 8px;
+  font-size: 0.8rem;
+  color: var(--text-2);
+  white-space: nowrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.route-steps__step--ok { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 35%, var(--border)); }
+.route-steps__step--info { color: var(--info); background: var(--info-bg); border-color: var(--info); font-weight: 600; }
+.route-steps__step--warning { color: var(--warning); background: var(--warning-bg); border-color: var(--warning); }
+.route-steps__step--danger { color: var(--danger); background: var(--danger-bg); }
+.route-steps__step--done { background: var(--ok-bg); }
+
+/* Aşamalar alt satıra kayar: uzun rotada da tümü görünür (yatay kaydırmada gizli kalmaz). */
 .route-flow {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
   padding: 0;
   margin: 12px 0 0;
-  overflow-x: auto;
   list-style: none;
 }
 
 .route-flow__stage {
   display: grid;
-  flex: 0 0 210px;
-  gap: 8px;
+  flex: 1 1 150px;
+  max-width: 230px;
+  gap: 6px;
   align-content: start;
-  padding: 12px;
+  padding: 8px;
   background: var(--surface-3);
   border-radius: var(--radius);
 }
@@ -1979,7 +2400,8 @@ progress {
 }
 
 .route-flow__step {
-  padding: 9px 11px;
+  padding: 6px 9px;
+  font-size: 0.85rem;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -2035,6 +2457,99 @@ progress {
 
 .tabs__panel[hidden] {
   display: none;
+}
+
+/* ───────── Kayıt sayfası: üst bilgi şeridi + işlem çubuğu + sekmeler (her sekmede tek iş) ───────── */
+.record-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: grid;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.record-header__top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.record-header__title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.record-header__title h1 {
+  margin: 0;
+  font-family: var(--font-mono, inherit);
+  font-size: 1.15rem;
+}
+
+.record-header__back {
+  margin-right: 6px;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.record-header__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 0;
+  margin: 0;
+}
+
+.record-header__fact {
+  display: grid;
+  gap: 1px;
+  min-width: 110px;
+  padding: 0 18px;
+  border-left: 1px solid var(--border);
+}
+
+.record-header__fact:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.record-header__fact dt {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: none;
+}
+
+.record-header__fact dd {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.record-header__fact--danger dd {
+  color: var(--danger);
+}
+
+.record-tabs {
+  margin-top: 14px;
+}
+
+.record-panel {
+  display: grid;
+  gap: 16px;
+  padding-top: 16px;
+}
+
+.record-panel > .section-title:first-child,
+.record-panel > section:first-child > .section-title:first-child {
+  margin-top: 0;
 }
 
 /* Kişi kartı: operatör formunun başında fotoğraf, ad ve sicil. */
@@ -2182,6 +2697,91 @@ progress {
 .cards--lines {
   grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
   align-items: start;
+}
+
+/* ───────── Canlı pano: bant tablosu, makine özeti, dikkat paneli ───────── */
+.lines-table__toggle {
+  width: 28px;
+}
+
+.lines-table__chevron {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+
+.lines-table__chevron--open {
+  transform: rotate(90deg);
+}
+
+.lines-table__progress {
+  display: grid;
+  gap: 4px;
+  min-width: 120px;
+}
+
+.lines-table__progress progress {
+  width: 100%;
+  height: 6px;
+}
+
+.machine-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: 0.8rem;
+}
+
+.machine-counts__item {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.machine-counts__item--ok { color: var(--ok); }
+.machine-counts__item--info { color: var(--info); }
+.machine-counts__item--warning { color: var(--warning); }
+.machine-counts__item--danger { color: var(--danger); }
+.machine-counts__item--idle { font-weight: 400; color: var(--muted); }
+
+.line-machines {
+  background: var(--surface);
+}
+
+.link-button {
+  padding: 0;
+  font: inherit;
+  color: var(--primary-text);
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+.dashboard-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 18px;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dashboard-panel {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.dashboard-panel h2 {
+  margin: 0;
+  font-size: 0.95rem;
 }
 
 .line-card {
@@ -2582,12 +3182,24 @@ progress {
 }
 
 /* ───────── Tablo içi girdiler (reçete, prim kademeleri) ───────── */
-.table--compact td > input,
+.table--compact td > input:not([type='checkbox'], [type='radio']),
 .table--compact td > select {
   width: 100%;
   min-width: 72px;
   height: 32px;
   min-height: 0;
+}
+
+/* Tablo satırındaki seçim kutusu: metin girdisi gibi genişlemez, sütunu dar kalır. */
+.table td > input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.table td:has(> input[type='checkbox']:only-child) {
+  width: 1%;
 }
 
 /* ───────── Demet etiketleri ───────── */
@@ -2736,7 +3348,7 @@ progress {
 
 /* Form dışındaki girdiler (genel arama, tablo içi) form alanlarıyla aynı görünür. */
 .global-search input,
-.table--compact td > input,
+.table--compact td > input:not([type='checkbox'], [type='radio']),
 .table--compact td > select {
   padding: 4px 10px;
   font: inherit;
@@ -2757,7 +3369,7 @@ progress {
 }
 
 .global-search input:focus-visible,
-.table--compact td > input:focus-visible,
+.table--compact td > input:not([type='checkbox'], [type='radio']):focus-visible,
 .table--compact td > select:focus-visible {
   border-color: var(--primary);
   outline: 0;
@@ -3171,6 +3783,18 @@ progress {
   margin-left: auto;
 }
 
+/* Süzgeci ve işlemi çok olan tek satırlık çubuk: arama kutusu yer daraldıkça küçülür, seçim kutusu sınırlıdır. */
+.toolbar--compact input[type='search'] {
+  flex: 1 1 140px;
+  width: auto;
+  min-width: 0;
+  max-width: 300px;
+}
+
+.toolbar--compact select:not([multiple]) {
+  max-width: 200px;
+}
+
 /* Başlığı yalnızca ekran okuyucuya açık liste sayfaları: dış boşluk yoktur, liste paneli içerik alanının
    tamamını kaplar (konum satırına, yan menüye ve ekranın kenarlarına bitişik). */
 .page:has(> h1.visually-hidden:first-child) {
@@ -3542,6 +4166,36 @@ progress {
 .customer-form {
   display: grid;
   gap: 16px;
+}
+
+/* Müşteri formunda sekme, etiket ve anahtar yazıları sade: alan değerleri öne çıkar. */
+.customer-form .tabs__tab {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.customer-form .tabs__tab--active {
+  font-weight: 600;
+}
+
+.customer-form .field {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.customer-form .field > label {
+  font-weight: 400;
+}
+
+.customer-form .switch {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.customer-form .form__section > legend,
+.customer-form .address-card > legend {
+  font-size: 0.8rem;
 }
 
 /* İki alan yan yana (ör. VKN / vergi dairesi); dar ekranda alt alta. */
@@ -5951,6 +6605,55 @@ button.modulebar__tab {
 }
 
 /* Geciken sipariş satırı: teslim tarihi geçmiş, kapanmamış ve sevk edilecek adedi var. */
+/* Dikkat isteyen satır (arıza, demet bekleme, ara): solda uyarı çizgisi. */
+.table tbody tr.table__row--attention > td:first-child {
+  box-shadow: inset 3px 0 0 var(--warning);
+}
+
+/* Parçalı seçim (görünüm süzgeci): bitişik küçük düğmeler, seçili olan dolu. */
+.segmented {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.segmented__item {
+  min-height: var(--control-height);
+  padding: 0 12px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text-2);
+  white-space: nowrap;
+  cursor: pointer;
+  background: var(--surface);
+  border: 0;
+}
+
+.segmented__item + .segmented__item {
+  border-left: 1px solid var(--border-strong);
+}
+
+.segmented__item:hover {
+  background: var(--surface-3);
+}
+
+.segmented__item--active,
+.segmented__item--active:hover {
+  font-weight: 600;
+  color: var(--surface);
+  background: var(--primary);
+}
+
+/* Sıradaki (hazır) ya da süren satır: solda vurgu çizgisi, açık zemin. */
+.table tbody tr.table__row--current > td {
+  background: var(--primary-soft);
+}
+
+.table tbody tr.table__row--current > td:first-child {
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+
 .table__row--overdue > td:first-child {
   box-shadow: inset 3px 0 0 var(--danger);
 }
@@ -6535,8 +7238,26 @@ button.modulebar__tab {
   white-space: normal;
 }
 
-/* ───────── Stok satırı işlem paneli ───────── */
-.stock-row__toggle[aria-expanded="true"] svg {
+/* ───────── Stok satırı: tıklayınca son hareketler, sağ tık / satır sonu düğmesi ile işlem menüsü ───────── */
+.table tbody tr.stock-row {
+  cursor: pointer;
+}
+
+/* Satır sonundaki "İşlem" düğmesi: açılır menüyü açar; açıkken ok yukarı döner. */
+.row-menu-button {
+  gap: 4px;
+}
+
+.row-menu-button svg.lucide {
+  width: 14px;
+  height: 14px;
+}
+
+.row-menu-button[aria-expanded="true"] {
+  background: var(--surface-3);
+}
+
+.row-menu-button[aria-expanded="true"] svg.lucide {
   transform: rotate(180deg);
 }
 
@@ -6656,4 +7377,219 @@ button.modulebar__tab {
 
 .defect-table__number {
   width: 15%;
+}
+
+/* Tablo hücresindeki tıklanabilir kod + ad: hücre ve başlıkla aynı hizada başlar, adlar alt alta hizalı durur. */
+.cell-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cell-link:hover {
+  color: var(--module, #0d5c6e);
+  text-decoration: underline;
+}
+
+.cell-link__code {
+  display: inline-block;
+  min-width: 7ch;
+}
+
+/* ───────── e-İrsaliye taslağı (GİB standart görünümüne göre yerleşim) ───────── */
+.edespatch {
+  position: relative;
+  max-width: 190mm;
+  margin: 0 auto;
+  padding: 8mm;
+  background: #fff;
+  color: #000;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 9pt;
+  line-height: 1.35;
+}
+
+.edespatch__watermark {
+  position: absolute;
+  inset: 35% 0 auto;
+  text-align: center;
+  font-size: 96pt;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.06);
+  transform: rotate(-24deg);
+  pointer-events: none;
+}
+
+.edespatch__top {
+  display: grid;
+  grid-template-columns: 1fr 44mm 1fr;
+  align-items: start;
+  gap: 6mm;
+}
+
+.edespatch__party {
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+  padding: 2mm 0;
+}
+
+.edespatch__party > * + * {
+  margin-top: 0.5mm;
+}
+
+.edespatch__title {
+  text-align: center;
+}
+
+.edespatch__emblem {
+  width: 22mm;
+  height: 22mm;
+  margin: 0 auto 2mm;
+  border: 2px solid #000;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: italic 700 22pt Georgia, serif;
+}
+
+.edespatch__title h1 {
+  margin: 0;
+  font-size: 14pt;
+  font-weight: 700;
+}
+
+.edespatch__qr {
+  justify-self: end;
+  width: 30mm;
+}
+
+.edespatch__qr svg {
+  width: 30mm;
+  height: 30mm;
+}
+
+.edespatch__middle {
+  display: grid;
+  grid-template-columns: 1fr 80mm;
+  gap: 6mm;
+  margin-top: 5mm;
+  align-items: start;
+}
+
+.edespatch__sayin {
+  font-weight: 700;
+}
+
+.edespatch__info {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.edespatch__info th,
+.edespatch__info td {
+  border: 1px solid #000;
+  padding: 1mm 2mm;
+  text-align: left;
+  font-size: 8.5pt;
+}
+
+.edespatch__info th {
+  width: 40%;
+  font-weight: 700;
+}
+
+.edespatch__ettn {
+  margin-top: 4mm;
+}
+
+.edespatch__delivery {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6mm;
+  margin-top: 3mm;
+  padding: 2mm 0;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
+}
+
+.edespatch__delivery h3 {
+  margin: 0 0 1mm;
+  font-size: 9pt;
+}
+
+.edespatch__lines {
+  width: 100%;
+  margin-top: 5mm;
+  border-collapse: collapse;
+}
+
+.edespatch__lines th,
+.edespatch__lines td {
+  border: 1px solid #000;
+  padding: 1mm 2mm;
+  text-align: left;
+  vertical-align: top;
+}
+
+.edespatch__lines thead th {
+  background: #e6e6e6;
+  font-weight: 700;
+}
+
+.edespatch__lines .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.edespatch__notes {
+  margin-top: 4mm;
+  padding: 2mm;
+  border: 1px solid #000;
+  min-height: 12mm;
+}
+
+.edespatch__foot {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20mm;
+  margin-top: 10mm;
+}
+
+.edespatch__sign {
+  display: flex;
+  flex-direction: column;
+  gap: 8mm;
+  border-top: 1px solid #000;
+  padding-top: 1mm;
+  font-weight: 700;
+}
+
+.edespatch__sign span + span {
+  font-weight: 400;
+}
+
+.edespatch__disclaimer {
+  margin-top: 6mm;
+  font-size: 7.5pt;
+  color: #444;
+  text-align: center;
+}
+
+.picklist__check {
+  text-align: center;
+  font-size: 12pt;
+}
+
+@media print {
+  .edespatch {
+    max-width: none;
+    padding: 0;
+  }
 }

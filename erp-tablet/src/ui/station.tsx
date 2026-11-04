@@ -11,20 +11,22 @@ const ERROR_TOAST_MS = 8000;
 /** İstasyon ekranlarının ortak parçaları: üst şerit, bilgi şeridi, yönlendirme ekranı, ileti ve meşgul göstergesi. */
 
 interface StationTopBarProps {
-  /** Akışın adımları (ör. Personel, Demet, Üretim). */
-  steps: string[];
+  /** Akışın adımları (ör. Personel, Demet, Üretim); verilmezse adım göstergesi çizilmez. */
+  steps?: string[];
   /** Bulunulan adımın sırası; henüz akışa girilmediyse -1. */
-  current: number;
+  current?: number;
+  /** Solda adım göstergesi yerine gösterilecek içerik (ör. çalışma durumu). */
+  leading?: ReactNode;
   online: boolean;
   now: Date;
   /** Bağlantı durumunun solundaki düğmeler. */
   actions?: ReactNode;
 }
 
-export function StationTopBar({ steps, current, online, now, actions }: StationTopBarProps) {
+export function StationTopBar({ steps, current = -1, leading, online, now, actions }: StationTopBarProps) {
   return (
     <View style={styles.topBar}>
-      <StepIndicator steps={steps} current={current} />
+      <View style={styles.topBarLeading}>{leading ?? (steps && <StepIndicator steps={steps} current={current} />)}</View>
 
       <View style={styles.topBarRight}>
         {actions}
@@ -188,6 +190,7 @@ export function BusyOverlay() {
 }
 
 const styles = StyleSheet.create({
+  topBarLeading: { flex: 1, minWidth: 0 },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',

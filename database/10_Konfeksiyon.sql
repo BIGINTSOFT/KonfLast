@@ -5081,3 +5081,233 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104084708_AddManualReportAttribution'
+)
+BEGIN
+    DECLARE @var nvarchar(max);
+    SELECT @var = QUOTENAME([d].[name])
+    FROM [sys].[default_constraints] [d]
+    INNER JOIN [sys].[columns] [c] ON [d].[parent_column_id] = [c].[column_id] AND [d].[parent_object_id] = [c].[object_id]
+    WHERE ([d].[parent_object_id] = OBJECT_ID(N'[Konfeksiyon].[BundleOperationEvents]') AND [c].[name] = N'OperatorId');
+    IF @var IS NOT NULL EXEC(N'ALTER TABLE [Konfeksiyon].[BundleOperationEvents] DROP CONSTRAINT ' + @var + ';');
+    ALTER TABLE [Konfeksiyon].[BundleOperationEvents] ALTER COLUMN [OperatorId] int NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104084708_AddManualReportAttribution'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[BundleOperationEvents] ADD [CountsForPerformance] bit NOT NULL DEFAULT CAST(1 AS bit);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104084708_AddManualReportAttribution'
+)
+BEGIN
+    INSERT INTO [Konfeksiyon].[__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261104084708_AddManualReportAttribution', N'10.0.12');
+END;
+
+COMMIT;
+GO
+
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[Shipments] DROP CONSTRAINT [CK_Shipments_Status];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    DROP INDEX [IX_SalesOrderReservations_SalesOrderLineId_WarehouseId] ON [Konfeksiyon].[SalesOrderReservations];
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[Shipments] ADD [DespatchUuid] uniqueidentifier NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[Shipments] ADD [DriverIdentityNo] nvarchar(11) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[Shipments] ADD [DriverName] nvarchar(100) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[Shipments] ADD [PickedAt] datetime2 NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[Shipments] ADD [PickedBy] nvarchar(100) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[Shipments] ADD [PickingBy] nvarchar(100) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[Shipments] ADD [PickingStartedAt] datetime2 NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[Shipments] ADD [VehiclePlate] nvarchar(20) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[ShipmentItems] ADD [CheckedQuantity] decimal(18,3) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[ShipmentItems] ADD [PickedQuantity] decimal(18,3) NOT NULL DEFAULT 0.0;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[ShipmentItems] ADD [RequestedQuantity] decimal(18,3) NULL;
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    ALTER TABLE [Konfeksiyon].[SalesOrderReservations] ADD [FromProduction] bit NOT NULL DEFAULT CAST(0 AS bit);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    CREATE TABLE [Konfeksiyon].[ShipmentPicks] (
+        [Id] bigint NOT NULL IDENTITY,
+        [RequestId] uniqueidentifier NOT NULL,
+        [ShipmentId] int NOT NULL,
+        [ShipmentItemId] int NOT NULL,
+        [LocationId] int NOT NULL,
+        [Quantity] decimal(18,3) NOT NULL,
+        [PickedAt] datetime2 NOT NULL,
+        [PickedBy] nvarchar(100) NOT NULL,
+        CONSTRAINT [PK_ShipmentPicks] PRIMARY KEY ([Id]),
+        CONSTRAINT [CK_ShipmentPicks_Quantity] CHECK ([Quantity] > 0),
+        CONSTRAINT [FK_ShipmentPicks_ShipmentItems_ShipmentItemId] FOREIGN KEY ([ShipmentItemId]) REFERENCES [Konfeksiyon].[ShipmentItems] ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_ShipmentPicks_Shipments_ShipmentId] FOREIGN KEY ([ShipmentId]) REFERENCES [Konfeksiyon].[Shipments] ([Id]) ON DELETE NO ACTION,
+        CONSTRAINT [FK_ShipmentPicks_WarehouseLocations_LocationId] FOREIGN KEY ([LocationId]) REFERENCES [Konfeksiyon].[WarehouseLocations] ([Id]) ON DELETE NO ACTION
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    EXEC(N'ALTER TABLE [Konfeksiyon].[Shipments] ADD CONSTRAINT [CK_Shipments_Status] CHECK ([Status] IN (''DRAFT'', ''PICKING'', ''PICKED'', ''SHIPPED'', ''CANCELLED''))');
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_SalesOrderReservations_SalesOrderLineId_WarehouseId_FromProduction] ON [Konfeksiyon].[SalesOrderReservations] ([SalesOrderLineId], [WarehouseId], [FromProduction]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    CREATE INDEX [IX_ShipmentPicks_LocationId] ON [Konfeksiyon].[ShipmentPicks] ([LocationId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_ShipmentPicks_RequestId] ON [Konfeksiyon].[ShipmentPicks] ([RequestId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    CREATE INDEX [IX_ShipmentPicks_ShipmentId] ON [Konfeksiyon].[ShipmentPicks] ([ShipmentId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    CREATE INDEX [IX_ShipmentPicks_ShipmentItemId] ON [Konfeksiyon].[ShipmentPicks] ([ShipmentItemId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [Konfeksiyon].[__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104131219_AddShipmentPickingAndReservations'
+)
+BEGIN
+    INSERT INTO [Konfeksiyon].[__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261104131219_AddShipmentPickingAndReservations', N'10.0.12');
+END;
+
+COMMIT;
+GO
+

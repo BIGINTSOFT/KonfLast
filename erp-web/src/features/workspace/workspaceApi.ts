@@ -22,7 +22,7 @@ export interface WorkTask {
 }
 
 export interface SearchHit {
-  /** Kaydın türü, örn. "Üretim siparişi". */
+  /** Kaydın türü, örn. "İş emri". */
   type: string
   title: string
   subtitle: string | null

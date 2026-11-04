@@ -196,7 +196,9 @@ public sealed class PayrollService(IKonfeksiyonDbContext db, IPerformanceService
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Where(e => e.EventType == BundleOperationEventType.QuantityReported && e.ProducedQuantity > 0
-                && e.OccurredAt >= from && e.OccurredAt < to);
+                && e.OccurredAt >= from && e.OccurredAt < to
+                // Operatörsüz ya da "performansa sayılmasın" diye elle bildirilen adet prime girmez.
+                && e.CountsForPerformance && e.OperatorId != null);
         if (operatorId is { } id)
         {
             events = events.Where(e => e.OperatorId == id);
@@ -226,7 +228,7 @@ public sealed class PayrollService(IKonfeksiyonDbContext db, IPerformanceService
 
         var outputs = facts
             .Select(f => new Output(
-                f.OperatorId,
+                f.OperatorId!.Value,
                 DateOnly.FromDateTime(clock.ToLocal(f.OccurredAt)),
                 f.OperationId,
                 f.ProducedQuantity,
@@ -312,6 +314,7 @@ public sealed class PayrollService(IKonfeksiyonDbContext db, IPerformanceService
             {
                 e.BundleOperationId,
                 e.OperatorId,
+                e.CountsForPerformance,
                 e.OccurredAt,
                 e.ProducedQuantity,
                 e.BundleOperation.OperationId,
@@ -347,10 +350,13 @@ public sealed class PayrollService(IKonfeksiyonDbContext db, IPerformanceService
                     var taken = Math.Min(left[i], needed);
                     left[i] -= taken;
                     needed -= taken;
-                    if (takeBack.InspectedAt >= from && (operatorId is null || operatorId == credits[i].OperatorId))
+                    // Geri alınan adet, prime sayılmamış bir bildirimdense kimseden düşülmez.
+                    if (takeBack.InspectedAt >= from && credits[i].CountsForPerformance
+                        && credits[i].OperatorId is { } creditOperator
+                        && (operatorId is null || operatorId == creditOperator))
                     {
                         deductions.Add(new Output(
-                            credits[i].OperatorId,
+                            creditOperator,
                             DateOnly.FromDateTime(clock.ToLocal(takeBack.InspectedAt)),
                             credits[i].OperationId,
                             -taken,
@@ -422,7 +428,9 @@ public sealed class OperatorEarningsReport(IPayrollService payroll) : IReport
     public ReportDefinition Definition { get; } = new(
         "operator-earnings", "Operatör kazançları",
         "Operatör bazında parça başı kazanç ve verim primi. Kazanç, bildirilen sağlam adet ile demet açılırken " +
-        "sabitlenen birim ücretin çarpımıdır; prim günlük verim kademelerinden gelir.");
+        "sabitlenen birim ücretin çarpımıdır; prim günlük verim kademelerinden gelir.",
+        Group: ReportGroups.Personnel,
+        Permission: ERP.Konfeksiyon.Domain.Authorization.KonfeksiyonPermissions.Report.Personnel);
 
     public async Task<Result<ReportData>> RunAsync(ReportParameters parameters, CancellationToken cancellationToken)
     {

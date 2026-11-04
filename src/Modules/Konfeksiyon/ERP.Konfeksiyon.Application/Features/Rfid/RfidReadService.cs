@@ -17,6 +17,12 @@ public interface IRfidReadService
 
     /// <summary>Tabletten okutulan demet kartını demete çözer.</summary>
     Task<Result<BundleReadDto>> ReadBundleAsync(RfidReadRequest request, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Okutulmuş demetin güncel hâli (okutma kaydı bırakmaz). Tablet açık duran operasyon listesini, makinesinde
+    /// başka yerden (ör. web'den elle bildirim) değişiklik olunca bununla yeniler.
+    /// </summary>
+    Task<Result<BundleReadDto>> GetBundleAsync(int bundleId, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -65,9 +71,37 @@ public sealed class RfidReadService(
         }
 
         var (tablet, outcome, duplicate) = read.Value;
+        return await BuildBundleReadAsync(outcome.BundleId!.Value, tablet.MachineId, duplicate, cancellationToken);
+    }
+
+    public async Task<Result<BundleReadDto>> GetBundleAsync(int bundleId, CancellationToken cancellationToken)
+    {
+        var tablet = await db.Tablets
+            .AsNoTracking()
+            .Where(t => t.Id == currentUser.TabletId && t.IsActive)
+            .Select(t => new ReadingTablet(t.Id, t.MachineId))
+            .SingleOrDefaultAsync(cancellationToken);
+        if (tablet is null)
+        {
+            return new Error(
+                ErrorCodes.InvalidDeviceCredentials, "Cihaz kimlik bilgileri geçersiz.", ErrorType.Unauthorized);
+        }
+
+        if (!await db.Bundles.AnyAsync(b => b.Id == bundleId, cancellationToken))
+        {
+            return new Error(ErrorCodes.NotFound, "Demet bulunamadı.", ErrorType.NotFound);
+        }
+
+        return await BuildBundleReadAsync(bundleId, tablet.MachineId, duplicate: false, cancellationToken);
+    }
+
+    /// <summary>Demeti ve bu makinede hangi adımın başlatılabileceğini tabletin göreceği biçimde döner.</summary>
+    private async Task<BundleReadDto> BuildBundleReadAsync(
+        int bundleId, int? machineId, bool duplicate, CancellationToken cancellationToken)
+    {
         var bundle = await db.Bundles
             .AsNoTracking()
-            .Where(b => b.Id == outcome.BundleId)
+            .Where(b => b.Id == bundleId)
             .Select(b => new
             {
                 b.Id,
@@ -89,8 +123,8 @@ public sealed class RfidReadService(
             })
             .SingleAsync(cancellationToken);
 
-        IReadOnlyList<int> capable = tablet.MachineId is { } machineId
-            ? await machineOperations.CapableOperationIdsAsync(machineId, cancellationToken)
+        IReadOnlyList<int> capable = machineId is { } id
+            ? await machineOperations.CapableOperationIdsAsync(id, cancellationToken)
             : [];
         // Demet fiziksel olarak tek yerdedir: işlemde bir adımı varken başka adımı başlatılamaz.
         var workable = bundle.Status is BundleStatus.Waiting or BundleStatus.InProduction

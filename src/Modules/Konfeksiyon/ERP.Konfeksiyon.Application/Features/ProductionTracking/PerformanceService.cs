@@ -131,13 +131,16 @@ public sealed class PerformanceService(IKonfeksiyonDbContext db, IFactoryClock c
                 e.ProducedQuantity,
                 e.RejectedQuantity,
                 e.OccurredAt,
+                e.CountsForPerformance,
             })
             .ToListAsync(cancellationToken);
 
+        // Performansa sayılmayan elle bildirimler (operatörsüz ya da "sayılmasın") verim hesabına girmez.
         var outputs = events
-            .Where(e => e.EventType is BundleOperationEventType.QuantityReported or BundleOperationEventType.RejectionReported)
+            .Where(e => e.CountsForPerformance && e.OperatorId != null
+                && e.EventType is BundleOperationEventType.QuantityReported or BundleOperationEventType.RejectionReported)
             .Select(e => new OutputFact(
-                e.WorkSessionId, e.OperatorId, e.MachineId, e.OperationId, e.OccurredAt, e.ProducedQuantity,
+                e.WorkSessionId, e.OperatorId!.Value, e.MachineId, e.OperationId, e.OccurredAt, e.ProducedQuantity,
                 e.RejectedQuantity, e.Sam))
             .ToList();
 
@@ -156,16 +159,22 @@ public sealed class PerformanceService(IKonfeksiyonDbContext db, IFactoryClock c
                 }
                 else if (isOpen && e.EventType is BundleOperationEventType.OperationPaused or BundleOperationEventType.OperationCompleted)
                 {
-                    work.Add(new WorkFact(
-                        open.WorkSessionId, open.OperatorId, open.MachineId, open.OperationId, open.OccurredAt, e.OccurredAt));
+                    // Performansa sayılmayan elle kapatmada süre bilinmez: aralık kimseye çalışma süresi olarak yazılmaz.
                     isOpen = false;
+                    if (!e.CountsForPerformance || open.OperatorId is not { } worker)
+                    {
+                        continue;
+                    }
+
+                    work.Add(new WorkFact(
+                        open.WorkSessionId, worker, open.MachineId, open.OperationId, open.OccurredAt, e.OccurredAt));
                 }
             }
 
-            if (isOpen)
+            if (isOpen && open.OperatorId is { } openWorker)
             {
                 work.Add(new WorkFact(
-                    open.WorkSessionId, open.OperatorId, open.MachineId, open.OperationId, open.OccurredAt, until));
+                    open.WorkSessionId, openWorker, open.MachineId, open.OperationId, open.OccurredAt, until));
             }
         }
 

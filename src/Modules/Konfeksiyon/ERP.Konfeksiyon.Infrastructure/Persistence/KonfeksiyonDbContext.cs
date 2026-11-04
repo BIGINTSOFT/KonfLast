@@ -101,6 +101,7 @@ public sealed class KonfeksiyonDbContext(AppDbContext db) : IKonfeksiyonDbContex
     public DbSet<ShipmentItem> ShipmentItems => db.Set<ShipmentItem>();
     public DbSet<ShipmentCarton> ShipmentCartons => db.Set<ShipmentCarton>();
     public DbSet<ShipmentCartonLine> ShipmentCartonLines => db.Set<ShipmentCartonLine>();
+    public DbSet<ShipmentPick> ShipmentPicks => db.Set<ShipmentPick>();
     public DbSet<AssortmentTemplate> AssortmentTemplates => db.Set<AssortmentTemplate>();
     public DbSet<AssortmentTemplateLine> AssortmentTemplateLines => db.Set<AssortmentTemplateLine>();
     public DbSet<Invoice> Invoices => db.Set<Invoice>();

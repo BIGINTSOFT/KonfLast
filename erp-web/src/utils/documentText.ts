@@ -102,7 +102,7 @@ const texts = {
   consignee: ['Alıcı', 'Consignee'],
   seller: ['Satıcı', 'Seller'],
   invoiceAddressLabel: ['Fatura adresi', 'Billing address'],
-  productionOrderNo: ['Üretim siparişi', 'Production order'],
+  productionOrderNo: ['İş emri', 'Production order'],
   cartonNo: ['Koli no', 'Carton no'],
   sizeBreakdown: ['Beden dağılımı', 'Size breakdown'],
   totalQuantity: ['Toplam adet', 'Total quantity'],

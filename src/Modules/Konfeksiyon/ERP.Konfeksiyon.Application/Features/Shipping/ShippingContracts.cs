@@ -25,6 +25,17 @@ public sealed class ShippingOptions
     /// </summary>
     [Range(0, 100)]
     public decimal OverShipTolerancePercent { get; set; }
+
+    /// <summary>
+    /// İrsaliye numarası öneki (e-İrsaliye: 3 karakter). Numara {önek}{yıl}{9 haneli sıra} biçimindedir,
+    /// örn. IRS2026000000031; irsaliye kesilirken numara elle verilmemişse sistem verir.
+    /// </summary>
+    [Required, RegularExpression("^[A-Z0-9]{3}$")]
+    public string DespatchPrefix { get; set; } = "IRS";
+
+    /// <summary>İrsaliyede gönderen (firma) vergi dairesi ve vergi kimlik numarası; e-İrsaliye taslağında basılır.</summary>
+    public string? SenderTaxOffice { get; set; }
+    public string? SenderTaxNumber { get; set; }
 }
 
 /// <param name="CustomerOrderNo">Bağlı müşteri siparişindeki müşterinin kendi sipariş numarası.</param>
@@ -42,11 +53,34 @@ public sealed record ShipmentListItemDto(
     int ItemCount,
     decimal TotalQuantity,
     string? CustomerOrderNo,
-    int CartonCount);
+    int CartonCount,
+    decimal PickedQuantity = 0,
+    string? PickingBy = null);
 
 /// <param name="AvailableQuantity">Kartın sevkiyat deposundaki şu anki stoğu (taslakta yol gösterir).</param>
+/// <param name="PickedQuantity">Depodan toplanan adet.</param>
+/// <param name="RequestedQuantity">Toplama eksik bittiyse ilk istenen adet.</param>
+/// <param name="CheckedQuantity">İrsaliye öncesi kontrolde sayılan adet.</param>
 public sealed record ShipmentItemDto(
-    int Id, int StockItemId, string ItemCode, string ItemName, StockUnit Unit, decimal Quantity, decimal AvailableQuantity);
+    int Id, int StockItemId, string ItemCode, string ItemName, StockUnit Unit, decimal Quantity, decimal AvailableQuantity,
+    decimal PickedQuantity = 0, decimal? RequestedQuantity = null, decimal? CheckedQuantity = null);
+
+/// <summary>Sevkiyatın toplama ve irsaliye durumu.</summary>
+/// <param name="PickingBy">Toplamayı üstlenmiş kullanıcı.</param>
+/// <param name="DespatchUuid">İrsaliyenin ETTN'si (irsaliye kesildikten sonra).</param>
+public sealed record ShipmentWorkflowDto(
+    bool CanSendToPicking,
+    bool CanReturnToDraft,
+    bool CanCompletePicking,
+    bool CanReopenPicking,
+    string? PickingBy,
+    DateTime? PickingStartedAt,
+    DateTime? PickedAt,
+    string? PickedBy,
+    string? VehiclePlate,
+    string? DriverName,
+    string? DriverIdentityNo,
+    Guid? DespatchUuid);
 
 /// <param name="RowVersion">Güncelleme ve durum işlemlerinde geri gönderilir (eşzamanlılık kontrolü).</param>
 public sealed record ShipmentDto(
@@ -78,7 +112,8 @@ public sealed record ShipmentDto(
     int? SalesOrderId = null,
     string? SalesOrderNo = null,
     string? CustomerOrderNo = null,
-    ShipmentCartonSummaryDto? Cartons = null);
+    ShipmentCartonSummaryDto? Cartons = null,
+    ShipmentWorkflowDto? Workflow = null);
 
 /// <summary>Sevkiyatın koli ve yükleme özeti (ayrıntıda uyarı ve sevk onayı için).</summary>
 /// <param name="MatchesItems">Koli yoksa ya da kolilerdeki adetler kalemlerle birebir tutuyorsa true.</param>
@@ -117,6 +152,41 @@ public sealed record ShipmentRequest(
     int? SalesOrderId = null);
 
 public sealed record ShipmentTransitionRequest(string RowVersion);
+
+/// <summary>Son kontrolde bir kalem için sayılan adet.</summary>
+public sealed record ShipmentCheckLine(int ShipmentItemId, decimal Quantity);
+
+/// <summary>
+/// İrsaliye kesme: toplanmış sevkiyatın kalemleri son kez sayılır; sayılan adetler toplananla birebir tutmalıdır.
+/// </summary>
+/// <param name="DocumentNo">İrsaliye numarası; boşsa sistem verir.</param>
+public sealed record ShipmentDispatchRequest(
+    string RowVersion,
+    IReadOnlyList<ShipmentCheckLine> Checks,
+    string? DocumentNo = null,
+    string? Carrier = null,
+    string? VehiclePlate = null,
+    string? DriverName = null,
+    string? DriverIdentityNo = null);
+
+public sealed class ShipmentDispatchRequestValidator : AbstractValidator<ShipmentDispatchRequest>
+{
+    public ShipmentDispatchRequestValidator()
+    {
+        RuleFor(x => x.RowVersion).NotEmpty().WithMessage("Sevkiyat sürümü (rowVersion) zorunludur.");
+        RuleFor(x => x.Checks).NotNull().WithMessage("Kontrol adetleri zorunludur.");
+        RuleForEach(x => x.Checks)
+            .Must(c => c.Quantity >= 0 && c.Quantity <= StockRules.MaxQuantity && decimal.Round(c.Quantity, 3) == c.Quantity)
+            .WithMessage("Kontrol adedi sıfır ya da pozitif olmalı ve en fazla 3 ondalık basamak içermelidir.");
+        RuleFor(x => x.DocumentNo).OptionalText(50);
+        RuleFor(x => x.Carrier).OptionalText(150);
+        RuleFor(x => x.VehiclePlate).OptionalText(20);
+        RuleFor(x => x.DriverName).OptionalText(100);
+        RuleFor(x => x.DriverIdentityNo)
+            .Matches("^[1-9][0-9]{10}$").When(x => !string.IsNullOrWhiteSpace(x.DriverIdentityNo))
+            .WithMessage("Şoför T.C. kimlik numarası 11 haneli olmalıdır.");
+    }
+}
 
 public sealed class ShipmentRequestValidator : AbstractValidator<ShipmentRequest>
 {

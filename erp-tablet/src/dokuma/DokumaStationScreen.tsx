@@ -378,15 +378,14 @@ export function DokumaStationScreen({ api, outbox, reader, tabletCode, onOpenSet
         moduleName="Dokuma"
         title={fixedLoom?.loomCode ?? tabletCode}
         subtitle={context ? fixedLoom?.loomName ?? 'Salon tableti' : undefined}
-        meta={tabletCode}
+        details={[{ label: 'Tablet', value: tabletCode }]}
         status={fixedState ? { label: `Tezgâh: ${fixedState.label}`, color: fixedState.color } : undefined}
         statusReason={fixedLoom?.openStopReason ?? null}
         onOpenSetup={onOpenSetup}
         personnelCaption="OPERATÖR"
+        // Düğme hep yerinde durur (alanlar kaymaz); oturum yokken pasiftir.
         footer={
-          context?.operator ? (
-            <BigButton label="Oturumu kapat" tone="ghost" size="compact" onPress={logout} disabled={busy} testID="dokuma-logout" />
-          ) : undefined
+          <BigButton label="Oturumu kapat" tone="ghost" size="compact" onPress={logout} disabled={busy || !context?.operator} testID="dokuma-logout" />
         }>
         {context?.operator ? (
           <SidebarOperator
@@ -486,10 +485,10 @@ export function DokumaStationScreen({ api, outbox, reader, tabletCode, onOpenSet
                 <View style={styles.barActions}>
                   {dueBreak && <BigButton label="Molaya çık" size="compact" onPress={takeBreak} disabled={busy} testID="dokuma-break" />}
                   {context?.pauseReasons.length ? (
-                    <BigButton label="Ara ver" tone="neutral" size="compact" onPress={() => setPicker('pause')} disabled={busy} testID="dokuma-pause" />
+                    <BigButton label="Ara ver" tone="primaryOutline" size="compact" onPress={() => setPicker('pause')} disabled={busy} testID="dokuma-pause" />
                   ) : null}
                   {fixedLoom && fixedLoom.beamId === null && (
-                    <BigButton label="Levent bekliyorum" tone="neutral" size="compact" onPress={waitForBeam} disabled={busy} testID="dokuma-waiting" />
+                    <BigButton label="Levent bekliyorum" tone="primaryOutline" size="compact" onPress={waitForBeam} disabled={busy} testID="dokuma-waiting" />
                   )}
                 </View>
               </View>
@@ -510,7 +509,7 @@ export function DokumaStationScreen({ api, outbox, reader, tabletCode, onOpenSet
                 </Prompt>
               )
             ) : !context.operator ? (
-              <Prompt glyph="card" step="1. ADIM" title="Personel kartınızı okutun" detail="Çalışmaya başlamak için kartınızı okuyucuya gösterin." />
+              <Prompt glyph="card" title="Personel kartınızı okutun" detail="Çalışmaya başlamak için kartınızı okuyucuya gösterin." />
             ) : pause && !waiting ? (
               <Prompt glyph="bundle" title="Çalışma duraklatıldı" detail="Top kesmek ya da duruş bildirmek için önce çalışmaya dönün." />
             ) : !selected ? (
@@ -676,7 +675,7 @@ function LoomCard({ loom, canGoBack, busy, onBack, onStop, onEndStop }: LoomCard
         </View>
       ) : (
         <View style={styles.actions}>
-          <BigButton label="Duruş bildir" tone="neutral" size="compact" onPress={onStop} disabled={busy} testID="dokuma-stop" />
+          <BigButton label="Duruş bildir" tone="primaryOutline" size="compact" onPress={onStop} disabled={busy} testID="dokuma-stop" />
         </View>
       )}
     </View>

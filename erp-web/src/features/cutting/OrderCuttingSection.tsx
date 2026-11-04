@@ -63,7 +63,7 @@ function RemainingMatrix({ items }: { items: CuttingSummaryItem[] }) {
 
 /**
  * Sipariş sayfasındaki kesim bölümü: renk-beden bazında kesilecek kalan (sipariş − kesilen − plansız demetlenen) ve
- * siparişin kesim planları. Yeni plan buradan açılır.
+ * siparişin kesim föyleri. Yeni plan buradan açılır.
  */
 export function OrderCuttingSection({ orderId }: { orderId: number }) {
   const canView = usePermission(Permissions.CuttingPlanView)
@@ -84,7 +84,7 @@ export function OrderCuttingSection({ orderId }: { orderId: number }) {
         <h2>Kesim</h2>
         <div className="page__actions">
           {summary && summary.plans.length > 0 && (
-            <Link to={`/cutting-plans?orderId=${orderId}`} className="button">Kesim planları</Link>
+            <Link to={`/cutting-plans?orderId=${orderId}`} className="button">Kesim föyleri</Link>
           )}
           {canManage && summary?.canPlan && (
             <button
@@ -92,7 +92,7 @@ export function OrderCuttingSection({ orderId }: { orderId: number }) {
               className={totalRemaining > 0 ? 'button button--primary' : 'button'}
               onClick={() => setCreating(true)}
             >
-              Yeni kesim planı
+              Yeni kesim föyü
             </button>
           )}
         </div>

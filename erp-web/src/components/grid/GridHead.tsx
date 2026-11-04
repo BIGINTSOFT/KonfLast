@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react'
 import type { ReactNode } from 'react'
 import type { Grid } from './useGrid'
 
@@ -24,12 +25,62 @@ export interface GridColumn {
   ariaLabel?: string
 }
 
+/**
+ * Sütun genişliklerini tablo ilk kez veriyle dolunca sabitler. Tarayıcı genişlikleri o sayfadaki veriye göre
+ * hesaplar; sabitlenmezse sayfa, filtre ya da sıralama değişince sütunlar kayar. Sabitlendikten sonra yalnızca
+ * veri değişir. Sütunlar değişirse genişlikler yeniden ölçülür.
+ */
+function useStableColumnWidths(columns: GridColumn[]) {
+  const theadRef = useRef<HTMLTableSectionElement>(null)
+  const lockedFor = useRef<string | null>(null)
+  const signature = columns.map((column, index) => column.key ?? `#${index}`).join('|')
+
+  useLayoutEffect(() => {
+    const thead = theadRef.current
+    const table = thead?.closest('table')
+    if (!thead || !table || lockedFor.current === signature) {
+      return
+    }
+
+    const headers = Array.from(thead.rows[0]?.cells ?? [])
+    if (lockedFor.current !== null) {
+      table.style.tableLayout = ''
+      table.style.width = ''
+      headers.forEach((header) => (header.style.width = ''))
+      lockedFor.current = null
+    }
+
+    // Boş tablo ("Kayıt bulunamadı") ya da görünmeyen tablo ölçülmez; veri gelince sabitlenir.
+    const hasRows = Array.from(table.tBodies[0]?.rows ?? []).some((row) => !row.querySelector('.table__empty'))
+    const tableWidth = table.getBoundingClientRect().width
+    const available = table.parentElement?.clientWidth ?? tableWidth
+    if (!hasRows || tableWidth === 0) {
+      return
+    }
+
+    const widths = headers.map((header) => header.getBoundingClientRect().width)
+    if (tableWidth > available + 1) {
+      // Kaydırmalı geniş tablo: piksel olarak sabitlenir.
+      table.style.width = `${tableWidth}px`
+      headers.forEach((header, index) => (header.style.width = `${widths[index]}px`))
+    } else {
+      // Sığan tablo: oranlar sabitlenir, pencere boyu değişince tablo yine genişliğe uyar.
+      headers.forEach((header, index) => (header.style.width = `${(widths[index] / tableWidth) * 100}%`))
+    }
+    table.style.tableLayout = 'fixed'
+    lockedFor.current = signature
+  })
+
+  return theadRef
+}
+
 /** Liste tablosunun başlığı: sıralanabilir sütun başlıkları ve altında sütun filtreleri. */
 export function GridHead({ columns, grid }: { columns: GridColumn[]; grid: Grid }) {
   const hasFilters = columns.some((column) => column.key && column.filter !== false)
+  const theadRef = useStableColumnWidths(columns)
 
   return (
-    <thead>
+    <thead ref={theadRef}>
       <tr>
         {columns.map((column, index) => {
           const className = [column.numeric ? 'table__number' : '', column.className ?? ''].join(' ').trim() || undefined

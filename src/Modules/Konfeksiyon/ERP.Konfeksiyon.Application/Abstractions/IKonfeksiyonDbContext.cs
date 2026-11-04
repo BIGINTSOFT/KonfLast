@@ -80,6 +80,7 @@ public interface IKonfeksiyonDbContext : IAppDbContext
     DbSet<ShipmentItem> ShipmentItems { get; }
     DbSet<ShipmentCarton> ShipmentCartons { get; }
     DbSet<ShipmentCartonLine> ShipmentCartonLines { get; }
+    DbSet<ShipmentPick> ShipmentPicks { get; }
     DbSet<AssortmentTemplate> AssortmentTemplates { get; }
     DbSet<AssortmentTemplateLine> AssortmentTemplateLines { get; }
     DbSet<Invoice> Invoices { get; }

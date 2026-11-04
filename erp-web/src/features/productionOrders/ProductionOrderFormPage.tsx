@@ -222,7 +222,7 @@ function OrderForm({ order, onConflict }: { order?: ProductionOrder; onConflict?
   }
 
   const backTo = order ? `/production-orders/${order.id}` : '/production-orders'
-  // Müşteri siparişinden açılan üretim siparişi o siparişin ürününü karşılar; ürün ve müşteri değişmez.
+  // Müşteri siparişinden açılan iş emri o siparişin ürününü karşılar; ürün ve müşteri değişmez.
   const linked = Boolean(order?.salesOrderId)
 
   return (
@@ -256,7 +256,7 @@ function OrderForm({ order, onConflict }: { order?: ProductionOrder; onConflict?
         />
         <div className="form__dates">
           <TextField
-            label="Sipariş tarihi"
+            label="İş emri tarihi"
             type="date"
             value={orderDate}
             onChange={(event) => setOrderDate(event.target.value)}
@@ -297,7 +297,7 @@ function OrderForm({ order, onConflict }: { order?: ProductionOrder; onConflict?
 
       {linked && (
         <p className="alert alert--info">
-          Bu üretim siparişi bir müşteri siparişinden açıldı: müşterisi ve ürünü değiştirilemez. Adet, müşteri
+          Bu iş emri bir müşteri siparişinden açıldı: müşterisi ve ürünü değiştirilemez. Adet, müşteri
           siparişindeki adetten farklı girilirse müşteri siparişi ekranında uyarı olarak görünür.
         </p>
       )}
@@ -338,9 +338,9 @@ function OrderForm({ order, onConflict }: { order?: ProductionOrder; onConflict?
 export function ProductionOrderCreatePage() {
   return (
     <section className="page">
-      <p><Link to="/production-orders">← Siparişlere dön</Link></p>
-      <h1>Yeni üretim siparişi</h1>
-      <p className="muted">Sipariş taslak olarak kaydedilir; numarası kayıt sırasında sistem tarafından verilir.</p>
+      <p><Link to="/production-orders">← İş emirlerine dön</Link></p>
+      <h1>Yeni iş emri</h1>
+      <p className="muted">İş emri taslak olarak kaydedilir; numarası kayıt sırasında sistem tarafından verilir.</p>
       <div className="card card--spaced"><OrderForm /></div>
     </section>
   )
@@ -353,20 +353,20 @@ export function ProductionOrderEditPage() {
 
   return (
     <section className="page">
-      <p><Link to={`/production-orders/${id}`}>← Siparişe dön</Link></p>
-      <h1>Siparişi düzenle{order ? `: ${order.orderNo}` : ''}</h1>
+      <p><Link to={`/production-orders/${id}`}>← İş emrine dön</Link></p>
+      <h1>İş emrini düzenle{order ? `: ${order.orderNo}` : ''}</h1>
 
       {isLoading && <p role="status">Yükleniyor…</p>}
       <ErrorAlert error={error} />
       {conflicted && (
         <p className="alert alert--error" role="alert">
-          Sipariş siz düzenlerken başka bir kullanıcı tarafından değiştirildi. Form güncel verilerle
+          İş emri siz düzenlerken başka bir kullanıcı tarafından değiştirildi. Form güncel verilerle
           yenilendi; değişikliklerinizi kontrol ederek tekrar girin.
         </p>
       )}
 
       {order && !order.isEditable && (
-        <p className="alert alert--info">Bu sipariş artık düzenlenemez. Değişiklik için önce taslağa alın.</p>
+        <p className="alert alert--info">Bu iş emri artık düzenlenemez. Değişiklik için önce taslağa alın.</p>
       )}
       {/* key: başka bir kullanıcı kaydedip sürüm değişirse form güncel veriyle yeniden kurulur. */}
       {order?.isEditable && (

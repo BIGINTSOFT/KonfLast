@@ -31,7 +31,7 @@ export function CuttingSheetPage() {
     <section className="page label-page">
       <style>{sheetStyle}</style>
       <div className="no-print">
-        <p><Link to={`/cutting-plans/${id}`}>← Kesim planına dön</Link></p>
+        <p><Link to={`/cutting-plans/${id}`}>← Kesim föyüne dön</Link></p>
         <header className="page__header">
           <div>
             <h1>Kesim föyü</h1>
@@ -50,7 +50,7 @@ export function CuttingSheetPage() {
         <article className="cutting-sheet">
           <h2>Kesim föyü {plan.planNo}</h2>
           <div className="cutting-sheet__head">
-            <div><strong>Üretim siparişi:</strong> {plan.orderNo}</div>
+            <div><strong>İş emri:</strong> {plan.orderNo}</div>
             <div><strong>Durum:</strong> {cuttingPlanStatusPresentation[plan.status].label}</div>
             <div><strong>Müşteri:</strong> {plan.customerName}</div>
             <div><strong>Tarih:</strong> {plan.cutAt ? formatDateTime(plan.cutAt) : formatDate(todayIsoDate())}</div>

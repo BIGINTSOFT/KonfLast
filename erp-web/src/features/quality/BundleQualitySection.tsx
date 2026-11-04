@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ClippedText } from '../../components/ClippedText'
 import { ErrorAlert } from '../../components/FormControls'
 import { usePermission } from '../../hooks/usePermission'
 import { Permissions } from '../../types/permissions'
@@ -28,11 +29,21 @@ export function BundleQualitySection({ bundleId }: { bundleId: number }) {
 
   return (
     <>
-      <h2 className="section-title">Kalite</h2>
+      {/* Başlık şeridi: işlem düğmesi sağda; diğer bölümlerle aynı görünüm. */}
+      <div className="section-bar">
+        <h2 className="section-title">Kalite</h2>
+        {!nothingYet && canInspect && quality.operations.length > 0 && (
+          <button type="button" className="button button--primary button--inline" onClick={() => setInspecting(true)}>
+            Kalite kontrolü gir
+          </button>
+        )}
+      </div>
 
       {quality.onHold && (
-        <p className="alert alert--error" role="status">
-          <strong>Demet kalite bekletmesinde.</strong> Serbest bırakılana kadar hiçbir operasyonu başlatılamaz.{' '}
+        <div className="alert alert--error alert--action" role="status">
+          <span>
+            <strong>Demet kalite bekletmesinde.</strong> Serbest bırakılana kadar hiçbir operasyonu başlatılamaz.
+          </span>
           {canReleaseHold && (
             <button
               type="button"
@@ -43,21 +54,12 @@ export function BundleQualitySection({ bundleId }: { bundleId: number }) {
               {releaseState.isLoading ? 'Kaldırılıyor…' : 'Bekletmeyi kaldır'}
             </button>
           )}
-        </p>
+        </div>
       )}
       <ErrorAlert error={releaseState.error} />
 
-      {nothingYet ? (
+      {nothingYet && (
         <p className="muted">Henüz üretilmiş parça yok; üretim bildirildikten sonra kalite kontrolü girilebilir.</p>
-      ) : (
-        canInspect &&
-        quality.operations.length > 0 && (
-          <p>
-            <button type="button" className="button button--primary" onClick={() => setInspecting(true)}>
-              Kalite kontrolü gir
-            </button>
-          </p>
-        )
       )}
 
       {quality.reworkTasks.length > 0 && (
@@ -113,7 +115,7 @@ export function BundleQualitySection({ bundleId }: { bundleId: number }) {
             <tbody>
               {quality.inspections.map((inspection) => (
                 <tr key={inspection.id}>
-                  <td>{formatDateTime(inspection.inspectedAt)}</td>
+                  <td className="table__nowrap">{formatDateTime(inspection.inspectedAt)}</td>
                   <td>
                     <strong>{inspection.sequenceNo}</strong> {inspection.operationName}
                     {inspection.reworkTaskId && <div className="muted">Tamir #{inspection.reworkTaskId} tekrar kontrolü</div>}
@@ -124,8 +126,9 @@ export function BundleQualitySection({ bundleId }: { bundleId: number }) {
                   <td className="table__number">{formatQuantity(inspection.rejectedQuantity)}</td>
                   <td className="table__number">{formatQuantity(inspection.reworkQuantity)}</td>
                   <td>{defectsText(inspection)}</td>
-                  <td>{inspection.inspectedBy}</td>
-                  <td>{inspection.note ?? '—'}</td>
+                  <td className="table__nowrap">{inspection.inspectedBy}</td>
+                  {/* Uzun not tabloyu genişletmez: kısaltılır, tıklanınca tamamı okunur. */}
+                  <td><ClippedText text={inspection.note} title="Kontrol notu" /></td>
                 </tr>
               ))}
             </tbody>

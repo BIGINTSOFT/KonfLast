@@ -29,7 +29,9 @@ public enum LiveTopic
 /// </summary>
 public interface ILiveNotifier
 {
-    void Publish(IReadOnlyCollection<LiveTopic> topics);
+    /// <param name="topics">Değişen alanlar (web ekranları).</param>
+    /// <param name="targets">Değişikliğin ait olduğu makine / tabletler (yalnızca ilgili tabletlere duyurulur).</param>
+    void Publish(IReadOnlyCollection<LiveTopic> topics, IReadOnlyCollection<LiveTarget>? targets = null);
 }
 
 /// <summary>Bir modülün hangi entity değişikliğinin hangi canlı alanı etkilediğini bildirmesi.</summary>
@@ -38,10 +40,40 @@ public interface ILiveTopicSource
     IReadOnlyDictionary<Type, LiveTopic> Topics { get; }
 }
 
+public enum LiveTargetKind
+{
+    /// <summary>Makine (tezgâh, istasyon): o makineye bağlı tabletler.</summary>
+    Machine,
+
+    /// <summary>Doğrudan tablet (ör. tablet kaydı değişti).</summary>
+    Tablet,
+}
+
+/// <summary>Değişikliğin duyurulacağı istasyon. Modül, tablet token'ındaki modül adıdır (ör. "Konfeksiyon").</summary>
+public readonly record struct LiveTarget(string Module, LiveTargetKind Kind, int Id);
+
+/// <summary>
+/// Bir modülün değişen kaydın hangi makineye / tablete ait olduğunu bildirmesi. Tablet ekranı, yalnızca kendi
+/// makinesindeki değişiklik duyurulunca yenilenir (web'den elle bildirim, arıza kapatma, oturum kapatma...).
+/// </summary>
+public interface ILiveTargetSource
+{
+    /// <summary>Kaydın ait olduğu hedefler; tablet ekranını ilgilendirmeyen kayıtta boştur.</summary>
+    IEnumerable<LiveTarget> TargetsOf(object entity);
+}
+
+/// <summary>Bir modülde makinelere bağlı tabletleri bulur (duyuru anında; tablet başka makineye taşınabilir).</summary>
+public interface ILiveTabletDirectory
+{
+    string Module { get; }
+
+    Task<IReadOnlyList<int>> TabletsOfMachinesAsync(IReadOnlyCollection<int> machineIds, CancellationToken cancellationToken);
+}
+
 /// <summary>Canlı yayın olmayan ortamlar (araçlar) için.</summary>
 public sealed class NullLiveNotifier : ILiveNotifier
 {
-    public void Publish(IReadOnlyCollection<LiveTopic> topics)
+    public void Publish(IReadOnlyCollection<LiveTopic> topics, IReadOnlyCollection<LiveTarget>? targets = null)
     {
     }
 }

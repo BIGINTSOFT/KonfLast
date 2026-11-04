@@ -83,7 +83,7 @@ export const entityLabels: Record<string, string> = {
   ProductMaterial: 'Ürün reçetesi',
   ProductionArea: 'Üretim alanı',
   ProductionLine: 'Bant',
-  ProductionOrder: 'Üretim siparişi',
+  ProductionOrder: 'İş emri',
   SalesOrder: 'Müşteri siparişi',
   SalesOrderLine: 'Müşteri siparişi kalemi',
   ProductionOrderItem: 'Sipariş kalemi',

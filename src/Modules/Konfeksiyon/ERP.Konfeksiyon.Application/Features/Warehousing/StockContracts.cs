@@ -253,7 +253,10 @@ public sealed record StockLotUpdateRequest(
 public sealed record ProductionReceiptRequest(Guid RequestId, int BundleId, int WarehouseId);
 
 /// <param name="Duplicate">İstek daha önce işlenmişti; hareketler ilk işlemin kayıtlarıdır.</param>
-public sealed record StockMovementDto(bool Duplicate, IReadOnlyList<StockTransactionDto> Transactions);
+/// <param name="ReservedForOrderNo">Üretimden teslim almada mal bir müşteri siparişine ayrıldıysa o sipariş.</param>
+/// <param name="ReservedQuantity">O siparişe ayrılan adet.</param>
+public sealed record StockMovementDto(
+    bool Duplicate, IReadOnlyList<StockTransactionDto> Transactions, string? ReservedForOrderNo = null, decimal ReservedQuantity = 0);
 
 /// <summary>Depoya teslim alınmayı bekleyen (tamamlanmış) demet.</summary>
 /// <param name="FinishedQuantity">Demetten çıkan sağlam adet; depoya bu kadar girer.</param>

@@ -22,7 +22,7 @@ const optionsOf = (presentation: Record<string, { label: string }>) =>
 const reworkColumns: GridColumn[] = [
   { key: 'id', label: 'Tamir', filter: 'number' },
   { key: 'bundleNo', label: 'Demet' },
-  { key: 'orderNo', label: 'Sipariş' },
+  { key: 'orderNo', label: 'İş emri' },
   { key: 'operationName', label: 'Operasyon' },
   { key: 'quantity', label: 'Adet', numeric: true },
   { key: 'status', label: 'Durum', filter: optionsOf(reworkStatusPresentation) },

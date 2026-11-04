@@ -7,6 +7,7 @@ import { usePermission } from '../../hooks/usePermission'
 import { Permissions } from '../../types/permissions'
 import { formatDate, formatDateTime, formatQuantity, formatRecipeAmount } from '../../utils/format'
 import { formatMoney } from '../../utils/money'
+import { cardScanHandlers } from '../rfid/cardScan'
 import { BatchFormDialog } from './BatchFormDialog'
 import { CompleteStepDialog, StartStepDialog } from './BatchStepDialogs'
 import {
@@ -88,7 +89,7 @@ export function BatchDetailPage() {
               <span>RFID kart: {batch.cardUid ? <code>{batch.cardUid}</code> : <span className="muted">atanmadı</span>}</span>
               {canManage && (
                 <>
-                  <input aria-label="Kart numarası" placeholder="Kartı okutun" maxLength={10} value={cardUid} onChange={(event) => setCardUid(event.target.value)} />
+                  <input aria-label="Kart numarası" placeholder="Kartı okutun" maxLength={10} autoComplete="off" value={cardUid} {...cardScanHandlers(setCardUid, { submitOnEnter: true })} />
                   <button type="submit" className="button" disabled={cardState.isLoading || cardUid.trim() === ''}>Kartı ata</button>
                   {batch.cardUid && <button type="button" className="button" disabled={cardState.isLoading} onClick={() => setCard({ id, uid: null })}>Kartı çıkar</button>}
                 </>

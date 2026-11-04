@@ -1,4 +1,4 @@
-import { Printer } from 'lucide-react'
+import { ClipboardCheck, Printer } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { ErrorAlert } from '../../components/FormControls'
@@ -13,20 +13,23 @@ import {
   useCancelShipmentMutation,
   useDeleteShipmentMutation,
   useGetShipmentQuery,
-  useShipShipmentMutation,
+  useShipmentTransitionMutation,
 } from './shippingApi'
 import { shipmentStatusPresentation } from './shippingPresentation'
 
-/** Sevkiyat: başlık, kalemler ve işlemler (sevk et, düzenle, iptal, sil). */
+/**
+ * Sevkiyat: başlık, kalemler ve akış işlemleri. Taslak düzenlenir ve depoya toplamaya verilir; toplanan sevkiyatın
+ * irsaliyesi, son adet kontrolünden sonra Sevkiyat menüsündeki "İrsaliye Bekleyenler"den kesilir.
+ */
 export function ShipmentDetailPage() {
   const shipmentId = Number(useParams().id)
   const navigate = useNavigate()
   const canManage = usePermission(Permissions.ShipmentManage)
-  // Sevk etmek (stoktan düşmek) ayrı yetkidir; iptal ve düzenleme sevkiyat yönetimiyle yapılır.
+  // İrsaliye kesmek (stoktan düşmek) ayrı yetkidir; iptal ve düzenleme sevkiyat yönetimiyle yapılır.
   const canShip = usePermission(Permissions.ShipmentShip)
 
   const { data: shipment, error, isLoading } = useGetShipmentQuery(shipmentId, { skip: !Number.isInteger(shipmentId) })
-  const [ship, shipState] = useShipShipmentMutation()
+  const [transition, transitionState] = useShipmentTransitionMutation()
   const [cancel, cancelState] = useCancelShipmentMutation()
   const [remove, removeState] = useDeleteShipmentMutation()
   const [editing, setEditing] = useState(false)
@@ -46,19 +49,18 @@ export function ShipmentDetailPage() {
   }
 
   const status = shipmentStatusPresentation[shipment.status]
-  const busy = shipState.isLoading || cancelState.isLoading || removeState.isLoading
+  const busy = transitionState.isLoading || cancelState.isLoading || removeState.isLoading
   const version = { id: shipment.id, rowVersion: shipment.rowVersion }
+  const workflow = shipment.workflow
+  const picking = shipment.status === 'PICKING' || shipment.status === 'PICKED'
+  const showPicked = picking || shipment.status === 'SHIPPED'
 
   const cartons = shipment.cartons
   const unloaded = cartons ? cartons.cartonCount - cartons.loadedCount : 0
 
-  const handleShip = () => {
-    // Yüklenmemiş koli sevki engellemez; kullanıcı onaydan önce uyarılır.
-    const warning = unloaded > 0
-      ? `Dikkat: ${cartons?.cartonCount ?? 0} koliden ${unloaded} tanesi el terminalinde yüklendi olarak okutulmadı.\n\n`
-      : ''
-    if (window.confirm(`${warning}Kalemler depodan düşülecek ve sevkiyat kesinleşecek. Bu işlem geri alınamaz. Devam edilsin mi?`)) {
-      void ship(version)
+  const run = (action: 'send-to-picking' | 'return-to-draft' | 'reopen-picking', question: string) => {
+    if (window.confirm(question)) {
+      void transition({ ...version, action })
     }
   }
 
@@ -84,7 +86,11 @@ export function ShipmentDetailPage() {
         <div className="page__actions">
           {shipment.status !== 'CANCELLED' && (
             <>
-              <Link className="button" to={`/shipments/${shipment.id}/despatch-note`}><Printer aria-hidden="true" />İrsaliye</Link>
+              {shipment.status !== 'DRAFT' && (
+                <Link className="button" to={`/shipments/${shipment.id}/pick-list`}><Printer aria-hidden="true" />Toplama listesi</Link>
+              )}
+              <Link className="button" to={`/shipments/${shipment.id}/e-despatch`}><Printer aria-hidden="true" />e-İrsaliye</Link>
+              <Link className="button" to={`/shipments/${shipment.id}/despatch-note`}><Printer aria-hidden="true" />Sevk belgesi</Link>
               {cartons !== null && cartons.cartonCount > 0 && (
                 <>
                   <Link className="button" to={`/shipments/${shipment.id}/packing-list`}><Printer aria-hidden="true" />Çeki listesi</Link>
@@ -93,47 +99,77 @@ export function ShipmentDetailPage() {
               )}
             </>
           )}
-          {(canManage || canShip) && (
+          {canShip && shipment.canShip && (
+            <Link className="button button--primary" to={`/despatch-queue/${shipment.id}`}>
+              <ClipboardCheck aria-hidden="true" />Kontrol ve irsaliye
+            </Link>
+          )}
+          {canManage && (
             <>
-            {canShip && shipment.canShip && (
-              <button type="button" className="button button--primary" disabled={busy} onClick={handleShip}>
-                {shipState.isLoading ? 'Sevk ediliyor…' : 'Sevk et'}
-              </button>
-            )}
-            {canManage && shipment.isEditable && (
-              <button type="button" className="button" disabled={busy} onClick={() => setEditing(true)}>Düzenle</button>
-            )}
-            {canManage && shipment.canCancel && (
-              <button
-                type="button"
-                className="button"
-                disabled={busy}
-                onClick={() => {
-                  if (window.confirm('Sevkiyat iptal edilecek. Devam edilsin mi?')) {
-                    void cancel(version)
-                  }
-                }}
-              >
-                İptal et
-              </button>
-            )}
-            {canManage && shipment.isEditable && (
-              <button type="button" className="button button--danger" disabled={busy} onClick={() => void handleDelete()}>
-                Sil
-              </button>
-            )}
+              {workflow?.canSendToPicking && (
+                <button
+                  type="button"
+                  className="button button--primary"
+                  disabled={busy}
+                  onClick={() => run('send-to-picking', 'Sevkiyat depoya toplamaya verilecek; kalemler kilitlenir. Devam edilsin mi?')}
+                >
+                  Toplamaya gönder
+                </button>
+              )}
+              {workflow?.canReturnToDraft && (
+                <button
+                  type="button"
+                  className="button"
+                  disabled={busy}
+                  onClick={() => run('return-to-draft', 'Toplama geri alınacak ve sevkiyat yeniden düzenlenebilir olacak. Devam edilsin mi?')}
+                >
+                  Taslağa döndür
+                </button>
+              )}
+              {workflow?.canReopenPicking && (
+                <button
+                  type="button"
+                  className="button"
+                  disabled={busy}
+                  onClick={() => run('reopen-picking', 'Sevkiyat yeniden toplamaya açılacak; eksik biten kalemler ilk istenen adede döner. Devam edilsin mi?')}
+                >
+                  Yeniden toplamaya aç
+                </button>
+              )}
+              {shipment.isEditable && (
+                <button type="button" className="button" disabled={busy} onClick={() => setEditing(true)}>Düzenle</button>
+              )}
+              {shipment.canCancel && (
+                <button
+                  type="button"
+                  className="button"
+                  disabled={busy}
+                  onClick={() => {
+                    if (window.confirm('Sevkiyat iptal edilecek. Devam edilsin mi?')) {
+                      void cancel(version)
+                    }
+                  }}
+                >
+                  İptal et
+                </button>
+              )}
+              {shipment.isEditable && (
+                <button type="button" className="button button--danger" disabled={busy} onClick={() => void handleDelete()}>
+                  Sil
+                </button>
+              )}
             </>
           )}
         </div>
       </header>
 
-      <ErrorAlert error={shipState.error} />
+      <ErrorAlert error={transitionState.error} />
       <ErrorAlert error={cancelState.error} />
       <ErrorAlert error={removeState.error} />
-      {cartons !== null && cartons.cartonCount > 0 && !cartons.matchesItems && shipment.isEditable && (
+      {cartons !== null && cartons.cartonCount > 0 && !cartons.matchesItems && (shipment.isEditable || shipment.status === 'PICKED') && (
         <p className="alert alert--error" role="alert">
-          Koliler sevkiyat kalemleriyle tutmuyor (kalemler koli dağıtımından sonra değişmiş olabilir). Sevk etmeden önce aşağıdaki
-          kolileri düzeltin ya da yeniden dağıtın.
+          Koliler sevkiyat kalemleriyle tutmuyor (kalemler koli dağıtımından ya da eksik toplamadan sonra değişmiş olabilir).
+          İrsaliyeden önce aşağıdaki kolileri düzeltin ya da yeniden dağıtın.
         </p>
       )}
 
@@ -152,7 +188,7 @@ export function ShipmentDetailPage() {
             </div>
             <div><dt>Müşteri sipariş no</dt><dd>{shipment.customerOrderNo ?? '—'}</dd></div>
             <div>
-              <dt>Üretim siparişi</dt>
+              <dt>İş emri</dt>
               <dd>
                 {shipment.productionOrderId === null ? '—' : (
                   <RecordLink to={`/production-orders/${shipment.productionOrderId}`}>{shipment.orderNo}</RecordLink>
@@ -162,11 +198,27 @@ export function ShipmentDetailPage() {
             <div><dt>Çıkış deposu</dt><dd>{shipment.warehouseCode} — {shipment.warehouseName}</dd></div>
             <div><dt>Sevk tarihi</dt><dd>{formatDate(shipment.shipDate)}</dd></div>
             <div><dt>İrsaliye no</dt><dd>{shipment.documentNo ?? '—'}</dd></div>
-            <div><dt>Taşıyıcı / plaka</dt><dd>{shipment.carrier ?? '—'}</dd></div>
             <div>
-              <dt>Sevk eden</dt>
+              <dt>Taşıyıcı / araç</dt>
+              <dd>{[shipment.carrier, workflow?.vehiclePlate, workflow?.driverName].filter(Boolean).join(' · ') || '—'}</dd>
+            </div>
+            {workflow && (picking || shipment.status === 'SHIPPED') && (
+              <div>
+                <dt>Toplayan</dt>
+                <dd>
+                  {workflow.pickedBy
+                    ? `${workflow.pickedBy} · ${formatDateTime(workflow.pickedAt ?? '')}`
+                    : workflow.pickingBy
+                      ? `${workflow.pickingBy} topluyor (başlangıç ${formatDateTime(workflow.pickingStartedAt ?? '')})`
+                      : 'Toplamaya başlanmadı'}
+                </dd>
+              </div>
+            )}
+            <div>
+              <dt>İrsaliyeyi kesen</dt>
               <dd>{shipment.shippedAt ? `${shipment.shippedBy} · ${formatDateTime(shipment.shippedAt)}` : '—'}</dd>
             </div>
+            {workflow?.despatchUuid && <div><dt>ETTN</dt><dd><code>{workflow.despatchUuid}</code></dd></div>}
             {cartons !== null && cartons.cartonCount > 0 && (
               <div>
                 <dt>Yükleme</dt>
@@ -190,8 +242,10 @@ export function ShipmentDetailPage() {
             <tr>
               <th>Mamul</th>
               <th className="table__number">Sevk adedi</th>
+              {showPicked && <th className="table__number">Toplanan</th>}
+              {shipment.status === 'SHIPPED' && <th className="table__number">Kontrol</th>}
               {shipment.isEditable && <th className="table__number">Depodaki stok</th>}
-              {shipment.isEditable && <th>Durum</th>}
+              {(shipment.isEditable || picking) && <th>Durum</th>}
             </tr>
           </thead>
           <tbody>
@@ -200,7 +254,16 @@ export function ShipmentDetailPage() {
               return (
                 <tr key={item.id}>
                   <td><code>{item.itemCode}</code> {item.itemName}</td>
-                  <td className="table__number"><strong>{formatStockQuantity(item.quantity, item.unit)}</strong></td>
+                  <td className="table__number">
+                    <strong>{formatStockQuantity(item.quantity, item.unit)}</strong>
+                    {item.requestedQuantity !== null && (
+                      <span className="muted"> / istenen {formatStockQuantity(item.requestedQuantity, item.unit)}</span>
+                    )}
+                  </td>
+                  {showPicked && <td className="table__number">{formatStockQuantity(item.pickedQuantity, item.unit)}</td>}
+                  {shipment.status === 'SHIPPED' && (
+                    <td className="table__number">{item.checkedQuantity === null ? '—' : formatStockQuantity(item.checkedQuantity, item.unit)}</td>
+                  )}
                   {shipment.isEditable && (
                     <td className="table__number">{formatStockQuantity(item.availableQuantity, item.unit)}</td>
                   )}
@@ -213,12 +276,23 @@ export function ShipmentDetailPage() {
                       )}
                     </td>
                   )}
+                  {picking && (
+                    <td>
+                      {item.pickedQuantity >= item.quantity ? (
+                        <span className="badge badge--ok"><span aria-hidden="true">✓</span> Toplandı</span>
+                      ) : item.pickedQuantity > 0 ? (
+                        <span className="badge badge--warning">Kısmen toplandı</span>
+                      ) : (
+                        <span className="badge badge--neutral">Bekliyor</span>
+                      )}
+                    </td>
+                  )}
                 </tr>
               )
             })}
             {shipment.items.length === 0 && (
               <tr>
-                <td colSpan={shipment.isEditable ? 4 : 2} className="table__empty">Kalem yok. Sevk etmek için önce kalem ekleyin.</td>
+                <td colSpan={shipment.isEditable ? 4 : 2} className="table__empty">Kalem yok. Toplamaya göndermek için önce kalem ekleyin.</td>
               </tr>
             )}
           </tbody>

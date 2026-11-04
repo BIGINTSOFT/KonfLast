@@ -253,8 +253,8 @@ function EarningsRow({
     <tr>
       <Cell scope={total ? 'row' : undefined}>
         {total ? 'Toplam' : (
-          <button type="button" className="button button--ghost" onClick={onOpen}>
-            <code>{row.operatorCode}</code> {row.operatorName}
+          <button type="button" className="cell-link" onClick={onOpen}>
+            <code className="cell-link__code">{row.operatorCode}</code>{row.operatorName}
           </button>
         )}
       </Cell>

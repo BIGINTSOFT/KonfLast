@@ -9,7 +9,7 @@ namespace ERP.Konfeksiyon.Domain.Entities;
 /// </summary>
 public class RfidCard : SoftDeletableEntity, IActivatable
 {
-    /// <summary>Normalize edilmiş UID (10 haneli kart numarası), örn. 0012629368.</summary>
+    /// <summary>Normalize edilmiş UID (en fazla 10 harf ya da rakam; sayısal numara 10 haneye tamamlanır), örn. 0012629368.</summary>
     public string Uid { get; set; } = null!;
 
     public RfidCardType CardType { get; set; }

@@ -24,6 +24,11 @@ public sealed class ShipmentConfiguration : IEntityTypeConfiguration<Shipment>
         builder.Property(s => s.Carrier).HasMaxLength(150);
         builder.Property(s => s.Notes).HasMaxLength(1000);
         builder.Property(s => s.ShippedBy).HasMaxLength(100);
+        builder.Property(s => s.PickingBy).HasMaxLength(100);
+        builder.Property(s => s.PickedBy).HasMaxLength(100);
+        builder.Property(s => s.VehiclePlate).HasMaxLength(20);
+        builder.Property(s => s.DriverName).HasMaxLength(100);
+        builder.Property(s => s.DriverIdentityNo).HasMaxLength(11);
         builder.Property(s => s.RowVersion).IsRowVersion();
 
         builder.HasOne(s => s.Customer).WithMany().HasForeignKey(s => s.CustomerId);
@@ -51,6 +56,9 @@ public sealed class ShipmentItemConfiguration : IEntityTypeConfiguration<Shipmen
         builder.ToTable("ShipmentItems", t => t.HasCheckConstraint("CK_ShipmentItems_Quantity", "[Quantity] > 0"));
 
         builder.Property(i => i.Quantity).HasPrecision(18, 3);
+        builder.Property(i => i.RequestedQuantity).HasPrecision(18, 3);
+        builder.Property(i => i.PickedQuantity).HasPrecision(18, 3);
+        builder.Property(i => i.CheckedQuantity).HasPrecision(18, 3);
 
         builder.HasOne(i => i.Shipment).WithMany(s => s.Items).HasForeignKey(i => i.ShipmentId);
         builder.HasOne(i => i.StockItem).WithMany().HasForeignKey(i => i.StockItemId);
@@ -60,5 +68,27 @@ public sealed class ShipmentItemConfiguration : IEntityTypeConfiguration<Shipmen
         builder.HasIndex(i => i.StockItemId);
 
         builder.HasQueryFilter(i => !i.Shipment.IsDeleted);
+    }
+}
+
+public sealed class ShipmentPickConfiguration : IEntityTypeConfiguration<ShipmentPick>
+{
+    public void Configure(EntityTypeBuilder<ShipmentPick> builder)
+    {
+        builder.ToTable("ShipmentPicks", t => t.HasCheckConstraint("CK_ShipmentPicks_Quantity", "[Quantity] > 0"));
+
+        builder.Property(p => p.Quantity).HasPrecision(18, 3);
+        builder.Property(p => p.PickedBy).HasMaxLength(100).IsRequired();
+
+        builder.HasOne(p => p.Shipment).WithMany(s => s.Picks).HasForeignKey(p => p.ShipmentId);
+        // İki yol da sevkiyata çıkar (zincirleme silme çakışır); kayıtlar kalemden önce kodda silinir.
+        builder.HasOne(p => p.ShipmentItem).WithMany().HasForeignKey(p => p.ShipmentItemId).OnDelete(DeleteBehavior.NoAction);
+        builder.HasOne(p => p.Location).WithMany().HasForeignKey(p => p.LocationId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(p => p.RequestId).IsUnique();
+        builder.HasIndex(p => p.ShipmentId);
+        builder.HasIndex(p => p.ShipmentItemId);
+
+        builder.HasQueryFilter(p => !p.Shipment.IsDeleted);
     }
 }

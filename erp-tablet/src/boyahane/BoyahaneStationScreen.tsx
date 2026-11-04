@@ -4,9 +4,9 @@ import { isRetryable } from '../api/http';
 import type { KeyboardWedgeReader } from '../rfid/KeyboardWedgeReader';
 import { WedgeInput } from '../rfid/WedgeInput';
 import { Banner, BigButton } from '../ui/controls';
-import { AuthorizationDialog, ReasonDialog } from '../ui/Dialog';
+import { AuthorizationPanel, ReasonPanel } from '../ui/InlinePanels';
 import { IdleDialog, useIdlePrompt } from '../ui/IdleDialog';
-import { BusyOverlay, InfoStrip, MessageToast, Prompt, StationTopBar } from '../ui/station';
+import { BusyOverlay, MessageToast, Prompt, StationTopBar } from '../ui/station';
 import { SidebarOperator, SidebarSignedOut, StationSidebarFrame } from '../ui/StationSidebarFrame';
 import { colors, radius, TOUCH_HEIGHT_COMPACT } from '../ui/theme';
 import { formatClock, formatElapsed } from '../util/time';
@@ -38,7 +38,6 @@ interface Props {
 
 type Message = { kind: 'error' | 'success' | 'info'; text: string };
 
-const flowSteps = ['Operatör', 'Parti', 'Üretim'];
 
 type AuthorizedAction = 'pause' | 'resume' | 'breakdown' | 'recover';
 
@@ -54,12 +53,6 @@ const operatorRoleLabels: Record<BoyahaneOperatorRole, string> = {
   OPERATOR: 'Operatör',
   SUPERVISOR: 'Vardiya amiri',
   MAINTENANCE: 'Bakım',
-};
-
-const machineStatus: Record<'AVAILABLE' | 'BREAKDOWN' | 'MAINTENANCE', { label: string; color: string }> = {
-  AVAILABLE: { label: 'Müsait', color: '#3ecf8e' },
-  BREAKDOWN: { label: 'Arızalı', color: '#ff8a80' },
-  MAINTENANCE: { label: 'Bakımda', color: '#f0bd5b' },
 };
 
 const operatorStatus = {
@@ -328,7 +321,6 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
     : pause?.kind === 'WAITING_FOR_BATCH' ? operatorStatus.waiting
     : pause ? operatorStatus.paused
     : operatorStatus.active;
-  const machineState = context?.machineStatus ? machineStatus[context.machineStatus] : null;
   const pauseTitle = pause?.kind === 'MACHINE_BREAKDOWN'
     ? `Makine arızalı${context?.machineStatusReason ? ` · ${context.machineStatusReason}` : ''}`
     : pause?.kind === 'BREAK' ? (pause.breakName ? `Moladasınız · ${pause.breakName}` : 'Moladasınız')
@@ -351,15 +343,13 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
         moduleName="Boyahane"
         title={context?.machine?.code ?? tabletCode}
         subtitle={context ? context.machine?.name ?? 'Kontrol noktası' : undefined}
-        meta={tabletCode}
-        status={machineState ? { label: `Makine: ${machineState.label}`, color: machineState.color } : undefined}
-        statusReason={context?.machineStatus && context.machineStatus !== 'AVAILABLE' ? context.machineStatusReason : null}
+        details={[{ label: 'Tablet', value: tabletCode }]}
+        // Makine durumu etiketi gösterilmez: arıza duraklama satırında, bakım iş alanındaki uyarıda nedeniyle görünür.
         onOpenSetup={onOpenSetup}
         personnelCaption="OPERATÖR"
+        // Düğme hep yerinde durur (alanlar kaymaz); oturum yokken pasiftir.
         footer={
-          context?.operator ? (
-            <BigButton label="Oturumu kapat" tone="ghost" size="compact" onPress={logout} disabled={busy} testID="boyahane-logout" />
-          ) : undefined
+          <BigButton label="Oturumu kapat" tone="ghost" size="compact" onPress={logout} disabled={busy || !context?.operator} testID="boyahane-logout" />
         }>
         {context?.operator ? (
           <SidebarOperator
@@ -380,16 +370,46 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
 
       <View style={styles.main}>
         <StationTopBar
-          steps={flowSteps}
-          current={!context ? -1 : !context.operator ? 0 : !batch ? 1 : 2}
+          leading={
+            context ? (
+              <View style={styles.workStatus} testID="boyahane-work-status">
+                <Text style={styles.barCaption}>{!context.operator ? 'OPERATÖR' : dueBreak && canPause ? 'MOLA ZAMANI' : 'ÇALIŞMA DURUMU'}</Text>
+                <Text style={styles.workStatusTitle} numberOfLines={1}>
+                  {!context.operator
+                    ? 'Personel kartı bekleniyor'
+                    : pause
+                      ? 'Duraklatıldı'
+                      : dueBreak && canPause
+                        ? `${dueBreak.name} (${dueBreak.plannedMinutes} dk)`
+                        : batch ? 'Üretimde' : 'Çalışıyor'}
+                </Text>
+                {canPause && dueBreak && !dueBreak.canStartNow && dueBreak.hint && (
+                  <Text style={styles.barHint} numberOfLines={1}>{dueBreak.hint}</Text>
+                )}
+              </View>
+            ) : null
+          }
           online={online}
           now={now}
           actions={
-            context?.machine && context.machineStatus === 'BREAKDOWN' ? (
+            <>
+            {/* Çalışırken: planlı mola (zamanı geldiyse), ara ve parti bekleme. */}
+            {canPause && dueBreak && (
+              <BigButton label="Molaya çık" size="compact" style={styles.topAction} onPress={takeBreak} disabled={busy || !dueBreak.canStartNow} testID="boyahane-break" />
+            )}
+            {canPause && context?.pauseReasons.length ? (
+              <BigButton label="Ara ver" tone="primaryOutline" size="compact" style={styles.topAction} onPress={() => setPicker('pause')} disabled={busy} testID="boyahane-pause" />
+            ) : null}
+            {canPause && !batch && !context?.currentBatchId && (
+              <BigButton label="Parti bekliyorum" tone="primaryOutline" size="compact" style={styles.topAction} onPress={waitForBatch} disabled={busy} testID="boyahane-waiting" />
+            )}
+            {canPause && context?.machine && <View style={styles.topDivider} />}
+            {context?.machine && context.machineStatus === 'BREAKDOWN' ? (
               <BigButton
                 label="Arızayı kapat"
                 tone="success"
                 size="compact"
+                style={styles.topAction}
                 onPress={() => requireCard('recover', null)}
                 disabled={busy}
                 testID="boyahane-recover"
@@ -399,6 +419,7 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
                 label="Arıza bildir"
                 tone="dangerOutline"
                 size="compact"
+                style={styles.topAction}
                 // Arıza nedensiz bildirilmez.
                 onPress={() => (context.breakdownReasons.length > 0
                   ? setPicker('breakdown')
@@ -406,22 +427,49 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
                 disabled={busy}
                 testID="boyahane-breakdown"
               />
-            ) : undefined
+            ) : null}
+            </>
           }
         />
 
-        {context && (
-          <InfoStrip
-            cells={[
-              { label: 'PARTİ', value: batch?.batchNo ?? 'Okutulmadı' },
-              { label: 'ADIM', value: current ? stepName(current) : '—' },
-              { label: 'MİKTAR', value: quantity },
-              { label: 'RENK', value: batch?.items[0]?.colorName ?? '—' },
-            ]}
-          />
-        )}
-
         <View style={styles.content}>
+          {/* Ara ve arıza nedeni seçimi ile yetkili onayı iş alanında gösterilir (pencere açılmaz). */}
+          {authorization ? (
+            <AuthorizationPanel
+              title={authorizations[authorization.action].title}
+              roles={authorizations[authorization.action].roles}
+              details={[
+                ...(context?.machine ? [{ label: 'Makine', value: context.machine.code }] : []),
+                ...(authorizationReason ? [{ label: 'Neden', value: authorizationReason }] : []),
+              ]}
+              error={authorizationError}
+              busy={busy}
+              onCancel={() => setAuthorization(null)}
+            />
+          ) : picker === 'pause' && canPause && context ? (
+            <ReasonPanel
+              caption="ARA VER"
+              title="Ara nedenini seçin"
+              description="Döndüğünüzde “Devam et” ile çalışmaya devam edersiniz."
+              reasons={context.pauseReasons.map(reasonOption)}
+              busy={busy}
+              onSelect={reasonId => requireCard('pause', reasonId)}
+              onCancel={() => setPicker(null)}
+              testIDPrefix="boyahane-pause-reason"
+            />
+          ) : picker === 'breakdown' && canPause && context?.machine ? (
+            <ReasonPanel
+              caption="ARIZA BİLDİR"
+              title="Arıza nedenini seçin"
+              description={`${context.machine.code} için arıza kaydı açılır.`}
+              reasons={context.breakdownReasons.map(reasonOption)}
+              tone="danger"
+              busy={busy}
+              onSelect={reasonId => requireCard('breakdown', reasonId)}
+              onCancel={() => setPicker(null)}
+              testIDPrefix="boyahane-breakdown-reason"
+            />
+          ) : (
           <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
             {pending > 0 && (
               <View style={styles.pending}>
@@ -440,36 +488,6 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
                 {pause.kind !== 'MACHINE_BREAKDOWN' && (
                   <BigButton label="Devam et" tone="success" size="compact" busy={busy} onPress={resume} testID="boyahane-resume" />
                 )}
-              </View>
-            )}
-
-            {canPause && (
-              <View style={styles.bar}>
-                <View style={styles.barText}>
-                  {dueBreak ? (
-                    <>
-                      <Text style={styles.barCaption}>MOLA ZAMANI</Text>
-                      <Text style={styles.barTitle} testID="boyahane-due-break">{dueBreak.name} ({dueBreak.plannedMinutes} dk)</Text>
-                      {!dueBreak.canStartNow && dueBreak.hint && <Text style={styles.barHint}>{dueBreak.hint}</Text>}
-                    </>
-                  ) : (
-                    <>
-                      <Text style={styles.barCaption}>ÇALIŞMA DURUMU</Text>
-                      <Text style={styles.barTitle}>Çalışıyor</Text>
-                    </>
-                  )}
-                </View>
-                <View style={styles.barActions}>
-                  {dueBreak && (
-                    <BigButton label="Molaya çık" size="compact" onPress={takeBreak} disabled={busy || !dueBreak.canStartNow} testID="boyahane-break" />
-                  )}
-                  {context?.pauseReasons.length ? (
-                    <BigButton label="Ara ver" tone="neutral" size="compact" onPress={() => setPicker('pause')} disabled={busy} testID="boyahane-pause" />
-                  ) : null}
-                  {!batch && !context?.currentBatchId && (
-                    <BigButton label="Parti bekliyorum" tone="neutral" size="compact" onPress={waitForBatch} disabled={busy} testID="boyahane-waiting" />
-                  )}
-                </View>
               </View>
             )}
 
@@ -496,7 +514,6 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
             ) : !context.operator ? (
               <Prompt
                 glyph="card"
-                step="1. ADIM"
                 title="Personel kartınızı okutun"
                 detail="Çalışmaya başlamak için kartınızı okuyucuya gösterin."
               />
@@ -507,7 +524,6 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
             ) : !batch ? (
               <Prompt
                 glyph="bundle"
-                step="2. ADIM"
                 title="Parti kartını okutun"
                 detail="RFID kartı ya da kağıt karttaki barkodu okutun; partinin sıradaki adımı açılır."
               />
@@ -518,6 +534,9 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
                     <Text style={styles.batchNo}>{batch.batchNo}</Text>
                     <BigButton label="Kapat" tone="neutral" size="compact" onPress={() => setBatch(null)} testID="boyahane-close" />
                   </View>
+                  <Text style={styles.meta}>
+                    {quantity}{batch.items[0]?.colorName ? ` · ${batch.items[0].colorName}` : ''}
+                  </Text>
                   {batch.liquorRatio !== null && (
                     <Text style={styles.meta}>Flotte 1:{number.format(batch.liquorRatio)} · {number.format(batch.liquorLiters ?? 0)} L</Text>
                   )}
@@ -558,6 +577,7 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
               </View>
             )}
           </ScrollView>
+          )}
 
           {message && (
             <MessageToast kind={message.kind} text={message.text} onDismiss={() => setMessage(null)} testID="boyahane-message" />
@@ -581,46 +601,6 @@ export function BoyahaneStationScreen({ api, outbox, reader, tabletCode, onOpenS
         />
       )}
 
-      {picker === 'pause' && canPause && context && (
-        <ReasonDialog
-          title="Ara ver"
-          description="Ara nedenini seçin. Döndüğünüzde “Devam et” ile çalışmaya devam edersiniz."
-          reasons={context.pauseReasons.map(reasonOption)}
-          confirmLabel="Ara ver"
-          busy={busy}
-          onConfirm={reasonId => requireCard('pause', reasonId)}
-          onCancel={() => setPicker(null)}
-          testIDPrefix="boyahane-pause-reason"
-        />
-      )}
-
-      {picker === 'breakdown' && canPause && context?.machine && (
-        <ReasonDialog
-          title="Arıza bildir"
-          description={`${context.machine.code} için arıza kaydı açılır.`}
-          reasons={context.breakdownReasons.map(reasonOption)}
-          confirmLabel="Arızayı bildir"
-          tone="danger"
-          busy={busy}
-          onConfirm={reasonId => requireCard('breakdown', reasonId)}
-          onCancel={() => setPicker(null)}
-          testIDPrefix="boyahane-breakdown-reason"
-        />
-      )}
-
-      {authorization && (
-        <AuthorizationDialog
-          title={authorizations[authorization.action].title}
-          roles={authorizations[authorization.action].roles}
-          details={[
-            ...(context?.machine ? [{ label: 'Makine', value: context.machine.code }] : []),
-            ...(authorizationReason ? [{ label: 'Neden', value: authorizationReason }] : []),
-          ]}
-          error={authorizationError}
-          busy={busy}
-          onCancel={() => setAuthorization(null)}
-        />
-      )}
     </View>
   );
 }
@@ -791,6 +771,11 @@ function CompleteForm({ batch, step, chemicals, busy, onEditing, onComplete }: C
 }
 
 const styles = StyleSheet.create({
+  workStatus: { gap: 1 },
+  workStatusTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  // Üst çubuk düğmeleri: eldivenle de rahat dokunulsun; "Arıza bildir" ayraçla ayrılır.
+  topAction: { minHeight: 46 },
+  topDivider: { width: 1, height: 30, marginHorizontal: 6, backgroundColor: colors.borderStrong },
   screen: { flex: 1, flexDirection: 'row', backgroundColor: colors.background },
   main: { flex: 1 },
   content: { flex: 1 },
@@ -814,7 +799,6 @@ const styles = StyleSheet.create({
   barCaption: { color: colors.muted, fontSize: 11, fontWeight: '700', letterSpacing: 1.2 },
   barTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
   barHint: { color: colors.textSecondary, fontSize: 13 },
-  barActions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   pending: {
     backgroundColor: colors.warningSoft,
     borderBottomWidth: 1,

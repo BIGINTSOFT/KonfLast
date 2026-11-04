@@ -176,3 +176,31 @@ public sealed class StockController(IStockService service, IStockScanService sca
             ? StatusCode(StatusCodes.Status201Created, ApiResponse.Success(result.Value, HttpContext))
             : FromResult(result);
 }
+
+/// <summary>
+/// Depo stok ekranından ayırma: serbest (müşterisi olmayan) hazır mamulün onaylı bir müşteri siparişi kalemine ayrılması
+/// ve ayırmaların bırakılması.
+/// </summary>
+[Route("api/v1/stock/reservations")]
+public sealed class StockReservationsController(IStockReservationService service) : ApiControllerBase
+{
+    /// <summary>Kartın depodaki ayırmaları (müşteri siparişleri ve iş emirleri) ve ayrılabileceği onaylı sipariş kalemleri.</summary>
+    [HttpGet]
+    [HasPermission(KonfeksiyonPermissions.Stock.View)]
+    public async Task<ActionResult<ApiResponse<StockReservationsDto>>> Get(
+        [FromQuery] int warehouseId, [FromQuery] int stockItemId, CancellationToken cancellationToken) =>
+        FromResult(await service.GetAsync(warehouseId, stockItemId, cancellationToken));
+
+    /// <summary>Serbest stoktan onaylı bir sipariş kalemine ayırır; kalemin açık adedi ve serbest stok aşılamaz.</summary>
+    [HttpPost]
+    [HasPermission(KonfeksiyonPermissions.Stock.Reserve)]
+    public async Task<ActionResult<ApiResponse<StockReservationsDto>>> Create(
+        CreateStockReservationRequest request, CancellationToken cancellationToken) =>
+        FromResult(await service.CreateAsync(request, cancellationToken));
+
+    /// <summary>Sipariş ayırmasını bırakır; mal serbest stoka döner (toplamadaki sevkiyatın malı bırakılamaz).</summary>
+    [HttpDelete("{id:int}")]
+    [HasPermission(KonfeksiyonPermissions.Stock.Reserve)]
+    public async Task<ActionResult<ApiResponse<StockReservationsDto>>> Release(int id, CancellationToken cancellationToken) =>
+        FromResult(await service.ReleaseAsync(id, cancellationToken));
+}

@@ -567,7 +567,7 @@ public sealed class PurchaseOrderService(
             && await db.ProductionOrders.CountAsync(p => productionIds.Contains(p.Id) && p.Status != ProductionOrderStatus.Cancelled, cancellationToken)
                 != productionIds.Count)
         {
-            return ReferenceValidation.InvalidReference("items", "Kalemin bağlandığı üretim siparişi bulunamadı ya da iptal edilmiş.");
+            return ReferenceValidation.InvalidReference("items", "Kalemin bağlandığı iş emri bulunamadı ya da iptal edilmiş.");
         }
 
         var stockItems = await db.StockItems

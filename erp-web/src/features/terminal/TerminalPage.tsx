@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowLeftRight, ClipboardCheck, ClipboardList, LogOut, Monitor, PackageCheck, Search, Smartphone, Truck } from 'lucide-react'
+import { ArrowLeft, ArrowLeftRight, ClipboardCheck, ClipboardList, LogOut, Monitor, PackageCheck, PackageOpen, Search, Smartphone, Truck } from 'lucide-react'
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
@@ -17,20 +17,26 @@ import { TerminalLoading } from './TerminalLoading'
 import { TerminalMove } from './TerminalMove'
 import { TerminalPick } from './TerminalPick'
 import { TerminalReceive } from './TerminalReceive'
+import { TerminalShipmentPick } from './TerminalShipmentPick'
 import { useScanner } from './terminalApi'
 import type { ScanResult } from './terminalApi'
 
-type Mode = 'lookup' | 'move' | 'count' | 'pick' | 'receive' | 'loading'
+type Mode = 'lookup' | 'move' | 'count' | 'shipmentPick' | 'pick' | 'receive' | 'loading'
 
 /**
  * manage: stok yönetme yetkisi ister; purchase: satın alma siparişlerini görme yetkisi de ister; shipment: sevkiyat
  * yönetme ya da sevk etme yetkisi ister (stok yönetme yetkisi gerekmez).
  */
-const modes: Record<Mode, { title: string; description: string; icon: LucideIcon; manage: boolean; purchase?: boolean; shipment?: boolean }> = {
+const modes: Record<Mode, { title: string; description: string; icon: LucideIcon; manage: boolean; purchase?: boolean; shipment?: boolean; picking?: boolean }> = {
   lookup: { title: 'Barkod sorgu', description: 'Top, adres ya da stok kartı okutun; nerede, ne kadar var görün.', icon: Search, manage: false },
   move: { title: 'Adres değiştir', description: 'Topu ya da kartı okutun, sonra yerleştirdiğiniz rafın adresini okutun.', icon: ArrowLeftRight, manage: true },
   count: { title: 'Sayım', description: 'Açık sayım fişine raf raf miktar girin.', icon: ClipboardCheck, manage: true },
-  pick: { title: 'Toplama', description: 'Sipariş numarasını okutun; hangi raftan hangi topu alacağınızı görün, aldıkça okutun.', icon: ClipboardList, manage: false },
+  shipmentPick: {
+    title: 'Sevkiyat toplama',
+    description: 'Toplama bekleyen sevkiyatı (siparişten aktarılan ya da elle açılan) seçin; adres sırasıyla adresi ve ürünü okutup onaylayın.',
+    icon: PackageOpen, manage: false, picking: true,
+  },
+  pick: { title: 'Malzeme toplama', description: 'İş emri numarasını okutun; hangi raftan hangi topu alacağınızı görün, aldıkça okutun.', icon: ClipboardList, manage: false },
   receive: { title: 'Mal kabul', description: 'Satın alma siparişinden gelen malzemeyi teslim alın.', icon: PackageCheck, manage: true, purchase: true },
   loading: { title: 'Sevkiyat yükleme', description: 'Sevkiyatı seçin, araca konan her kolinin etiketini okutun; eksik koliler listelenir.', icon: Truck, manage: false, shipment: true },
 }
@@ -109,7 +115,8 @@ export function TerminalPage({ standalone = false }: { standalone?: boolean }) {
   const canShip = usePermission(Permissions.ShipmentShip)
   const canLoad = canManageShipments || canShip
   const available = (Object.keys(modes) as Mode[]).filter(
-    (key) => (canManage || !modes[key].manage) && (canSeePurchases || !modes[key].purchase) && (canLoad || !modes[key].shipment),
+    (key) => (canManage || !modes[key].manage) && (canSeePurchases || !modes[key].purchase) && (canLoad || !modes[key].shipment)
+      && (canManageShipments || !modes[key].picking),
   )
 
   return (
@@ -154,6 +161,7 @@ export function TerminalPage({ standalone = false }: { standalone?: boolean }) {
           {mode === 'lookup' && <TerminalLookup />}
           {mode === 'move' && <TerminalMove />}
           {mode === 'count' && <TerminalCount />}
+          {mode === 'shipmentPick' && <TerminalShipmentPick />}
           {mode === 'pick' && <TerminalPick />}
           {mode === 'receive' && <TerminalReceive />}
           {mode === 'loading' && <TerminalLoading />}
